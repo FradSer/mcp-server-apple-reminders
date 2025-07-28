@@ -37,7 +37,7 @@ function determineSystem24HourTime(): boolean {
  * suitable for AppleScript
  * 
  * @param dateStr - Date string in standard format or natural language
- * @returns Formatted date string (D MMMM YYYY H:mm:ss) or (D MMMM YYYY h:mm:ss A)
+ * @returns Formatted date string (D MMMM YYYY H:mm:ss) or (D MMMM YYYY h:mm:ss A) with English month names
  * @throws Error if the date format is invalid
  */
 export function parseDate(dateStr: string): string {
@@ -59,12 +59,12 @@ export function parseDate(dateStr: string): string {
 
     let formattedDate;
     if (use24Hour) {
-        // Format as 24-hour time
-        formattedDate = parsedDate.format("D MMMM YYYY HH:mm:ss");
+        // Format as 24-hour time with English month names
+        formattedDate = parsedDate.locale('en').format("D MMMM YYYY HH:mm:ss");
         debugLog("Parsed date (24-hour):", formattedDate);
     } else {
-        // Format as 12-hour time with AM/PM
-        formattedDate = parsedDate.format("D MMMM YYYY h:mm:ss A");
+        // Format as 12-hour time with AM/PM with English month names
+        formattedDate = parsedDate.locale('en').format("D MMMM YYYY h:mm:ss A");
         debugLog("Parsed date (12-hour):", formattedDate);
     }
     return formattedDate;
