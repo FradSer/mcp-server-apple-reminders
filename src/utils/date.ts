@@ -37,11 +37,14 @@ function determineSystem24HourTime(): boolean {
  * suitable for AppleScript
  * 
  * @param dateStr - Date string in standard format or natural language
- * @returns Formatted date string (D MMMM YYYY H:mm:ss) or (D MMMM YYYY h:mm:ss A) with English month names
+ * @returns Formatted date string (D MMMM YYYY) for date-only or (D MMMM YYYY H:mm:ss) / (D MMMM YYYY h:mm:ss A) for datetime
  * @throws Error if the date format is invalid
  */
 export function parseDate(dateStr: string): string {
   try {
+    // Check if this is a date-only format (YYYY-MM-DD without time)
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim());
+    
     // Try parsing with moment, expecting 'YYYY-MM-DD HH:mm:ss' or other moment-parsable formats
     const parsedDate = moment(dateStr, [
       "YYYY-MM-DD HH:mm:ss", // Explicitly handle the documented format first
@@ -54,18 +57,24 @@ export function parseDate(dateStr: string): string {
       throw new Error(`Invalid or unsupported date format: ${dateStr}. Please use 'YYYY-MM-DD HH:mm:ss'.`);
     }
 
-    // Check if system uses 24-hour time
-    const use24Hour = determineSystem24HourTime();
-
     let formattedDate;
-    if (use24Hour) {
-        // Format as 24-hour time with English month names
-        formattedDate = parsedDate.locale('en').format("D MMMM YYYY HH:mm:ss");
-        debugLog("Parsed date (24-hour):", formattedDate);
+    if (isDateOnly) {
+        // For date-only inputs, return just the date without time
+        formattedDate = parsedDate.locale('en').format("D MMMM YYYY");
+        debugLog("Parsed date (date-only):", formattedDate);
     } else {
-        // Format as 12-hour time with AM/PM with English month names
-        formattedDate = parsedDate.locale('en').format("D MMMM YYYY h:mm:ss A");
-        debugLog("Parsed date (12-hour):", formattedDate);
+        // Check if system uses 24-hour time for datetime inputs
+        const use24Hour = determineSystem24HourTime();
+        
+        if (use24Hour) {
+            // Use unambiguous DD Month YYYY format for 24-hour time
+            formattedDate = parsedDate.locale('en').format("D MMMM YYYY HH:mm:ss");
+            debugLog("Parsed date (24-hour):", formattedDate);
+        } else {
+            // Use unambiguous DD Month YYYY format for 12-hour time with AM/PM
+            formattedDate = parsedDate.locale('en').format("D MMMM YYYY h:mm:ss A");
+            debugLog("Parsed date (12-hour):", formattedDate);
+        }
     }
     return formattedDate;
   } catch (error) {

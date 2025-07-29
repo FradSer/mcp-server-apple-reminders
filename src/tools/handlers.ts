@@ -20,9 +20,9 @@ export async function handleCreateReminder(args: any): Promise<CallToolResult> {
     let finalNote = args.note || "";
     if (args.url) {
       if (finalNote) {
-        finalNote = `${finalNote}\n\n${args.url}`;
+        finalNote = `${finalNote}\n\nURL: ${args.url}`;
       } else {
-        finalNote = args.url;
+        finalNote = `URL: ${args.url}`;
       }
     }
 
@@ -43,7 +43,17 @@ export async function handleCreateReminder(args: any): Promise<CallToolResult> {
     if (args.dueDate) {
       const parsedDate = parseDate(args.dueDate);
       debugLog("Parsed date:", parsedDate);
-      scriptBody += `, due date:date ${quoteAppleScriptString(parsedDate)}`;
+      
+      // Check if this is a date-only format (YYYY-MM-DD without time)
+      const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(args.dueDate.trim());
+      
+      if (isDateOnly) {
+        // Use allday due date for date-only reminders
+        scriptBody += `, allday due date:date ${quoteAppleScriptString(parsedDate)}`;
+      } else {
+        // Use regular due date for datetime reminders
+        scriptBody += `, due date:date ${quoteAppleScriptString(parsedDate)}`;
+      }
     }
     
     // Add note if specified (including URL if provided)
@@ -94,10 +104,10 @@ export async function handleUpdateReminder(args: any): Promise<CallToolResult> {
     let finalNote = args.note;
     if (args.url) {
       if (finalNote) {
-        finalNote = `${finalNote}\n\n${args.url}`;
+        finalNote = `${finalNote}\n\nURL: ${args.url}`;
       } else if (finalNote !== undefined) {
         // If note is defined but falsy (e.g., empty string), set it to just the URL
-        finalNote = args.url;
+        finalNote = `URL: ${args.url}`;
       } else {
         // We'll handle this differently - append to existing body
         finalNote = undefined;
@@ -127,7 +137,17 @@ export async function handleUpdateReminder(args: any): Promise<CallToolResult> {
     
     if (args.dueDate) {
       const parsedDate = parseDate(args.dueDate);
-      scriptBody += `  set due date of targetReminder to date ${quoteAppleScriptString(parsedDate)}\n`;
+      
+      // Check if this is a date-only format (YYYY-MM-DD without time)
+      const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(args.dueDate.trim());
+      
+      if (isDateOnly) {
+        // Use allday due date for date-only reminders
+        scriptBody += `  set allday due date of targetReminder to date ${quoteAppleScriptString(parsedDate)}\n`;
+      } else {
+        // Use regular due date for datetime reminders
+        scriptBody += `  set due date of targetReminder to date ${quoteAppleScriptString(parsedDate)}\n`;
+      }
     }
     
     if (finalNote !== undefined) {
@@ -136,7 +156,7 @@ export async function handleUpdateReminder(args: any): Promise<CallToolResult> {
       // Special case: append URL to existing body
       scriptBody += `  set currentBody to body of targetReminder\n`;
       scriptBody += `  if currentBody is missing value then set currentBody to ""\n`;
-      scriptBody += `  set body of targetReminder to currentBody & ${quoteAppleScriptString(`\n\n${args.url}`)}\n`;
+      scriptBody += `  set body of targetReminder to currentBody & ${quoteAppleScriptString(`\n\nURL: ${args.url}`)}\n`;
     }
     
     if (args.completed !== undefined) {
