@@ -74,11 +74,24 @@ class RemindersManager {
     func printReminderDetails(reminder: EKReminder) {
         print("Title: \(reminder.title ?? "No Title")")
         
-        if let dueDate = reminder.dueDateComponents?.date {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .short
-            print("Due Date: \(formatter.string(from: dueDate))")
+        if let dueDateComponents = reminder.dueDateComponents {
+            // Check if time components are set to determine if this is date-only or datetime
+            let hasTimeComponents = dueDateComponents.hour != nil || dueDateComponents.minute != nil || dueDateComponents.second != nil
+            
+            if let dueDate = dueDateComponents.date {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                
+                if hasTimeComponents {
+                    // Has time components - format with time
+                    formatter.timeStyle = .short
+                } else {
+                    // Date-only - no time
+                    formatter.timeStyle = .none
+                }
+                
+                print("Due Date: \(formatter.string(from: dueDate))")
+            }
         }
         
         if let notes = reminder.notes, !notes.isEmpty {

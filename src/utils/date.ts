@@ -11,8 +11,8 @@ import { execSync } from "child_process";
 let use24HourTimeCached: boolean | undefined;
 
 // Date format constants for AppleScript compatibility
-const DATE_FORMAT_12_HOUR = "MMMM D, YYYY h:mm:ss A" as const;
-const DATE_FORMAT_24_HOUR = "MMMM D, YYYY HH:mm:ss" as const;
+const DATE_FORMAT_12_HOUR = "D MMMM YYYY h:mm:ss A" as const;
+const DATE_FORMAT_24_HOUR = "D MMMM YYYY HH:mm:ss" as const;
 
 /**
  * Clears the cached 24-hour time preference (for testing purposes only)
@@ -52,17 +52,21 @@ function determineSystem24HourTime(): boolean {
  * suitable for AppleScript with locale-independent English month names
  * 
  * @param dateStr - Date string in standard format (YYYY-MM-DD, YYYY-MM-DD HH:mm:ss, or ISO 8601)
- * @returns Formatted date string in English locale: "MMMM D, YYYY HH:mm:ss" (24h) or "MMMM D, YYYY h:mm:ss A" (12h)
+ * @returns Formatted date string in English locale: "D MMMM YYYY" for date-only, "D MMMM YYYY HH:mm:ss" (24h) or "D MMMM YYYY h:mm:ss A" (12h) for datetime
  * @throws Error if the date format is invalid or unsupported
  * 
  * @example
  * ```typescript
- * parseDate('2024-12-25 18:30:00') // Returns: "December 25, 2024 6:30:00 PM" (12h system)
- * parseDate('2024-12-25 18:30:00') // Returns: "December 25, 2024 18:30:00" (24h system)
+ * parseDate('2024-12-25') // Returns: "25 December 2024" (date-only)
+ * parseDate('2024-12-25 18:30:00') // Returns: "25 December 2024 6:30:00 PM" (12h system)
+ * parseDate('2024-12-25 18:30:00') // Returns: "25 December 2024 18:30:00" (24h system)
  * ```
  */
 export function parseDate(dateStr: string): string {
   try {
+    // Check if this is a date-only format (YYYY-MM-DD without time)
+    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim());
+    
     // Try parsing with moment, expecting 'YYYY-MM-DD HH:mm:ss' or other moment-parsable formats
     const parsedDate = moment(dateStr, [
       "YYYY-MM-DD HH:mm:ss", // Explicitly handle the documented format first
@@ -79,16 +83,24 @@ export function parseDate(dateStr: string): string {
       );
     }
 
-    // Check if system uses 24-hour time
-    const use24Hour = determineSystem24HourTime();
-
     // Format with English locale for AppleScript compatibility
     const englishMoment = parsedDate.locale('en');
-    const formattedDate = use24Hour 
-        ? englishMoment.format(DATE_FORMAT_24_HOUR)
-        : englishMoment.format(DATE_FORMAT_12_HOUR);
     
-    debugLog(`Parsed date (${use24Hour ? '24' : '12'}-hour):`, formattedDate);
+    let formattedDate;
+    if (isDateOnly) {
+        // For date-only inputs, return just the date without time
+        formattedDate = englishMoment.format("D MMMM YYYY");
+        debugLog("Parsed date (date-only):", formattedDate);
+    } else {
+        // Check if system uses 24-hour time for datetime inputs
+        const use24Hour = determineSystem24HourTime();
+        
+        formattedDate = use24Hour 
+            ? englishMoment.format(DATE_FORMAT_24_HOUR)
+            : englishMoment.format(DATE_FORMAT_12_HOUR);
+        
+        debugLog(`Parsed date (${use24Hour ? '24' : '12'}-hour):`, formattedDate);
+    }
     return formattedDate;
   } catch (error) {
     debugLog("Date parsing error:", error);
