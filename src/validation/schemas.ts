@@ -5,8 +5,10 @@
 
 import { z } from 'zod';
 
-// Security patterns - whitelist approach
-const SAFE_TEXT_PATTERN = /^[\w\s\-\.\,\!\?\(\)\[\]\'\"]*$/;
+// Security patterns – allow full Unicode text while blocking control and risky delimiter chars.
+// Allows newlines for notes; blocks: most control chars, DEL, <, >, {, }, |, ^, ` and backslash.
+// This keeps Chinese/Unicode names working while remaining safe with AppleScript quoting.
+const SAFE_TEXT_PATTERN = /^[^\u0000-\u0009\u000B-\u001F\u007F<>\\\{\}\|\^`]*$/u;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}(\s\d{2}:\d{2}:\d{2})?$/;
 const URL_PATTERN = /^https?:\/\/[^\s<>"{}|\\^`\[\]]+$/i;
 

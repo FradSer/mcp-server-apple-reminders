@@ -151,16 +151,27 @@ export function generateDateProperty(dateStr: string, quoteFn: (str: string) => 
  * @throws Error if the date format is invalid
  */
 function formatDate(dateStr: string, isDateOnly: boolean): string {
-  const parsedDate = moment(dateStr, [
-    "YYYY-MM-DD HH:mm:ss",
-    moment.ISO_8601,
-    "YYYY-MM-DD",
-  ], true);
+  let parsedDate: any;
+  try {
+    parsedDate = moment(dateStr, [
+      "YYYY-MM-DD HH:mm:ss",
+      moment.ISO_8601,
+      "YYYY-MM-DD",
+    ], true);
+  } catch {
+    // Normalize any parsing exceptions to a consistent message expected by tests/consumers
+    throw new Error(
+      `Invalid or unsupported date format: "${dateStr}". ` +
+      `Supported formats: YYYY-MM-DD HH:mm:ss, YYYY-MM-DD, ISO 8601. ` +
+      `Example: "2024-12-25 14:30:00"`
+    );
+  }
 
   if (!parsedDate.isValid()) {
     throw new Error(
-      `Invalid date format: "${dateStr}". ` +
-      `Supported: YYYY-MM-DD, YYYY-MM-DD HH:mm:ss, ISO 8601`
+      `Invalid or unsupported date format: "${dateStr}". ` +
+      `Supported formats: YYYY-MM-DD HH:mm:ss, YYYY-MM-DD, ISO 8601. ` +
+      `Example: "2024-12-25 14:30:00"`
     );
   }
 

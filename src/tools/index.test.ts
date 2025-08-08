@@ -9,17 +9,14 @@ jest.mock('./handlers.js', () => ({
   handleListReminders: jest.fn(),
   handleUpdateReminder: jest.fn(),
   handleDeleteReminder: jest.fn(),
-  handleMoveReminder: jest.fn()
+  handleMoveReminder: jest.fn(),
+  handleCreateReminderList: jest.fn()
 }));
 
 jest.mock('./definitions.js', () => ({
   TOOLS: [
-    { name: 'create_reminder', description: 'Create reminder' },
-    { name: 'list_reminders', description: 'List reminders' },
-    { name: 'list_reminder_lists', description: 'List reminder lists' },
-    { name: 'update_reminder', description: 'Update reminder' },
-    { name: 'delete_reminder', description: 'Delete reminder' },
-    { name: 'move_reminder', description: 'Move reminder' }
+    { name: 'reminders', description: 'Unified reminders tool' },
+    { name: 'lists', description: 'Reminder lists tool' }
   ]
 }));
 
@@ -31,7 +28,8 @@ import {
   handleListReminders,
   handleUpdateReminder,
   handleDeleteReminder,
-  handleMoveReminder
+  handleMoveReminder,
+  handleCreateReminderList
 } from './handlers.js';
 
 const mockHandleCreateReminder = handleCreateReminder as jest.MockedFunction<typeof handleCreateReminder>;
@@ -40,6 +38,7 @@ const mockHandleListReminders = handleListReminders as jest.MockedFunction<typeo
 const mockHandleUpdateReminder = handleUpdateReminder as jest.MockedFunction<typeof handleUpdateReminder>;
 const mockHandleDeleteReminder = handleDeleteReminder as jest.MockedFunction<typeof handleDeleteReminder>;
 const mockHandleMoveReminder = handleMoveReminder as jest.MockedFunction<typeof handleMoveReminder>;
+const mockHandleCreateReminderList = handleCreateReminderList as jest.MockedFunction<typeof handleCreateReminderList>;
 
 describe('Tools Index', () => {
   beforeEach(() => {
@@ -47,8 +46,8 @@ describe('Tools Index', () => {
   });
 
   describe('handleToolCall', () => {
-    test('should route create_reminder to handleCreateReminder', async () => {
-      const args = { title: 'Test reminder' };
+    test('should route reminders action=create to handleCreateReminder', async () => {
+      const args = { action: 'create', title: 'Test reminder' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Success' }],
         isError: false
@@ -56,14 +55,14 @@ describe('Tools Index', () => {
 
       mockHandleCreateReminder.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('create_reminder', args);
+      const result = await handleToolCall('reminders', args);
 
       expect(mockHandleCreateReminder).toHaveBeenCalledWith(args);
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route list_reminders to handleListReminders', async () => {
-      const args = { list: 'Work' };
+    test('should route reminders action=list to handleListReminders', async () => {
+      const args = { action: 'list', list: 'Work' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Reminders list' }],
         isError: false
@@ -71,13 +70,13 @@ describe('Tools Index', () => {
 
       mockHandleListReminders.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('list_reminders', args);
+      const result = await handleToolCall('reminders', args);
 
       expect(mockHandleListReminders).toHaveBeenCalledWith(args);
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route list_reminder_lists to handleListReminderLists', async () => {
+    test('should route lists action=list to handleListReminderLists', async () => {
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Lists' }],
         isError: false
@@ -85,14 +84,14 @@ describe('Tools Index', () => {
 
       mockHandleListReminderLists.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('list_reminder_lists', {});
+      const result = await handleToolCall('lists', { action: 'list' });
 
       expect(mockHandleListReminderLists).toHaveBeenCalledWith({});
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route update_reminder to handleUpdateReminder', async () => {
-      const args = { title: 'Old title', newTitle: 'New title' };
+    test('should route reminders action=update to handleUpdateReminder', async () => {
+      const args = { action: 'update', title: 'Old title', newTitle: 'New title' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Updated' }],
         isError: false
@@ -100,14 +99,14 @@ describe('Tools Index', () => {
 
       mockHandleUpdateReminder.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('update_reminder', args);
+      const result = await handleToolCall('reminders', args);
 
       expect(mockHandleUpdateReminder).toHaveBeenCalledWith(args);
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route delete_reminder to handleDeleteReminder', async () => {
-      const args = { title: 'Delete me' };
+    test('should route reminders action=delete to handleDeleteReminder', async () => {
+      const args = { action: 'delete', title: 'Delete me' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Deleted' }],
         isError: false
@@ -115,14 +114,14 @@ describe('Tools Index', () => {
 
       mockHandleDeleteReminder.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('delete_reminder', args);
+      const result = await handleToolCall('reminders', args);
 
       expect(mockHandleDeleteReminder).toHaveBeenCalledWith(args);
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route move_reminder to handleMoveReminder', async () => {
-      const args = { title: 'Move me', fromList: 'A', toList: 'B' };
+    test('should route reminders action=move to handleMoveReminder', async () => {
+      const args = { action: 'move', title: 'Move me', fromList: 'A', toList: 'B' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Moved' }],
         isError: false
@@ -130,7 +129,7 @@ describe('Tools Index', () => {
 
       mockHandleMoveReminder.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('move_reminder', args);
+      const result = await handleToolCall('reminders', args);
 
       expect(mockHandleMoveReminder).toHaveBeenCalledWith(args);
       expect(result).toEqual(expectedResult);
@@ -181,35 +180,38 @@ describe('Tools Index', () => {
       mockHandleCreateReminder.mockResolvedValue(expectedResult);
 
       // Test with null args
-      await handleToolCall('create_reminder', null);
-      expect(mockHandleCreateReminder).toHaveBeenCalledWith(null);
+      await handleToolCall('reminders', null as any);
+      expect(mockHandleCreateReminder).not.toHaveBeenCalled();
 
-      // Test with undefined args
-      await handleToolCall('create_reminder', undefined);
-      expect(mockHandleCreateReminder).toHaveBeenCalledWith(undefined);
+      // Test with missing action
+      await handleToolCall('reminders', {} as any);
+      expect(mockHandleCreateReminder).not.toHaveBeenCalled();
     });
 
     test('should propagate handler errors', async () => {
       const error = new Error('Handler failed');
       mockHandleCreateReminder.mockRejectedValue(error);
 
-      await expect(handleToolCall('create_reminder', {})).rejects.toThrow('Handler failed');
+      await expect(handleToolCall('reminders', { action: 'create' })).rejects.toThrow('Handler failed');
     });
 
     test('should handle handlers returning different result types', async () => {
       const testCases = [
         {
-          tool: 'create_reminder',
+          tool: 'reminders',
+          args: { action: 'create' },
           handler: mockHandleCreateReminder,
           result: { content: [{ type: 'text' as const, text: 'Created' }], isError: false }
         },
         {
-          tool: 'list_reminders',
+          tool: 'reminders',
+          args: { action: 'list' },
           handler: mockHandleListReminders,
           result: { content: [{ type: 'text' as const, text: JSON.stringify({ reminders: [] }) }], isError: false }
         },
         {
-          tool: 'update_reminder',
+          tool: 'reminders',
+          args: { action: 'update' },
           handler: mockHandleUpdateReminder,
           result: { content: [{ type: 'text' as const, text: 'Updated successfully' }], isError: false }
         }
@@ -218,7 +220,7 @@ describe('Tools Index', () => {
       for (const testCase of testCases) {
         testCase.handler.mockResolvedValue(testCase.result);
         
-        const result = await handleToolCall(testCase.tool, {});
+        const result = await handleToolCall(testCase.tool, testCase.args as any);
         
         expect(result).toEqual(testCase.result);
         expect(testCase.handler).toHaveBeenCalled();
@@ -229,6 +231,7 @@ describe('Tools Index', () => {
 
     test('should handle complex arguments', async () => {
       const complexArgs = {
+        action: 'create',
         title: 'Complex reminder',
         dueDate: '2024-12-25 18:00:00',
         list: 'Work Tasks',
@@ -248,7 +251,7 @@ describe('Tools Index', () => {
 
       mockHandleCreateReminder.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('create_reminder', complexArgs);
+      const result = await handleToolCall('reminders', complexArgs);
 
       expect(mockHandleCreateReminder).toHaveBeenCalledWith(complexArgs);
       expect(result).toEqual(expectedResult);
@@ -265,12 +268,8 @@ describe('Tools Index', () => {
     test('should contain expected tool definitions', () => {
       const toolNames = TOOLS.map(tool => tool.name);
       
-      expect(toolNames).toContain('create_reminder');
-      expect(toolNames).toContain('list_reminders');
-      expect(toolNames).toContain('list_reminder_lists');
-      expect(toolNames).toContain('update_reminder');
-      expect(toolNames).toContain('delete_reminder');
-      expect(toolNames).toContain('move_reminder');
+      expect(toolNames).toContain('reminders');
+      expect(toolNames).toContain('lists');
     });
   });
 });

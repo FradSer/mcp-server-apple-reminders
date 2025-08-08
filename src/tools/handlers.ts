@@ -63,7 +63,9 @@ class NoteHandler {
 export async function handleCreateReminder(args: any): Promise<CallToolResult> {
   try {
     // Validate input for security
-    const validatedArgs = validateInput(CreateReminderSchema, args);
+    // Support unified 'reminders' tool: ignore non-create fields like action
+    const { action: _ignored, ...rest } = args ?? {};
+    const validatedArgs = validateInput(CreateReminderSchema, rest);
     // Prepare note content by combining note and URL if provided
     let finalNote = validatedArgs.note || "";
     if (validatedArgs.url) {
@@ -87,11 +89,10 @@ export async function handleCreateReminder(args: any): Promise<CallToolResult> {
     // Build properties object for the reminder
     scriptBody += `set reminderProps to {name:${quoteAppleScriptString(validatedArgs.title)}`;
     
-    // Add due date if specified
+    // Add due date if specified (supports date-only vs datetime)
     if (validatedArgs.dueDate) {
-      const parsedDate = parseDate(validatedArgs.dueDate);
-      debugLog("Parsed date:", parsedDate);
-      scriptBody += `, due date:date ${quoteAppleScriptString(parsedDate)}`;
+      const dateProperty = generateDateProperty(validatedArgs.dueDate, quoteAppleScriptString);
+      scriptBody += dateProperty;
     }
     
     // Add note if specified (including URL if provided)
@@ -132,7 +133,8 @@ export async function handleCreateReminder(args: any): Promise<CallToolResult> {
  */
 export async function handleUpdateReminder(args: any): Promise<CallToolResult> {
   try {
-    const validatedArgs = validateInput(UpdateReminderSchema, args);
+    const { action: _ignored, ...rest } = args ?? {};
+    const validatedArgs = validateInput(UpdateReminderSchema, rest);
     
     // Check if this is a batch operation
     if (validatedArgs.batchOperation?.enabled) {
@@ -195,8 +197,9 @@ class ReminderUpdateBuilder {
     }
     
     if (this.args.dueDate) {
-      const parsedDate = parseDate(this.args.dueDate);
-      updates.push(`  set due date of targetReminder to date ${quoteAppleScriptString(parsedDate)}`);
+      const { formatted, isDateOnly } = parseDateWithType(this.args.dueDate);
+      const dateType = isDateOnly ? 'allday due date' : 'due date';
+      updates.push(`  set ${dateType} of targetReminder to date ${quoteAppleScriptString(formatted)}`);
     }
     
     if (this.shouldUpdateNotes()) {
@@ -226,7 +229,7 @@ class ReminderUpdateBuilder {
       return [
         '  set currentBody to body of targetReminder',
         '  if currentBody is missing value then set currentBody to ""',
-        `  set body of targetReminder to currentBody & ${quoteAppleScriptString(`\n\n${this.args.url}`)}`
+        `  set body of targetReminder to currentBody & ${quoteAppleScriptString(`URL: ${this.args.url}`)}`
       ].join('\n');
     }
     
@@ -237,6 +240,8 @@ class ReminderUpdateBuilder {
     if (!this.args.url && this.args.note === undefined) return undefined;
     if (!this.args.url) return this.args.note;
     if (this.args.note === undefined) return undefined; // Special case for URL append
+    // If an empty note string is provided, replace with a labeled URL without leading newlines
+    if (this.args.note === '') return `URL: ${this.args.url}`;
     if (!this.args.note) return this.args.url;
     return `${this.args.note}\n\n${this.args.url}`;
   }
@@ -477,7 +482,8 @@ async function handleBatchOrganization(batchOperation: any): Promise<CallToolRes
 export async function handleDeleteReminder(args: any): Promise<CallToolResult> {
   try {
     // Validate input for security
-    const validatedArgs = validateInput(DeleteReminderSchema, args);
+    const { action: _ignored, ...rest } = args ?? {};
+    const validatedArgs = validateInput(DeleteReminderSchema, rest);
     let scriptBody = '';
     
     // Find the reminder by title
@@ -541,7 +547,8 @@ export async function handleDeleteReminder(args: any): Promise<CallToolResult> {
 export async function handleMoveReminder(args: any): Promise<CallToolResult> {
   try {
     // Validate input for security
-    const validatedArgs = validateInput(MoveReminderSchema, args);
+    const { action: _ignored, ...rest } = args ?? {};
+    const validatedArgs = validateInput(MoveReminderSchema, rest);
     let scriptBody = '';
     
     // Find the reminder in the source list
@@ -603,7 +610,8 @@ export async function handleMoveReminder(args: any): Promise<CallToolResult> {
 export async function handleListReminderLists(args?: any): Promise<CallToolResult> {
   try {
     // Validate input for security if args provided
-    const validatedArgs = args ? validateInput(ListReminderListsSchema, args) : undefined;
+    const cleaned = args && typeof args === 'object' ? (() => { const { action: _ignored, ...rest } = args; return rest; })() : undefined;
+    const validatedArgs = cleaned ? validateInput(ListReminderListsSchema, cleaned) : undefined;
     
     // Check if this is a request to create a new list
     if (validatedArgs?.createNew) {
@@ -672,7 +680,8 @@ export async function handleListReminderLists(args?: any): Promise<CallToolResul
 export async function handleListReminders(args: any): Promise<CallToolResult> {
   try {
     // Validate input for security
-    const validatedArgs = validateInput(ListRemindersSchema, args);
+    const { action: _ignored, ...rest } = args ?? {};
+    const validatedArgs = validateInput(ListRemindersSchema, rest);
     
     const showCompleted = validatedArgs.showCompleted === true;
     const { reminders } = await remindersManager.getReminders(showCompleted);
