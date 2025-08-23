@@ -173,3 +173,10 @@ dist
 
 # Finder (MacOS) folder config
 .DS_Store
+
+# Swift compiled binaries
+src/swift/bin/
+dist/swift/bin/
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo

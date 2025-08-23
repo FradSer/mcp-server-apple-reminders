@@ -12,6 +12,7 @@ export interface Reminder {
   title: string;
   dueDate?: string;
   notes?: string;
+  url?: string;           // Native URL field (currently limited by EventKit API)
   list: string;
   isCompleted: boolean;
 }
