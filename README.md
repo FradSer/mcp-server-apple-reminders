@@ -283,16 +283,49 @@ Manage reminder lists - view existing lists or create new ones for organizing re
 }
 ```
 
+**Note about URL fields**: The `url` field is currently limited by Apple's EventKit API restrictions and will typically be `null`. This is a limitation of Apple's EventKit framework, not our implementation. URLs stored in the native URL field of reminders cannot be accessed programmatically.
+
+**Structured URL Format**: This server now uses a structured format for URLs in reminder notes to ensure consistent parsing and extraction:
+
+```
+Reminder note content here...
+
+URLs:
+- https://example.com
+- https://another-url.com
+```
+
+**URL Extraction**: You can extract URLs from reminder notes using the structured format or regex fallback:
+```typescript
+// Using the structured format (recommended)
+import { extractUrlsFromNotes, parseReminderNote } from './urlHelpers';
+
+// Extract just URLs
+const urls = extractUrlsFromNotes(reminder.notes);
+
+// Parse into separate note content and URLs
+const { note, urls } = parseReminderNote(reminder.notes);
+
+// Legacy regex method (fallback for unstructured content)
+const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
+```
+
+**Benefits of Structured Format**:
+- **Consistent parsing**: URLs are always in a predictable location
+- **Multiple URL support**: Handle multiple URLs per reminder reliably
+- **Clean separation**: Note content and URLs are clearly separated
+- **Backward compatible**: Unstructured URLs still detected as fallback
+
 **List Response**:
 ```json
 {
   "reminders": [
     {
-      "title": "Buy groceries",
+      "title": "Buy groceries", 
       "list": "Shopping",
       "isCompleted": false,
       "dueDate": "2024-03-25 18:00:00",
-      "notes": "Don't forget milk",
+      "notes": "Don't forget milk\n\nURLs:\n- https://grocery-store.com\n- https://shopping-list.com",
       "url": null
     }
   ],

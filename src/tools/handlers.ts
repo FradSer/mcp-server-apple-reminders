@@ -406,6 +406,7 @@ function createReminderListResponse(
     isCompleted: reminder.isCompleted === true,
     dueDate: reminder.dueDate || null,
     notes: reminder.notes || null,
+    url: reminder.url || null,
   }));
 
   return {
