@@ -213,6 +213,15 @@ Lists all reminders or reminders from a specific list:
 - `search`: Search for reminders containing this text in title or notes
 - `dueWithin`: Filter by due date range ("today", "tomorrow", "this-week", "overdue", "no-date")
 
+**Note about URL fields**: The `url` field is currently limited by Apple's EventKit API restrictions and will typically be `null`. This is a limitation of Apple's EventKit framework, not our implementation. URLs stored in the native URL field of reminders cannot be accessed programmatically.
+
+If you need to extract URLs from reminder notes, you can easily do this in your own code:
+```typescript
+const urls = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
+```
+
+
+
 Example response:
 ```json
 {
@@ -222,7 +231,8 @@ Example response:
       "list": "Shopping",
       "isCompleted": false,
       "dueDate": "2024-03-25 18:00:00",
-      "notes": "Don't forget milk"
+      "notes": "Don't forget milk",
+      "url": null
     }
   ],
   "total": 1,

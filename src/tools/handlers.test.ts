@@ -219,6 +219,7 @@ describe('handleListReminders', () => {
       isCompleted: false,
       dueDate: null,
       notes: null,
+      url: null,
     });
     expect(parsedJson.filter.list).toBe('Reminders');
     expect(parsedJson.filter.showCompleted).toBe(false);
@@ -312,7 +313,8 @@ describe('handleListReminders', () => {
       list: 'Default',
       isCompleted: false,
       dueDate: null,
-      notes: null
+      notes: null,
+      url: null
     });
   });
 
@@ -356,7 +358,8 @@ describe('handleListReminders', () => {
       list: 'Work',
       isCompleted: true,
       dueDate: '2024-03-12 10:00:00',
-      notes: 'Test notes'
+      notes: 'Test notes',
+      url: null
     });
   });
 
