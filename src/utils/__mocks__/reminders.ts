@@ -23,6 +23,7 @@ export class RemindersManager {
           isCompleted: false,
           dueDate: undefined,
           notes: undefined,
+          url: undefined
         },
         {
           title: 'Test Reminder 2',
@@ -30,8 +31,9 @@ export class RemindersManager {
           isCompleted: true,
           dueDate: '2024-03-12 10:00:00',
           notes: 'Test notes',
-        },
-      ],
+          url: 'https://example.com'
+        }
+      ]
     };
   }
 }

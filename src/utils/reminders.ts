@@ -396,24 +396,13 @@ Or rebuild the binary:
     const reminder: Partial<Reminder> = { isCompleted: false };
 
     const fieldParsers: Record<string, (value: string) => void> = {
-      'Title:': (value) => {
-        reminder.title = value.trim();
-      },
-      'Due Date:': (value) => {
-        reminder.dueDate = value.trim();
-      },
-      'Notes:': (value) => {
-        reminder.notes = value.trim();
-      },
-      'List:': (value) => {
-        reminder.list = value.trim();
-      },
-      'Status:': (value) => {
-        reminder.isCompleted = value.trim() === 'Status: Completed';
-      },
-      'Raw isCompleted value:': (value) => {
-        reminder.isCompleted = value.trim().toLowerCase() === 'true';
-      },
+      'Title:': (value) => reminder.title = value.trim(),
+      'Due Date:': (value) => reminder.dueDate = value.trim(),
+      'Notes:': (value) => reminder.notes = value.trim(),
+      'URL:': (value) => reminder.url = value.trim(),
+      'List:': (value) => reminder.list = value.trim(),
+      'Status:': (value) => reminder.isCompleted = value.trim() === 'Status: Completed',
+      'Raw isCompleted value:': (value) => reminder.isCompleted = value.trim().toLowerCase() === 'true'
     };
 
     for (const line of lines) {
