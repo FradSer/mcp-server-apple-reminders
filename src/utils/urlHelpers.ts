@@ -11,15 +11,22 @@
 export function extractUrlsFromNotes(notes: string | null | undefined): string[] {
   if (!notes) return [];
   
-  // Look for the structured URLs section
-  const urlSectionMatch = notes.match(/\n\nURLs:\n((?:- https?:\/\/[^\s\n]+\n?)+)/);
-  if (urlSectionMatch) {
+  // Look for all structured URLs sections
+  const urlSectionMatches = notes.matchAll(/\n\nURLs:\n((?:- https?:\/\/[^\s\n]+\n?)+)/g);
+  const allUrls = [];
+  
+  for (const match of urlSectionMatches) {
     // Extract URLs from structured format
-    const urlLines = urlSectionMatch[1];
-    return urlLines
+    const urlLines = match[1];
+    const sectionUrls = urlLines
       .split('\n')
       .map(line => line.replace(/^- /, '').trim())
       .filter(url => url.length > 0);
+    allUrls.push(...sectionUrls);
+  }
+  
+  if (allUrls.length > 0) {
+    return allUrls;
   }
   
   // Fallback: extract any URLs using regex for backward compatibility
@@ -34,7 +41,7 @@ export function extractUrlsFromNotes(notes: string | null | undefined): string[]
  * @returns Formatted note content with structured URLs
  */
 export function formatNoteWithUrls(note: string | undefined | null, urls: string[]): string {
-  const cleanNote = (note || '').trim();
+  const cleanNote = removeUrlSections(note || '').trim();
   const validUrls = urls.filter(url => url && isValidUrl(url));
   
   if (validUrls.length === 0) {
