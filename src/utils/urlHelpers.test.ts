@@ -68,6 +68,38 @@ URLs:
     const urls = extractUrlsFromNotes(notes);
     expect(urls).toEqual(['https://secure.com', 'http://insecure.com']);
   });
+
+  test('should handle notes with multiple URL sections', () => {
+    const notes = `Task description
+
+URLs:
+- https://first.com
+- https://second.com
+
+More content here
+
+URLs:
+- https://third.com
+- https://fourth.com`;
+
+    const urls = extractUrlsFromNotes(notes);
+    expect(urls).toEqual(['https://first.com', 'https://second.com', 'https://third.com', 'https://fourth.com']);
+  });
+
+  test('should handle notes with single URL in multiple sections', () => {
+    const notes = `Task
+
+URLs:
+- https://example.com
+
+Content
+
+URLs:
+- https://another.com`;
+
+    const urls = extractUrlsFromNotes(notes);
+    expect(urls).toEqual(['https://example.com', 'https://another.com']);
+  });
 });
 
 describe('formatNoteWithUrls', () => {
@@ -126,6 +158,41 @@ URLs:
 URLs:
 - https://valid.com
 - http://valid-too.com`);
+  });
+
+  test('should clean existing URL sections before adding new ones', () => {
+    const noteWithExistingUrls = `Task description
+
+URLs:
+- https://old.com
+- https://existing.com`;
+
+    const result = formatNoteWithUrls(noteWithExistingUrls, ['https://new.com']);
+    
+    expect(result).toBe(`Task description
+
+URLs:
+- https://new.com`);
+  });
+
+  test('should handle multiple existing URL sections', () => {
+    const noteWithMultipleUrlSections = `Task
+
+URLs:
+- https://first.com
+
+Content
+
+URLs:
+- https://second.com`;
+
+    const result = formatNoteWithUrls(noteWithMultipleUrlSections, ['https://replacement.com']);
+    
+    expect(result).toBe(`Task
+Content
+
+URLs:
+- https://replacement.com`);
   });
 });
 
