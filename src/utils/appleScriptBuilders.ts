@@ -8,6 +8,7 @@ import {
   quoteAppleScriptString,
 } from './applescript.js';
 import { generateDateProperty, parseDateWithType } from './date.js';
+import { combineNoteWithUrl, formatNoteWithUrls, extractNoteContent, extractUrlsFromNotes } from "./urlHelpers.js";
 
 interface ReminderProperties {
   title: string;
@@ -70,10 +71,7 @@ export class ReminderCreationBuilder {
 
   private combineNoteAndUrl(): string {
     const { note, url } = this.properties;
-    if (!note && !url) return '';
-    if (!note && url) return url;
-    if (!url && note) return note;
-    return `${note}\n\n${url}`;
+    return combineNoteWithUrl(note, url);
   }
 }
 
@@ -191,13 +189,16 @@ export class ReminderUpdateScriptBuilder {
     if (finalNote !== undefined) {
       return `  set body of targetReminder to ${quoteAppleScriptString(finalNote)}`;
     }
-
-    // Special case: append URL to existing body
+    
+    // Special case: append URL to existing body using structured format
     if (this.properties.url && this.properties.note === undefined) {
+      // We need to handle this case by reading current body and combining it
+      // For now, we'll use a simpler approach with the URL helper
+      const structuredUrl = formatNoteWithUrls('', [this.properties.url]);
       return [
         '  set currentBody to body of targetReminder',
         '  if currentBody is missing value then set currentBody to ""',
-        `  set body of targetReminder to currentBody & ${quoteAppleScriptString(`URL: ${this.properties.url}`)}`,
+        `  set body of targetReminder to currentBody & ${quoteAppleScriptString('\n\n' + structuredUrl)}`
       ].join('\n');
     }
 
@@ -208,11 +209,9 @@ export class ReminderUpdateScriptBuilder {
     const { note, url } = this.properties;
 
     if (!url && note === undefined) return undefined;
-    if (!url) return note;
     if (note === undefined) return undefined; // Special case for URL append
-    if (note === '') return `URL: ${url}`;
-    if (!note) return url;
-    return `${note}\n\n${url}`;
+    
+    return combineNoteWithUrl(note, url);
   }
 }
 

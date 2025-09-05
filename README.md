@@ -337,6 +337,41 @@ const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
 }
 ```
 
+## URL Utilities
+
+The server includes built-in URL utilities for working with the structured URL format. These utilities are exported from `src/utils/urlHelpers.js`:
+
+### Key Functions
+
+- `extractUrlsFromNotes(notes)` - Extract URLs from structured or unstructured notes
+- `parseReminderNote(notes)` - Parse notes into separate content and URL array  
+- `formatNoteWithUrls(note, urls)` - Format note content with structured URLs
+- `removeUrlSections(notes)` - Remove URL sections to get clean note content
+- `combineNoteWithUrl(note, url)` - Combine note with single URL in structured format
+
+### Usage Examples
+
+```typescript
+import { 
+  extractUrlsFromNotes, 
+  parseReminderNote,
+  formatNoteWithUrls 
+} from 'mcp-server-apple-reminders/src/utils/urlHelpers.js';
+
+// Extract URLs from any reminder note
+const urls = extractUrlsFromNotes(reminder.notes);
+console.log(urls); // ['https://example.com', 'https://test.com']
+
+// Parse note into content and URLs
+const { note, urls } = parseReminderNote(reminder.notes);
+console.log(note); // "Task description" 
+console.log(urls); // ['https://example.com']
+
+// Create structured note content
+const structured = formatNoteWithUrls("New task", ['https://link1.com', 'https://link2.com']);
+// Result: "New task\n\nURLs:\n- https://link1.com\n- https://link2.com"
+```
+
 ## Organization Strategies
 
 The server provides intelligent reminder organization capabilities through four built-in strategies:
