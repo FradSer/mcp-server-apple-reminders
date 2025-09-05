@@ -516,3 +516,4 @@ npm run build
 **Build Tools:**
 - Swift binaries for native macOS integration
 - TypeScript compilation for cross-platform compatibility
+
