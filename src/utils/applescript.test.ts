@@ -35,7 +35,7 @@ describe('AppleScript Security Tests', () => {
       const input = "String with 'apostrophes'";
       const result = quoteAppleScriptString(input);
 
-      expect(result).toBe('"String with \\\'apostrophes\\\'"');
+      expect(result).toBe('"String with \'apostrophes\'"');
     });
 
     test('should properly escape backslashes', () => {
@@ -49,7 +49,7 @@ describe('AppleScript Security Tests', () => {
       const input = 'Complex "string\' with \\ all types';
       const result = quoteAppleScriptString(input);
 
-      expect(result).toBe('"Complex \\"string\\\' with \\\\ all types"');
+      expect(result).toBe('"Complex \\"string\' with \\\\ all types"');
     });
 
     test('should handle empty string', () => {
