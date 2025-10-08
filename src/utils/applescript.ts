@@ -16,7 +16,6 @@ function escapeAppleScriptString(str: string): string {
   return str
     .replace(/\\/g, '\\\\') // Escape backslashes first
     .replace(/"/g, '\\"') // Escape double quotes
-    .replace(/'/g, "\\'") // Escape single quotes
     .replace(/\r/g, '\\r') // Escape carriage returns
     .replace(/\n/g, '\\n') // Escape newlines
     .replace(/\t/g, '\\t'); // Escape tabs
