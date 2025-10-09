@@ -7,7 +7,7 @@ import {
   createRemindersScript,
   quoteAppleScriptString,
 } from './applescript.js';
-import { generateDateProperty, generateNaturalDateProperty, parseDateWithType } from './date.js';
+import { generateDateProperty, parseDateWithType } from './date.js';
 import { combineNoteWithUrl, formatNoteWithUrls, extractNoteContent, extractUrlsFromNotes } from "./urlHelpers.js";
 
 interface ReminderProperties {
@@ -47,23 +47,12 @@ export class ReminderCreationBuilder {
     const props = [`name:${quoteAppleScriptString(this.properties.title)}`];
 
     if (this.properties.dueDate) {
-      // Try natural language parsing first, fallback to standard parsing
-      try {
-        props.push(
-          generateNaturalDateProperty(
-            this.properties.dueDate,
-            quoteAppleScriptString,
-          ).slice(1),
-        );
-      } catch {
-        // Fallback to standard date parsing
-        props.push(
-          generateDateProperty(
-            this.properties.dueDate,
-            quoteAppleScriptString,
-          ).slice(1),
-        );
-      }
+      props.push(
+        generateDateProperty(
+          this.properties.dueDate,
+          quoteAppleScriptString,
+        ).slice(1),
+      );
     }
 
     const combinedNote = this.combineNoteAndUrl();
@@ -181,28 +170,11 @@ export class ReminderUpdateScriptBuilder {
   private buildDateUpdate(): string {
     if (!this.properties.dueDate) return '';
 
-    try {
-      // Try natural language parsing first
-      const naturalResult = generateNaturalDateProperty(
-        this.properties.dueDate,
-        quoteAppleScriptString,
-      );
-      const dateType = this.properties.dueDate.includes('allday due date') 
-        ? 'allday due date' 
-        : 'due date';
-      return `  set ${dateType} of targetReminder to date ${quoteAppleScriptString(
-        this.properties.dueDate.includes('allday due date') 
-          ? this.properties.dueDate.replace('allday due date:', '').trim()
-          : this.properties.dueDate.replace('due date:', '').trim()
-      )}`;
-    } catch {
-      // Fallback to standard date parsing
-      const { formatted, isDateOnly } = parseDateWithType(
-        this.properties.dueDate,
-      );
-      const dateType = isDateOnly ? 'allday due date' : 'due date';
-      return `  set ${dateType} of targetReminder to date ${quoteAppleScriptString(formatted)}`;
-    }
+    const { formatted, isDateOnly } = parseDateWithType(
+      this.properties.dueDate,
+    );
+    const dateType = isDateOnly ? 'allday due date' : 'due date';
+    return `  set ${dateType} of targetReminder to date ${quoteAppleScriptString(formatted)}`;
   }
 
   private shouldUpdateNotes(): boolean {

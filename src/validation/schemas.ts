@@ -5,7 +5,6 @@
 
 import { z } from 'zod';
 import { debugLog } from '../utils/logger.js';
-import { isValidDateInput } from '../utils/date.js';
 
 // Security patterns – allow printable Unicode text while blocking dangerous control and delimiter chars.
 // Allows standard printable ASCII, extended Latin, CJK, plus newlines/tabs for notes.
@@ -47,21 +46,7 @@ export const SafeListNameSchema = createOptionalSafeTextSchema(MAX_LIST_NAME_LEN
 export const RequiredListNameSchema = createSafeTextSchema(1, MAX_LIST_NAME_LENGTH, 'List name');
 export const SafeSearchSchema = createOptionalSafeTextSchema(MAX_SEARCH_LENGTH, 'Search term');
 
-// Enhanced date schema supporting natural language
 export const SafeDateSchema = z.string()
-  .refine(
-    (value) => {
-      if (!value) return true; // Allow empty/optional
-      return isValidDateInput(value);
-    },
-    {
-      message: "Date must be in natural language (e.g., 'tomorrow', 'next Monday') or standard format (YYYY-MM-DD, YYYY-MM-DD HH:mm:ss)"
-    }
-  )
-  .optional();
-
-// Legacy strict date schema for backward compatibility
-export const StrictDateSchema = z.string()
   .regex(DATE_PATTERN, "Date must be in format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:mm:ss'")
   .optional();
 

@@ -125,7 +125,14 @@ For the changes to take effect:
 
 ## Natural Language Time Support
 
-This MCP server now supports **natural language time expressions** for creating and updating reminders! You can use intuitive time expressions instead of strict date formats.
+This MCP server supports **natural language time expressions** through AI-powered conversion! The AI will automatically convert your natural language time expressions to the standard date formats required by the system.
+
+### How It Works
+
+When you use natural language time expressions like "tomorrow at 3pm" or "next Monday", the AI will:
+1. Understand your natural language input
+2. Convert it to standard date formats (YYYY-MM-DD or YYYY-MM-DD HH:mm:ss)
+3. Use the converted format when calling the MCP tools
 
 ### Supported Time Expressions
 

@@ -39,7 +39,7 @@ export function registerHandlers(server: Server): void {
       {
         name: 'daily-task-organizer',
         description:
-          'Create a comprehensive daily task management workflow with Apple Reminders using natural language time expressions',
+          'Create a comprehensive daily task management workflow with Apple Reminders. AI will convert natural language time expressions to standard date formats.',
         arguments: [
           {
             name: 'task_category',
@@ -55,7 +55,7 @@ export function registerHandlers(server: Server): void {
           },
           {
             name: 'time_frame',
-            description: 'Time frame for tasks (supports natural language: "today", "this week", "next Monday", "tomorrow morning", etc.)',
+            description: 'Time frame for tasks (can be natural language like "today", "this week", "next Monday", "tomorrow morning", etc.)',
             required: false,
           },
         ],
@@ -63,7 +63,7 @@ export function registerHandlers(server: Server): void {
       {
         name: 'smart-reminder-creator',
         description:
-          'Intelligently create reminders with optimal scheduling and context using natural language time expressions',
+          'Intelligently create reminders with optimal scheduling and context. AI will convert natural language time expressions to standard date formats.',
         arguments: [
           {
             name: 'task_description',
@@ -72,7 +72,7 @@ export function registerHandlers(server: Server): void {
           },
           {
             name: 'due_time',
-            description: 'When the reminder should be due (supports natural language: "tomorrow at 3pm", "next Friday", "in 2 hours", etc.)',
+            description: 'When the reminder should be due (can be natural language like "tomorrow at 3pm", "next Friday", "in 2 hours", etc.)',
             required: false,
           },
           {
@@ -159,7 +159,7 @@ export function registerHandlers(server: Server): void {
       {
         name: 'context-aware-scheduling',
         description:
-          'Create reminders with intelligent scheduling based on context and optimal timing',
+          'Create reminders with intelligent scheduling based on context and optimal timing. AI will convert natural language time expressions to standard date formats.',
         arguments: [
           {
             name: 'task_type',
@@ -194,13 +194,13 @@ export function registerHandlers(server: Server): void {
         const timeFrame = args?.time_frame || 'today';
         return {
           description:
-            'Comprehensive daily task organization workflow for Apple Reminders with natural language time support',
+            'Comprehensive daily task organization workflow for Apple Reminders',
           messages: [
             {
               role: 'user',
               content: {
                 type: 'text',
-                text: `Help me organize my daily tasks in Apple Reminders for ${timeFrame}, focusing on ${taskCategory} with ${priorityLevel} priority level.\n\nPlease help me:\n1. Review my current reminders and lists to understand what I have\n2. Create a structured daily plan that categorizes tasks by priority and time sensitivity\n3. Suggest optimal reminder lists organization for ${taskCategory}\n4. Set up appropriate due dates and times using natural language expressions (e.g., "tomorrow at 3pm", "next Monday morning", "in 2 hours")\n5. Recommend a daily review routine to stay on track\n\nIMPORTANT: When creating reminders, use natural language time expressions that users can easily understand and modify. The system supports expressions like "tomorrow", "next Friday", "this evening", "in 3 hours", "next week", etc.\n\nStart by listing my current reminders and reminder lists, then provide a comprehensive daily organization strategy with natural language time scheduling.`,
+                text: `Help me organize my daily tasks in Apple Reminders for ${timeFrame}, focusing on ${taskCategory} with ${priorityLevel} priority level.\n\nPlease help me:\n1. Review my current reminders and lists to understand what I have\n2. Create a structured daily plan that categorizes tasks by priority and time sensitivity\n3. Suggest optimal reminder lists organization for ${taskCategory}\n4. Set up appropriate due dates and times for maximum productivity\n5. Recommend a daily review routine to stay on track\n\nIMPORTANT: When creating reminders, you can use natural language time expressions like "tomorrow at 3pm", "next Monday morning", "in 2 hours", etc. However, when calling the MCP tools, you MUST convert these to standard date formats (YYYY-MM-DD or YYYY-MM-DD HH:mm:ss) that the system can understand.\n\nStart by listing my current reminders and reminder lists, then provide a comprehensive daily organization strategy.`,
               },
             },
           ],
@@ -214,13 +214,13 @@ export function registerHandlers(server: Server): void {
         const urgency = args?.urgency || 'medium';
         return {
           description:
-            'Intelligent reminder creation with optimal scheduling and context using natural language time expressions',
+            'Intelligent reminder creation with optimal scheduling and context',
           messages: [
             {
               role: 'user',
               content: {
                 type: 'text',
-                text: `Help me create a smart reminder for: "${taskDescription}"\n                \nDue Time: ${dueTime || 'Not specified - please suggest optimal timing'}\nContext: ${context}\nUrgency Level: ${urgency}\n\nPlease analyze this task and help me:\n1. Break down the task if it's complex or has multiple steps\n2. Determine the optimal timing and due date using natural language expressions (e.g., "tomorrow at 3pm", "next Friday morning", "in 2 hours")\n3. Suggest the most appropriate reminder list to use\n4. Recommend any additional notes or details to include\n5. Consider dependencies or prerequisites\n6. Set up follow-up reminders if needed\n\nIMPORTANT: Use natural language time expressions that are intuitive and easy to modify. Supported formats include:\n- Relative times: "tomorrow", "next week", "in 3 hours"\n- Specific times: "tomorrow at 3pm", "next Monday morning", "this evening"\n- Chinese expressions: "明天", "下周一", "后天下午"\n- Time periods: "this week", "next month", "this afternoon"\n\nCreate a comprehensive reminder that maximizes the chance of successful completion with clear, natural time scheduling.`,
+                text: `Help me create a smart reminder for: "${taskDescription}"\n                \nDue Time: ${dueTime || 'Not specified - please suggest optimal timing'}\nContext: ${context}\nUrgency Level: ${urgency}\n\nPlease analyze this task and help me:\n1. Break down the task if it's complex or has multiple steps\n2. Determine the optimal timing and due date\n3. Suggest the most appropriate reminder list to use\n4. Recommend any additional notes or details to include\n5. Consider dependencies or prerequisites\n6. Set up follow-up reminders if needed\n\nIMPORTANT: When calling MCP tools to create reminders, you MUST convert any natural language time expressions to standard date formats:\n- Use YYYY-MM-DD for date-only reminders\n- Use YYYY-MM-DD HH:mm:ss for reminders with specific times\n- Examples: "tomorrow at 3pm" → "2024-12-26 15:00:00", "next Monday" → "2024-12-30"\n\nCreate a comprehensive reminder that maximizes the chance of successful completion.`,
               },
             },
           ],
@@ -309,7 +309,7 @@ export function registerHandlers(server: Server): void {
               role: 'user',
               content: {
                 type: 'text',
-                text: `Help me create context-aware reminders for a ${taskType} that requires ${energyLevel} energy level, with dependencies: ${dependencies}\n\nPlease analyze and optimize:\n1. Determine the best time of day/week for this type of task\n2. Consider my energy patterns and when I'm most effective\n3. Account for any dependencies and prerequisite tasks\n4. Set up preparation reminders to ensure I'm ready\n5. Create buffer time for unexpected delays or complications\n6. Set up follow-up reminders to track completion and next steps\n7. Consider environmental factors that might affect task completion\n8. Design reminders that work with my natural rhythms and preferences\n\nCreate a scheduling strategy that maximizes the likelihood of successful task completion by considering all contextual factors.`,
+                text: `Help me create context-aware reminders for a ${taskType} that requires ${energyLevel} energy level, with dependencies: ${dependencies}\n\nPlease analyze and optimize:\n1. Determine the best time of day/week for this type of task\n2. Consider my energy patterns and when I'm most effective\n3. Account for any dependencies and prerequisite tasks\n4. Set up preparation reminders to ensure I'm ready\n5. Create buffer time for unexpected delays or complications\n6. Set up follow-up reminders to track completion and next steps\n7. Consider environmental factors that might affect task completion\n8. Design reminders that work with my natural rhythms and preferences\n\nIMPORTANT: When calling MCP tools to create reminders, you MUST convert any natural language time expressions to standard date formats (YYYY-MM-DD or YYYY-MM-DD HH:mm:ss).\n\nCreate a scheduling strategy that maximizes the likelihood of successful task completion by considering all contextual factors.`,
               },
             },
           ],
