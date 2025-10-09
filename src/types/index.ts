@@ -5,6 +5,18 @@
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
+// Re-export prompt types for convenience
+export type {
+  PromptDefinition,
+  PromptCategory,
+  PromptRegistry,
+  PromptExecutionContext,
+  PromptArgument,
+  PromptMessage,
+  PromptMessageContent,
+  PromptTemplate,
+} from '../prompts/types.js';
+
 /**
  * Reminder item interface
  */
