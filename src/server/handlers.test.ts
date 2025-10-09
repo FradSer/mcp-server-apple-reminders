@@ -352,9 +352,17 @@ describe('Server Handlers - Prompts', () => {
       const message = response.messages[0];
       expect(message.role).toBe('user');
       expect(message.content.type).toBe('text');
-      expect(message.content.text).toContain('Help me organize my daily tasks');
-      expect(message.content.text).toContain('all categories');
-      expect(message.content.text).toContain('today');
+      expect(message.content.text).toContain(
+        'Mission: Design a realistic today execution plan in Apple Reminders',
+      );
+      expect(message.content.text).toContain(
+        'Task category focus: all categories',
+      );
+      expect(message.content.text).toContain(
+        'Priority emphasis: mixed priorities',
+      );
+      expect(message.content.text).toContain('Planning horizon: today');
+      expect(message.content.text).toContain('### Snapshot');
     });
 
     it('should return smart-reminder-creator prompt with custom arguments', async () => {
@@ -425,8 +433,12 @@ describe('Server Handlers - Prompts', () => {
 
       expect(response.description).toContain('cleaning up and organizing');
       const message = response.messages[0];
-      expect(message.content.text).toContain('comprehensive');
-      expect(message.content.text).toContain('Audit all current reminders');
+      expect(message.content.text).toContain(
+        'Mission: Execute a comprehensive clean-up',
+      );
+      expect(message.content.text).toContain(
+        '### Audit highlights — bullet list summarising clutter sources and impact.',
+      );
     });
 
     it('should validate required arguments', async () => {
