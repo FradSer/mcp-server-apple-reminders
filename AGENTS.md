@@ -15,6 +15,9 @@ The TypeScript source lives under `src/`, segmented into `server/` for MCP trans
 ## Coding Style & Naming Conventions
 Biome enforces two-space indentation, single quotes, and import ordering; run `pnpm exec biome check` if you need a local report before pushing. Use camelCase for variables, PascalCase for classes, UPPER_SNAKE_CASE for constants in `utils/constants.ts`, and keep functions under fifty lines by extracting composable helpers. Prefer dependency injection and pure functions so higher layers can be mocked in tests.
 
+## Prompt Template Design
+Prompt builders in `src/server/prompts.ts` rely on `createStructuredPrompt` to enforce persona, context, process, output, and quality sections for every workflow. This helper keeps Clean Architecture boundaries intact by centralising orchestration inside the server layer while leaving utilities and parsing logic unchanged. We standardise fuzzy-time guidance in the helper so schedules stay compatible with Apple's natural language parser instead of brittle absolute timestamps. Run `pnpm test -- src/server/prompts.test.ts` to confirm every prompt still exposes the mandated structure before merging updates.
+
 ## Testing Guidelines
 Jest powers the suite with `ts-jest`, so seed every feature with a failing `.test.ts` before implementing behaviour. Mirror implementation filenames, describe scenarios explicitly, and lean on fixtures in `src/utils/__mocks__` to avoid touching real Reminders data. All commits must leave `pnpm test` green on macOS 13+ where the Swift binary can execute.
 
