@@ -12,6 +12,7 @@ import { logger } from './logger.js';
 import {
   findProjectRoot,
   locateProjectRoot,
+  getFallbackSearchDirectory,
 } from './projectUtils.js';
 
 const MAX_ROOT_SEARCH_DEPTH = 10;
@@ -62,7 +63,11 @@ export class RemindersManager {
    */
   private findProjectRootFromCwd(): string {
     const startDir = process.cwd();
-    return locateProjectRoot(startDir, MAX_ROOT_SEARCH_DEPTH) ?? startDir;
+    const locatedRoot = locateProjectRoot(startDir, MAX_ROOT_SEARCH_DEPTH);
+    if (locatedRoot) {
+      return locatedRoot;
+    }
+    return getFallbackSearchDirectory(startDir, MAX_ROOT_SEARCH_DEPTH);
   }
 
   /**
