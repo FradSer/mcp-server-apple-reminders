@@ -1,0 +1,187 @@
+---
+globs: *.test.ts,*.test.js,jest.config.mjs
+description: Testing patterns and conventions for Apple Reminders MCP Server
+---
+
+# Testing Patterns & Conventions
+
+## Test Configuration
+
+Based on [jest.config.mjs](mdc:jest.config.mjs):
+- **Framework**: Jest with ts-jest for TypeScript support
+- **Test Environment**: Node.js
+- **Setup**: [src/test-setup.ts](mdc:src/test-setup.ts) for global configuration
+- **Mock Location**: `src/utils/__mocks__/` for external dependency mocks
+
+## Test File Organization
+
+- **Co-locate tests** with source files (`handlers.test.ts` next to `handlers.ts`)
+- **Use descriptive test names** that explain the behavior being tested
+- **Group related tests** using `describe` blocks
+- **One test file per source file** for maintainability
+
+## Test Structure Patterns
+
+```typescript
+import { jest } from '@jest/globals';
+import { createReminder } from '../handlers.js';
+import { mockReminderRepository } from '../utils/__mocks__/reminders.js';
+
+describe('Reminder Handlers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('createReminder', () => {
+    it('should create a reminder with valid input', async () => {
+      // Arrange
+      const input = { title: 'Test Reminder', dueDate: '2024-01-01' };
+      mockReminderRepository.create.mockResolvedValue({ id: '1', ...input });
+
+      // Act
+      const result = await createReminder(input);
+
+      // Assert
+      expect(result).toEqual({ id: '1', ...input });
+      expect(mockReminderRepository.create).toHaveBeenCalledWith(input);
+    });
+
+    it('should throw error for invalid input', async () => {
+      // Arrange
+      const invalidInput = { title: '', dueDate: 'invalid-date' };
+
+      // Act & Assert
+      await expect(createReminder(invalidInput)).rejects.toThrow('Invalid input');
+    });
+  });
+});
+```
+
+## Mocking Patterns
+
+### External Dependencies
+```typescript
+// Mock Swift binary execution
+jest.mock('../utils/binaryPathInitializer.js', () => ({
+  getBinaryPath: jest.fn().mockReturnValue('/mock/path/GetReminders'),
+}));
+
+// Mock AppleScript execution
+jest.mock('../utils/applescript.js', () => ({
+  executeAppleScript: jest.fn().mockResolvedValue('success'),
+}));
+```
+
+### Repository Mocks
+```typescript
+// In src/utils/__mocks__/reminders.ts
+export const mockReminderRepository = {
+  findAll: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+
+// Use in tests
+import { mockReminderRepository } from '../utils/__mocks__/reminders.js';
+```
+
+## Test Categories
+
+### Unit Tests
+- **Focus**: Individual functions and methods
+- **Mock**: All external dependencies
+- **Location**: `*.test.ts` files alongside source
+- **Coverage**: Business logic, validation, error handling
+
+### Integration Tests
+- **Focus**: Component interactions
+- **Mock**: External systems (Swift binary, AppleScript)
+- **Location**: `*.test.ts` files in appropriate directories
+- **Coverage**: Tool handlers, server endpoints
+
+### End-to-End Tests
+- **Focus**: Complete user workflows
+- **Mock**: Minimal (only external Apple Reminders app)
+- **Location**: `e2e/` directory (if needed)
+- **Coverage**: Full MCP tool functionality
+
+## Assertion Patterns
+
+```typescript
+// Use specific matchers
+expect(result).toEqual(expectedObject);
+expect(mockFunction).toHaveBeenCalledWith(expectedArgs);
+expect(mockFunction).toHaveBeenCalledTimes(1);
+
+// Test error conditions
+await expect(asyncFunction()).rejects.toThrow('Expected error message');
+
+// Test async operations
+await expect(asyncFunction()).resolves.toBe(expectedValue);
+```
+
+## Test Data Patterns
+
+```typescript
+// Create test fixtures
+const createTestReminder = (overrides = {}) => ({
+  id: 'test-id',
+  title: 'Test Reminder',
+  isCompleted: false,
+  dueDate: '2024-01-01',
+  notes: 'Test notes',
+  ...overrides,
+});
+
+// Use factories for complex objects
+const reminderFactory = {
+  create: (overrides = {}) => createTestReminder(overrides),
+  createCompleted: () => createTestReminder({ isCompleted: true }),
+  createOverdue: () => createTestReminder({ dueDate: '2023-01-01' }),
+};
+```
+
+## Performance Testing
+
+```typescript
+// Test execution time for critical operations
+it('should complete bulk operations within time limit', async () => {
+  const startTime = Date.now();
+  await bulkCreateReminders(largeReminderList);
+  const duration = Date.now() - startTime;
+  
+  expect(duration).toBeLessThan(5000); // 5 second limit
+});
+```
+
+## Test Environment Setup
+
+Based on [src/test-setup.ts](mdc:src/test-setup.ts):
+- **Environment Variables**: Set `NODE_ENV=test` for test-specific behavior
+- **Global Mocks**: Configure mocks for external dependencies
+- **Test Data**: Initialize test databases or mock data
+- **Cleanup**: Ensure tests don't affect each other
+
+## Coverage Guidelines
+
+- **Aim for 80%+ coverage** on critical business logic
+- **Focus on edge cases** and error conditions
+- **Test both success and failure paths**
+- **Include validation and error handling tests**
+
+## Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm test -- --watch
+
+# Run specific test file
+npm test -- handlers.test.ts
+
+# Run tests with coverage
+npm test -- --coverage
+```
