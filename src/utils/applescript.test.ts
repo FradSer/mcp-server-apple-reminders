@@ -1,4 +1,4 @@
-// 使用全局 Jest 函数，避免额外依赖
+// Use global Jest functions to avoid extra dependencies
 
 // Mock child_process and logger
 const mockExecSync = jest.fn();

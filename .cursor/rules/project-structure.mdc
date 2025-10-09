@@ -1,0 +1,77 @@
+---
+alwaysApply: true
+description: Project structure and architecture guidelines for Apple Reminders MCP Server
+---
+
+# Apple Reminders MCP Server - Project Structure
+
+## Architecture Overview
+
+This is a **Model Context Protocol (MCP) server** that provides native integration with Apple Reminders on macOS. The project follows a **dual-strategy architecture**:
+
+- **Read Operations**: Swift + EventKit → `dist/swift/bin/GetReminders`
+- **Write Operations**: AppleScript → `tell application "Reminders"`
+
+## Directory Structure
+
+```
+src/
+├── index.ts                  # Main entry point - server startup and configuration
+├── server/                   # MCP server implementation
+│   ├── server.ts             # Server configuration and lifecycle management
+│   ├── handlers.ts           # Request handlers and routing logic
+│   ├── prompts.ts            # MCP prompt templates and registry
+│   └── *.test.ts             # Server layer tests
+├── swift/                    # Native Swift integration
+│   ├── bin/                  # Compiled Swift binaries (auto-generated)
+│   ├── GetReminders.swift    # Swift source for EventKit integration
+│   └── build.sh              # Swift compilation script
+├── tools/                    # MCP tool definitions and handlers
+│   ├── definitions.ts        # Tool schemas and validation (Zod)
+│   ├── handlers.ts           # Tool implementation logic
+│   ├── index.ts              # Tool registration and exports
+│   └── *.test.ts             # Tool layer tests
+├── types/                    # TypeScript type definitions
+│   ├── index.ts              # Core domain types (Reminder, ReminderList, etc.)
+│   └── prompts.ts            # Prompt-specific type definitions
+├── utils/                    # Helper functions and utilities
+│   ├── __mocks__/            # Test mocks for external dependencies
+│   ├── applescript.ts        # AppleScript execution utilities
+│   ├── reminders.ts          # Reminder data access layer
+│   ├── validation.ts         # Input validation helpers
+│   └── *.test.ts             # Utility tests
+├── validation/               # Schema validation utilities
+│   └── schemas.ts            # Zod validation schemas
+└── test-setup.ts             # Jest test environment configuration
+```
+
+## Key Files Reference
+
+- [package.json](mdc:package.json) - Project configuration and dependencies
+- [src/index.ts](mdc:src/index.ts) - Application entry point
+- [src/server/server.ts](mdc:src/server/server.ts) - MCP server setup
+- [src/tools/definitions.ts](mdc:src/tools/definitions.ts) - Tool schemas
+- [src/swift/GetReminders.swift](mdc:src/swift/GetReminders.swift) - Native Swift integration
+- [src/validation/schemas.ts](mdc:src/validation/schemas.ts) - Input validation
+
+## Build Output
+
+The `dist/` directory contains compiled output:
+- `dist/index.js` - Main compiled entry point
+- `dist/swift/bin/GetReminders` - Compiled Swift binary
+- `dist/server/`, `dist/tools/`, `dist/utils/` - Compiled TypeScript modules
+
+## Critical Dependencies
+
+- **@modelcontextprotocol/sdk** - MCP protocol implementation
+- **zod** - Runtime type validation and schema definition
+- **moment** - Date/time handling utilities
+- **Swift/EventKit** - Native macOS Reminders integration
+
+## Development Workflow
+
+1. **Build Required**: Always run `npm run build` before starting server
+2. **Swift Binary**: Must be compiled and available at `dist/swift/bin/GetReminders`
+3. **TypeScript**: Strict mode enabled with ES2020 target
+4. **Testing**: Jest with ts-jest for TypeScript support
+5. **Linting**: Biome for formatting and linting (single quotes, 2-space indent)

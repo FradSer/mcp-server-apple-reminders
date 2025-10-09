@@ -1,4 +1,4 @@
-// 使用全局 Jest 函数，避免额外依赖
+// Use global Jest functions to avoid extra dependencies
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { handleToolCall, TOOLS } from './index.js';

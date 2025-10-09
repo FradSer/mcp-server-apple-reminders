@@ -1,4 +1,4 @@
-// 使用全局 Jest 函数，避免额外依赖
+// Use global Jest functions to avoid extra dependencies
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   GetPromptRequestSchema,
@@ -94,7 +94,7 @@ describe('Server Handlers', () => {
 
         expect(result).toHaveProperty('prompts');
         expect(Array.isArray(result.prompts)).toBe(true);
-        expect(result.prompts.length).toBe(7);
+        expect(result.prompts.length).toBe(6);
 
         // Check if all expected prompts are present
         const promptNames = result.prompts.map((p: MockPrompt) => p.name);
@@ -104,7 +104,6 @@ describe('Server Handlers', () => {
         expect(promptNames).toContain('weekly-planning-workflow');
         expect(promptNames).toContain('reminder-cleanup-guide');
         expect(promptNames).toContain('goal-tracking-setup');
-        expect(promptNames).toContain('context-aware-scheduling');
       });
     });
 
@@ -204,6 +203,19 @@ describe('Server Handlers', () => {
         expect(result.messages[0].content.text).toContain('comprehensive');
       });
 
+      test('should throw when required arguments are missing', async () => {
+        const request = {
+          params: {
+            name: 'smart-reminder-creator',
+            arguments: {},
+          },
+        };
+
+        await expect(getPromptHandler(request)).rejects.toThrow(
+          'Prompt "smart-reminder-creator" requires the "task_description" argument to be provided as a non-empty string.',
+        );
+      });
+
       test('should throw error for unknown prompt', async () => {
         const request = {
           params: {
@@ -248,7 +260,7 @@ describe('Server Handlers - Prompts', () => {
 
       expect(response).toHaveProperty('prompts');
       expect(Array.isArray(response.prompts)).toBe(true);
-      expect(response.prompts.length).toBe(7);
+      expect(response.prompts.length).toBe(6);
 
       // Check if all expected prompts are present
       const promptNames = response.prompts.map((p: MockPrompt) => p.name);
@@ -258,7 +270,6 @@ describe('Server Handlers - Prompts', () => {
       expect(promptNames).toContain('weekly-planning-workflow');
       expect(promptNames).toContain('reminder-cleanup-guide');
       expect(promptNames).toContain('goal-tracking-setup');
-      expect(promptNames).toContain('context-aware-scheduling');
     });
 
     it('should have proper prompt structure', async () => {
@@ -341,9 +352,17 @@ describe('Server Handlers - Prompts', () => {
       const message = response.messages[0];
       expect(message.role).toBe('user');
       expect(message.content.type).toBe('text');
-      expect(message.content.text).toContain('Help me organize my daily tasks');
-      expect(message.content.text).toContain('all categories');
-      expect(message.content.text).toContain('today');
+      expect(message.content.text).toContain(
+        'Mission: Design a realistic today execution plan in Apple Reminders',
+      );
+      expect(message.content.text).toContain(
+        'Task category focus: all categories',
+      );
+      expect(message.content.text).toContain(
+        'Priority emphasis: mixed priorities',
+      );
+      expect(message.content.text).toContain('Planning horizon: today');
+      expect(message.content.text).toContain('### Snapshot');
     });
 
     it('should return smart-reminder-creator prompt with custom arguments', async () => {
@@ -414,8 +433,27 @@ describe('Server Handlers - Prompts', () => {
 
       expect(response.description).toContain('cleaning up and organizing');
       const message = response.messages[0];
-      expect(message.content.text).toContain('comprehensive');
-      expect(message.content.text).toContain('Audit all current reminders');
+      expect(message.content.text).toContain(
+        'Mission: Execute a comprehensive clean-up',
+      );
+      expect(message.content.text).toContain(
+        '### Audit highlights — bullet list summarising clutter sources and impact.',
+      );
+    });
+
+    it('should validate required arguments', async () => {
+      const request = {
+        params: {
+          name: 'goal-tracking-setup',
+          arguments: {
+            goal_type: '',
+          },
+        },
+      };
+
+      await expect(getPromptHandler(request)).rejects.toThrow(
+        'Prompt "goal-tracking-setup" requires the "goal_type" argument to be provided as a non-empty string.',
+      );
     });
   });
 });

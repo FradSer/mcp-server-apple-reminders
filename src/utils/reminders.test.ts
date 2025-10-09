@@ -1,4 +1,4 @@
-// 使用全局 Jest 函数，避免额外依赖
+// Use global Jest functions to avoid extra dependencies
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';

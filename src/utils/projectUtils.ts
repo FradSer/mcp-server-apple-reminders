@@ -14,51 +14,50 @@ import { logger } from './logger.js';
  * @throws Error if project root cannot be found
  */
 export function findProjectRoot(maxDepth = 10): string {
-  let currentDir = process.cwd();
-  
-  // In test environment, use cwd-based search only
-  if (process.env.NODE_ENV === 'test') {
-    let depth = 0;
-    while (depth < maxDepth) {
-      if (isCorrectProjectRoot(currentDir)) {
-        logger.debug(`Project root found at: ${currentDir}`);
-        return currentDir;
-      }
+  const root = locateProjectRoot(process.cwd(), maxDepth);
 
-      const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) {
-        break; // Reached filesystem root
-      }
-      
-      currentDir = parentDir;
-      depth++;
-    }
-  } else {
-    // In production/development, use a more robust approach
-    let depth = 0;
-    while (depth < maxDepth) {
-      if (isCorrectProjectRoot(currentDir)) {
-        logger.debug(`Project root found at: ${currentDir}`);
-        return currentDir;
-      }
-
-      const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) {
-        break; // Reached filesystem root
-      }
-      
-      currentDir = parentDir;
-      depth++;
-    }
+  if (root) {
+    return root;
   }
 
   throw new Error(`Project root not found within ${maxDepth} directory levels`);
 }
 
 /**
+ * Attempts to find the project root starting from the provided directory.
+ * @param startDir - Directory to begin the search from
+ * @param maxDepth - Maximum directory levels to traverse upward
+ * @returns The project root when found, otherwise `undefined`
+ */
+export function locateProjectRoot(
+  startDir: string,
+  maxDepth = 10,
+): string | undefined {
+  let currentDir = startDir;
+  let depth = 0;
+
+  while (depth < maxDepth) {
+    if (isCorrectProjectRoot(currentDir)) {
+      logger.debug(`Project root found at: ${currentDir}`);
+      return currentDir;
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break; // Reached filesystem root
+    }
+
+    currentDir = parentDir;
+    depth++;
+  }
+
+  return undefined;
+}
+
+/**
  * Checks if a directory contains the correct package.json for this project
  */
-function isCorrectProjectRoot(dir: string): boolean {
+export function isCorrectProjectRoot(dir: string): boolean {
   const packageJsonPath = path.join(dir, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
     return false;
@@ -82,4 +81,29 @@ function isCorrectProjectRoot(dir: string): boolean {
 export function resolveFromProjectRoot(relativePath: string): string {
   const projectRoot = findProjectRoot();
   return path.resolve(projectRoot, relativePath);
+}
+
+/**
+ * Provides a fallback directory when the project root cannot be located.
+ * @param startDir - Directory where the search began
+ * @param maxDepth - Maximum directories to traverse upwards
+ * @returns The last directory evaluated during the search
+ */
+export function getFallbackSearchDirectory(
+  startDir: string,
+  maxDepth = 10,
+): string {
+  let currentDir = startDir;
+  let depth = 0;
+
+  while (depth < maxDepth) {
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break;
+    }
+    currentDir = parentDir;
+    depth++;
+  }
+
+  return currentDir;
 }
