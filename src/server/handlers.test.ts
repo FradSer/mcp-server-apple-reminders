@@ -5,6 +5,7 @@ import {
   ListPromptsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { registerHandlers } from './handlers.js';
+import { PROMPT_DEFINITIONS } from './prompts.js';
 
 // Mock server type for testing
 interface MockServer {
@@ -23,6 +24,7 @@ interface MockPrompt {
 interface MockPromptArgument {
   name: string;
   description: string;
+  required: boolean;
 }
 
 // Mock the tools and applescript modules
@@ -94,17 +96,15 @@ describe('Server Handlers', () => {
 
         expect(result).toHaveProperty('prompts');
         expect(Array.isArray(result.prompts)).toBe(true);
-        expect(result.prompts.length).toBe(7);
+        const promptDefinitions = Object.values(PROMPT_DEFINITIONS);
+        expect(result.prompts.length).toBe(promptDefinitions.length);
 
         // Check if all expected prompts are present
         const promptNames = result.prompts.map((p: MockPrompt) => p.name);
-        expect(promptNames).toContain('daily-task-organizer');
-        expect(promptNames).toContain('smart-reminder-creator');
-        expect(promptNames).toContain('reminder-review-assistant');
-        expect(promptNames).toContain('weekly-planning-workflow');
-        expect(promptNames).toContain('reminder-cleanup-guide');
-        expect(promptNames).toContain('goal-tracking-setup');
-        expect(promptNames).toContain('context-aware-scheduling');
+        const expectedNames = promptDefinitions.map(
+          (definition) => definition.metadata.name,
+        );
+        expectedNames.forEach((name) => expect(promptNames).toContain(name));
       });
     });
 
@@ -123,8 +123,8 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.description).toContain(
-          'Comprehensive daily task organization',
+        expect(result.description).toBe(
+          PROMPT_DEFINITIONS['daily-task-organizer'].metadata.description,
         );
         expect(result.messages).toHaveLength(1);
         expect(result.messages[0].role).toBe('user');
@@ -148,7 +148,9 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.description).toContain('Intelligent reminder creation');
+        expect(result.description).toBe(
+          PROMPT_DEFINITIONS['smart-reminder-creator'].metadata.description,
+        );
         expect(result.messages).toHaveLength(1);
         expect(result.messages[0].content.text).toContain(
           'Complete project proposal',
@@ -170,7 +172,9 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.description).toContain('goal tracking system');
+        expect(result.description).toBe(
+          PROMPT_DEFINITIONS['goal-tracking-setup'].metadata.description,
+        );
         expect(result.messages).toHaveLength(1);
         expect(result.messages[0].content.text).toContain('health');
         expect(result.messages[0].content.text).toContain('weekly');
@@ -186,9 +190,14 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.messages[0].content.text).toContain('all categories');
-        expect(result.messages[0].content.text).toContain('today');
-        expect(result.messages[0].content.text).toContain('mixed priorities');
+        const defaults = PROMPT_DEFINITIONS['daily-task-organizer'].defaults;
+        expect(result.messages[0].content.text).toContain(
+          defaults.task_category,
+        );
+        expect(result.messages[0].content.text).toContain(defaults.time_frame);
+        expect(result.messages[0].content.text).toContain(
+          defaults.priority_level,
+        );
       });
 
       test('should handle missing arguments', async () => {
@@ -201,7 +210,10 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.messages[0].content.text).toContain('comprehensive');
+        const cleanupDefault =
+          PROMPT_DEFINITIONS['reminder-cleanup-guide'].defaults
+            .cleanup_strategy;
+        expect(result.messages[0].content.text).toContain(cleanupDefault);
       });
 
       test('should throw error for unknown prompt', async () => {
@@ -248,17 +260,16 @@ describe('Server Handlers - Prompts', () => {
 
       expect(response).toHaveProperty('prompts');
       expect(Array.isArray(response.prompts)).toBe(true);
-      expect(response.prompts.length).toBe(7);
+
+      const promptDefinitions = Object.values(PROMPT_DEFINITIONS);
+      expect(response.prompts.length).toBe(promptDefinitions.length);
 
       // Check if all expected prompts are present
       const promptNames = response.prompts.map((p: MockPrompt) => p.name);
-      expect(promptNames).toContain('daily-task-organizer');
-      expect(promptNames).toContain('smart-reminder-creator');
-      expect(promptNames).toContain('reminder-review-assistant');
-      expect(promptNames).toContain('weekly-planning-workflow');
-      expect(promptNames).toContain('reminder-cleanup-guide');
-      expect(promptNames).toContain('goal-tracking-setup');
-      expect(promptNames).toContain('context-aware-scheduling');
+      const expectedNames = promptDefinitions.map(
+        (definition) => definition.metadata.name,
+      );
+      expectedNames.forEach((name) => expect(promptNames).toContain(name));
     });
 
     it('should have proper prompt structure', async () => {
@@ -342,8 +353,9 @@ describe('Server Handlers - Prompts', () => {
       expect(message.role).toBe('user');
       expect(message.content.type).toBe('text');
       expect(message.content.text).toContain('Help me organize my daily tasks');
-      expect(message.content.text).toContain('all categories');
-      expect(message.content.text).toContain('today');
+      const defaults = PROMPT_DEFINITIONS['daily-task-organizer'].defaults;
+      expect(message.content.text).toContain(defaults.task_category);
+      expect(message.content.text).toContain(defaults.time_frame);
     });
 
     it('should return smart-reminder-creator prompt with custom arguments', async () => {
@@ -360,7 +372,9 @@ describe('Server Handlers - Prompts', () => {
 
       const response = await getPromptHandler(request);
 
-      expect(response.description).toContain('Intelligent reminder creation');
+      expect(response.description).toBe(
+        PROMPT_DEFINITIONS['smart-reminder-creator'].metadata.description,
+      );
       const message = response.messages[0];
       expect(message.content.text).toContain('Complete project proposal');
       expect(message.content.text).toContain(
@@ -382,7 +396,9 @@ describe('Server Handlers - Prompts', () => {
 
       const response = await getPromptHandler(request);
 
-      expect(response.description).toContain('goal tracking system');
+      expect(response.description).toBe(
+        PROMPT_DEFINITIONS['goal-tracking-setup'].metadata.description,
+      );
       const message = response.messages[0];
       expect(message.content.text).toContain('health');
       expect(message.content.text).toContain('weekly');
@@ -412,9 +428,14 @@ describe('Server Handlers - Prompts', () => {
 
       const response = await getPromptHandler(request);
 
-      expect(response.description).toContain('cleaning up and organizing');
+      expect(response.description).toBe(
+        PROMPT_DEFINITIONS['reminder-cleanup-guide'].metadata.description,
+      );
       const message = response.messages[0];
-      expect(message.content.text).toContain('comprehensive');
+      const cleanupDefault =
+        PROMPT_DEFINITIONS['reminder-cleanup-guide'].defaults
+          .cleanup_strategy;
+      expect(message.content.text).toContain(cleanupDefault);
       expect(message.content.text).toContain('Audit all current reminders');
     });
   });
