@@ -123,16 +123,47 @@ For the changes to take effect:
 2. Start Claude Desktop again
 3. Look for the tool icon to verify the Apple Reminders server is connected
 
+## Natural Language Time Support
+
+This MCP server now supports **natural language time expressions** for creating and updating reminders! You can use intuitive time expressions instead of strict date formats.
+
+### Supported Time Expressions
+
+**English Expressions:**
+- Relative times: `"tomorrow"`, `"next week"`, `"in 3 hours"`, `"this evening"`
+- Specific times: `"tomorrow at 3pm"`, `"next Monday morning"`, `"Friday afternoon"`
+- Time periods: `"this week"`, `"next month"`, `"this weekend"`
+
+**Chinese Expressions:**
+- `"明天"` (tomorrow), `"下周一"` (next Monday), `"后天下午"` (day after tomorrow afternoon)
+- `"今天"` (today), `"昨天"` (yesterday), `"这个周末"` (this weekend)
+
+**Examples:**
+```
+Create a reminder to "Review documents" due "in 2 hours"
+Add a reminder to "Call dentist" for "next Monday morning"  
+Set a reminder for "Team meeting" at "3pm tomorrow"
+Create a reminder to "Plan vacation" due "this weekend"
+Update "Buy groceries" to be due "tomorrow evening"
+```
+
 ## Usage Examples
 
 Once configured, you can ask Claude to interact with your Apple Reminders. Here are some example prompts:
 
-### Creating Reminders
+### Creating Reminders with Natural Language Time Support
 ```
 Create a reminder to "Buy groceries" for tomorrow at 5 PM.
 Add a reminder to "Call mom" with a note "Ask about weekend plans".
 Create a reminder in my "Work" list to "Submit report" due next Friday.
 Create a reminder with URL "Check this website: https://google.com".
+
+# Natural Language Time Expressions (NEW!)
+Create a reminder to "Review documents" due "in 2 hours".
+Add a reminder to "Call dentist" for "next Monday morning".
+Create a reminder to "Plan vacation" due "this weekend".
+Set a reminder for "Team meeting" at "3pm tomorrow".
+Create a reminder to "Buy gifts" due "next Friday afternoon".
 ```
 
 

@@ -39,7 +39,7 @@ export function registerHandlers(server: Server): void {
       {
         name: 'daily-task-organizer',
         description:
-          'Create a comprehensive daily task management workflow with Apple Reminders',
+          'Create a comprehensive daily task management workflow with Apple Reminders using natural language time expressions',
         arguments: [
           {
             name: 'task_category',
@@ -55,7 +55,7 @@ export function registerHandlers(server: Server): void {
           },
           {
             name: 'time_frame',
-            description: 'Time frame for tasks (today, this_week, this_month)',
+            description: 'Time frame for tasks (supports natural language: "today", "this week", "next Monday", "tomorrow morning", etc.)',
             required: false,
           },
         ],
@@ -63,12 +63,17 @@ export function registerHandlers(server: Server): void {
       {
         name: 'smart-reminder-creator',
         description:
-          'Intelligently create reminders with optimal scheduling and context',
+          'Intelligently create reminders with optimal scheduling and context using natural language time expressions',
         arguments: [
           {
             name: 'task_description',
             description: 'Description of the task or reminder to create',
             required: true,
+          },
+          {
+            name: 'due_time',
+            description: 'When the reminder should be due (supports natural language: "tomorrow at 3pm", "next Friday", "in 2 hours", etc.)',
+            required: false,
           },
           {
             name: 'context',
@@ -189,13 +194,13 @@ export function registerHandlers(server: Server): void {
         const timeFrame = args?.time_frame || 'today';
         return {
           description:
-            'Comprehensive daily task organization workflow for Apple Reminders',
+            'Comprehensive daily task organization workflow for Apple Reminders with natural language time support',
           messages: [
             {
               role: 'user',
               content: {
                 type: 'text',
-                text: `Help me organize my daily tasks in Apple Reminders for ${timeFrame}, focusing on ${taskCategory} with ${priorityLevel} priority level.\n\nPlease help me:\n1. Review my current reminders and lists to understand what I have\n2. Create a structured daily plan that categorizes tasks by priority and time sensitivity\n3. Suggest optimal reminder lists organization for ${taskCategory}\n4. Set up appropriate due dates and times for maximum productivity\n5. Recommend a daily review routine to stay on track\n\nStart by listing my current reminders and reminder lists, then provide a comprehensive daily organization strategy.`,
+                text: `Help me organize my daily tasks in Apple Reminders for ${timeFrame}, focusing on ${taskCategory} with ${priorityLevel} priority level.\n\nPlease help me:\n1. Review my current reminders and lists to understand what I have\n2. Create a structured daily plan that categorizes tasks by priority and time sensitivity\n3. Suggest optimal reminder lists organization for ${taskCategory}\n4. Set up appropriate due dates and times using natural language expressions (e.g., "tomorrow at 3pm", "next Monday morning", "in 2 hours")\n5. Recommend a daily review routine to stay on track\n\nIMPORTANT: When creating reminders, use natural language time expressions that users can easily understand and modify. The system supports expressions like "tomorrow", "next Friday", "this evening", "in 3 hours", "next week", etc.\n\nStart by listing my current reminders and reminder lists, then provide a comprehensive daily organization strategy with natural language time scheduling.`,
               },
             },
           ],
@@ -204,17 +209,18 @@ export function registerHandlers(server: Server): void {
 
       case 'smart-reminder-creator': {
         const taskDescription = args?.task_description || 'a new task';
+        const dueTime = args?.due_time || '';
         const context = args?.context || '';
         const urgency = args?.urgency || 'medium';
         return {
           description:
-            'Intelligent reminder creation with optimal scheduling and context',
+            'Intelligent reminder creation with optimal scheduling and context using natural language time expressions',
           messages: [
             {
               role: 'user',
               content: {
                 type: 'text',
-                text: `Help me create a smart reminder for: "${taskDescription}"\n                \nContext: ${context}\nUrgency Level: ${urgency}\n\nPlease analyze this task and help me:\n1. Break down the task if it's complex or has multiple steps\n2. Determine the optimal timing and due date based on urgency and context\n3. Suggest the most appropriate reminder list to use\n4. Recommend any additional notes or details to include\n5. Consider dependencies or prerequisites\n6. Set up follow-up reminders if needed\n\nCreate a comprehensive reminder that maximizes the chance of successful completion.`,
+                text: `Help me create a smart reminder for: "${taskDescription}"\n                \nDue Time: ${dueTime || 'Not specified - please suggest optimal timing'}\nContext: ${context}\nUrgency Level: ${urgency}\n\nPlease analyze this task and help me:\n1. Break down the task if it's complex or has multiple steps\n2. Determine the optimal timing and due date using natural language expressions (e.g., "tomorrow at 3pm", "next Friday morning", "in 2 hours")\n3. Suggest the most appropriate reminder list to use\n4. Recommend any additional notes or details to include\n5. Consider dependencies or prerequisites\n6. Set up follow-up reminders if needed\n\nIMPORTANT: Use natural language time expressions that are intuitive and easy to modify. Supported formats include:\n- Relative times: "tomorrow", "next week", "in 3 hours"\n- Specific times: "tomorrow at 3pm", "next Monday morning", "this evening"\n- Chinese expressions: "明天", "下周一", "后天下午"\n- Time periods: "this week", "next month", "this afternoon"\n\nCreate a comprehensive reminder that maximizes the chance of successful completion with clear, natural time scheduling.`,
               },
             },
           ],

@@ -307,6 +307,77 @@ describe('Date Parser Tests (24-hour system)', () => {
   });
 });
 
+describe('Natural Language Date Parsing', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('parseDateNatural should parse natural language input', async () => {
+    const { parseDateNatural } = await import('./date.js');
+    
+    // Mock the natural language parsing
+    jest.doMock('./naturalLanguageDate.js', () => ({
+      parseDateWithNaturalLanguage: jest.fn().mockReturnValue({
+        isoDate: '2024-12-26',
+        isDateOnly: true,
+        originalInput: 'tomorrow',
+        confidence: 1.0,
+        parsedDate: new Date('2024-12-26'),
+        formattedForAppleScript: 'December 26, 2024',
+      }),
+    }));
+
+    const result = parseDateNatural('tomorrow');
+    expect(result).toBeTruthy();
+    expect(result.isoDate).toBe('2024-12-26');
+    expect(result.isDateOnly).toBe(true);
+  });
+
+  test('generateNaturalDateProperty should create correct AppleScript property', async () => {
+    const { generateNaturalDateProperty } = await import('./date.js');
+    
+    // Mock the natural language parsing
+    jest.doMock('./naturalLanguageDate.js', () => ({
+      parseDateWithNaturalLanguage: jest.fn().mockReturnValue({
+        isoDate: '2024-12-26',
+        isDateOnly: true,
+        originalInput: 'tomorrow',
+        confidence: 1.0,
+        parsedDate: new Date('2024-12-26'),
+        formattedForAppleScript: 'December 26, 2024',
+      }),
+    }));
+
+    const mockQuote = (str: string) => `"${str}"`;
+    const result = generateNaturalDateProperty('tomorrow', mockQuote);
+    expect(result).toBe(', allday due date:date "December 26, 2024"');
+  });
+
+  test('isValidDateInput should validate natural language input', async () => {
+    const { isValidDateInput } = await import('./date.js');
+    
+    // Mock the natural language parsing
+    jest.doMock('./naturalLanguageDate.js', () => ({
+      parseDateWithNaturalLanguage: jest.fn().mockImplementation((input) => {
+        if (input === 'tomorrow') {
+          return {
+            isoDate: '2024-12-26',
+            isDateOnly: true,
+            originalInput: 'tomorrow',
+            confidence: 1.0,
+            parsedDate: new Date('2024-12-26'),
+            formattedForAppleScript: 'December 26, 2024',
+          };
+        }
+        throw new Error('Invalid input');
+      }),
+    }));
+
+    expect(isValidDateInput('tomorrow')).toBe(true);
+    expect(isValidDateInput('invalid')).toBe(false);
+  });
+});
+
 describe('New Utility Functions', () => {
   let mockMomentInstance: MockMomentInstance;
 

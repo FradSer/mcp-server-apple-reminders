@@ -1,11 +1,12 @@
 /**
  * date.ts
- * Utilities for parsing and formatting dates
+ * Utilities for parsing and formatting dates with natural language support
  */
 
 import { spawn } from 'node:child_process';
 import moment from 'moment';
 import { debugLog } from './logger.js';
+import { parseDateWithNaturalLanguage, type NaturalLanguageParseResult } from './naturalLanguageDate.js';
 
 // Date format constants for AppleScript compatibility
 const DATE_ONLY_FORMAT = 'MMMM D, YYYY' as const;
@@ -253,4 +254,43 @@ function formatDate(dateStr: string, isDateOnly: boolean): string {
 export function parseDate(dateStr: string): string {
   const isDateOnly = isDateOnlyFormat(dateStr);
   return formatDate(dateStr, isDateOnly);
+}
+
+/**
+ * Enhanced date parsing with natural language support
+ * @param input - Date input (natural language or standard format)
+ * @returns Natural language parse result with AppleScript formatting
+ * @throws Error if parsing fails completely
+ */
+export function parseDateNatural(input: string): NaturalLanguageParseResult {
+  return parseDateWithNaturalLanguage(input);
+}
+
+/**
+ * Generates AppleScript property string for natural language date handling
+ * @param input - Natural language date input
+ * @param quoteFn - Function to quote AppleScript strings
+ * @returns AppleScript property string for the appropriate date type
+ */
+export function generateNaturalDateProperty(
+  input: string,
+  quoteFn: (str: string) => string,
+): string {
+  const result = parseDateWithNaturalLanguage(input);
+  const dateType = result.isDateOnly ? 'allday due date' : 'due date';
+  return `, ${dateType}:date ${quoteFn(result.formattedForAppleScript)}`;
+}
+
+/**
+ * Validates if input can be parsed as a date (natural language or standard)
+ * @param input - Input string to validate
+ * @returns true if the input can be parsed as a date
+ */
+export function isValidDateInput(input: string): boolean {
+  try {
+    parseDateWithNaturalLanguage(input);
+    return true;
+  } catch {
+    return false;
+  }
 }
