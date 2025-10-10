@@ -140,3 +140,24 @@ export interface Resource {
   mimeType: string;
   name: string;
 }
+
+/**
+ * Prompt-related type exports for consumers that need to interact with the
+ * structured MCP prompt registry.
+ */
+export {
+  type PromptName,
+  type PromptArgumentDefinition,
+  type PromptMetadata,
+  type PromptMessageContent,
+  type PromptMessage,
+  type PromptResponse,
+  type DailyTaskOrganizerArgs,
+  type SmartReminderCreatorArgs,
+  type ReminderReviewAssistantArgs,
+  type WeeklyPlanningWorkflowArgs,
+  type ReminderCleanupGuideArgs,
+  type GoalTrackingSetupArgs,
+  type PromptArgsByName,
+  type PromptTemplate,
+} from './prompts.js';

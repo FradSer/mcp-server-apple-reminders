@@ -9,7 +9,13 @@ import {
   validateBinarySecurity,
 } from './binaryValidator.js';
 import { logger } from './logger.js';
-import { findProjectRoot } from './projectUtils.js';
+import {
+  findProjectRoot,
+  locateProjectRoot,
+  getFallbackSearchDirectory,
+} from './projectUtils.js';
+
+const MAX_ROOT_SEARCH_DEPTH = 10;
 
 /**
  * Class to interact with Apple Reminders using the Swift binary
@@ -56,21 +62,12 @@ export class RemindersManager {
    * Finds project root from current working directory
    */
   private findProjectRootFromCwd(): string {
-    let projectRoot = process.cwd();
-    const maxDepth = 10;
-    let depth = 0;
-
-    while (depth < maxDepth) {
-      if (this.isCorrectProjectRoot(projectRoot)) {
-        return projectRoot;
-      }
-      const parent = path.dirname(projectRoot);
-      if (parent === projectRoot) break;
-      projectRoot = parent;
-      depth++;
+    const startDir = process.cwd();
+    const locatedRoot = locateProjectRoot(startDir, MAX_ROOT_SEARCH_DEPTH);
+    if (locatedRoot) {
+      return locatedRoot;
     }
-
-    return projectRoot;
+    return getFallbackSearchDirectory(startDir, MAX_ROOT_SEARCH_DEPTH);
   }
 
   /**
@@ -89,45 +86,24 @@ export class RemindersManager {
       const currentDir = path.dirname(currentFilePath);
 
       // Start from the current file's directory and go up to find package.json
-      let projectRoot = currentDir;
-      const maxDepth = 10;
+      const projectRoot = locateProjectRoot(
+        currentDir,
+        MAX_ROOT_SEARCH_DEPTH,
+      );
 
-      // Look for the correct package.json by going up the directory tree
-      for (let i = 0; i < maxDepth; i++) {
-        if (this.isCorrectProjectRoot(projectRoot)) {
-          logger.debug(`Project root found from file location: ${projectRoot}`);
-          return projectRoot;
-        }
-        const parent = path.dirname(projectRoot);
-        if (parent === projectRoot) break; // Reached filesystem root
-        projectRoot = parent;
+      if (projectRoot) {
+        logger.debug(`Project root found from file location: ${projectRoot}`);
+        return projectRoot;
       }
 
       // If we couldn't find the correct package.json from file location, fall back to cwd
-      logger.debug('Could not find correct package.json from file location, falling back to cwd');
+      logger.debug(
+        'Could not find correct package.json from file location, falling back to cwd',
+      );
       return this.findProjectRootFromCwd();
     } catch (error) {
       logger.debug('Error getting file location, falling back to cwd:', error);
       return this.findProjectRootFromCwd();
-    }
-  }
-
-  /**
-   * Checks if a directory contains the correct package.json for this project
-   */
-  private isCorrectProjectRoot(dir: string): boolean {
-    const packageJsonPath = path.join(dir, 'package.json');
-    if (!fs.existsSync(packageJsonPath)) {
-      return false;
-    }
-
-    try {
-      const packageContent = fs.readFileSync(packageJsonPath, 'utf8');
-      const packageData = JSON.parse(packageContent);
-      return packageData.name === 'mcp-server-apple-reminders';
-    } catch (error) {
-      logger.debug(`Failed to parse package.json at ${packageJsonPath}:`, error);
-      return false;
     }
   }
 

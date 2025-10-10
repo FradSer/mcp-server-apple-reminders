@@ -1,0 +1,131 @@
+---
+globs: *.ts,*.tsx
+description: TypeScript coding conventions and patterns for Apple Reminders MCP Server
+---
+
+# TypeScript Coding Conventions
+
+## Code Style & Formatting
+
+- **Indentation**: 2 spaces (configured in [biome.json](mdc:biome.json))
+- **Quotes**: Single quotes for strings (`'hello'` not `"hello"`)
+- **Semicolons**: Required for consistency
+- **Imports**: Organized automatically by Biome assist rules
+- **Line Length**: Keep lines under 100 characters when possible
+
+## TypeScript Configuration
+
+Based on [tsconfig.json](mdc:tsconfig.json):
+- **Target**: ES2020 with NodeNext module resolution
+- **Strict Mode**: Enabled for type safety
+- **Declaration Files**: Generated for all modules
+- **Source Maps**: Enabled for debugging
+
+## Naming Conventions
+
+- **Variables/Functions**: camelCase (`createReminder`, `dueDate`)
+- **Classes**: PascalCase (`Logger`, `ReminderRepository`)
+- **Constants**: SCREAMING_SNAKE_CASE (`MAX_TITLE_LENGTH`)
+- **Interfaces**: PascalCase with descriptive names (`ReminderAction`, `ListAction`)
+- **Types**: PascalCase (`Reminder`, `ReminderList`)
+
+## Import/Export Patterns
+
+```typescript
+// Prefer named exports for utilities
+import { debugLog, logger } from '../utils/logger.js';
+
+// Use type imports for type-only imports
+import type { Reminder, ReminderList } from '../types/index.js';
+
+// Group imports: external libs, internal modules, types
+import { z } from 'zod';
+import { existsSync, readFileSync } from 'node:fs';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { createSafeTextSchema } from '../validation/schemas.js';
+```
+
+## Error Handling Patterns
+
+```typescript
+// Use try-catch with proper error typing
+try {
+  const result = await riskyOperation();
+  return result;
+} catch (error) {
+  debugLog('Operation failed:', error);
+  throw new Error(`Failed to perform operation: ${error instanceof Error ? error.message : String(error)}`);
+}
+
+// Validate inputs with Zod schemas
+const validatedInput = schema.parse(input);
+```
+
+## Function Patterns
+
+```typescript
+// Use JSDoc comments for public functions
+/**
+ * Creates a new reminder with validation
+ * @param title - The reminder title
+ * @param dueDate - Optional due date
+ * @returns Promise resolving to created reminder
+ */
+async function createReminder(title: string, dueDate?: string): Promise<Reminder> {
+  // Implementation
+}
+
+// Use const assertions for readonly arrays
+const REMINDER_ACTIONS = ['create', 'update', 'delete'] as const;
+type ReminderAction = typeof REMINDER_ACTIONS[number];
+```
+
+## Validation Patterns
+
+Based on [src/validation/schemas.ts](mdc:src/validation/schemas.ts):
+
+```typescript
+// Use Zod for runtime validation
+const reminderSchema = z.object({
+  title: z.string().min(1).max(200),
+  dueDate: z.string().regex(DATE_PATTERN).optional(),
+  note: z.string().max(2000).optional(),
+});
+
+// Create reusable schema factories
+const createSafeTextSchema = (minLength: number, maxLength: number) =>
+  z.string()
+    .min(minLength)
+    .max(maxLength)
+    .regex(SAFE_TEXT_PATTERN);
+```
+
+## Async/Await Patterns
+
+```typescript
+// Prefer async/await over Promises
+async function processReminders(): Promise<Reminder[]> {
+  const reminders = await loadReminders();
+  const processed = await Promise.all(
+    reminders.map(async (reminder) => {
+      return await processReminder(reminder);
+    })
+  );
+  return processed;
+}
+```
+
+## File Organization
+
+- **One main export per file** (class, function, or object)
+- **Co-locate tests** with source files (`*.test.ts`)
+- **Use index.ts files** for clean module exports
+- **Group related functionality** in the same directory
+
+## Type Safety Guidelines
+
+- **Avoid `any`** - use `unknown` or proper typing
+- **Use strict null checks** - handle undefined/null explicitly
+- **Prefer interfaces over types** for object shapes
+- **Use const assertions** for literal types
+- **Leverage TypeScript's type inference** when possible
