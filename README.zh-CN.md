@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 0.8.1](https://img.shields.io/badge/version-0.8.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 0.9.0](https://img.shields.io/badge/version-0.9.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
@@ -161,6 +161,23 @@ code %APPDATA%\Claude\claude_desktop_config.json
 - 与 Apple 原生提醒事项应用交互
 - 向 Claude 返回格式化结果
 - 维护与 macOS 的原生集成
+
+## 结构化提示库
+
+该服务器提供统一的提示注册表，可通过 MCP 的 `ListPrompts` 和 `GetPrompt` 端点访问。所有模板共享“使命、上下文输入、编号流程、约束、输出格式和质量标准”六个部分，让下游助手不必再从零解析松散示例即可生成稳定指令。
+
+- **daily-task-organizer** —— 可选的 `task_category`、`priority_level`、`time_frame` 输入会生成当日执行蓝图，在高优先级任务与休息窗口之间取得平衡。
+- **smart-reminder-creator** —— 必填 `task_description`，可选 `context` 与 `urgency`，输出的提醒草案会显式映射元数据，降低执行失败风险。
+- **reminder-review-assistant** —— 可选 `review_type` 和 `list_name`，聚焦收件箱盘点并避免破坏性批量操作。
+- **weekly-planning-workflow** —— 可选 `focus_areas`、`week_start_date`，用于构建周一至周日的复盘与时间区块规划。
+- **reminder-cleanup-guide** —— 可选 `cleanup_strategy`，提供逐步检查清单和安全护栏，帮助安心清理列表。
+- **goal-tracking-setup** —— 必填 `goal_type`，可选 `time_horizon`，拼装周期性提醒、里程碑和反思节奏。
+
+### 设计约束与验证
+
+- 提示严格限制在 Apple Reminders 原生能力范围内（无第三方自动化），在执行不可逆动作前会主动确认缺失信息。
+- 统一的 Markdown 片段保证客户端无需额外解析即可呈现表格或清单。
+- 修改提示文案后运行 `pnpm test -- src/server/prompts.test.ts`，即可验证元数据、模式兼容性以及分段叙述是否保持一致。
 
 ## 可用的 MCP 工具
 
@@ -371,15 +388,29 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ## 开发
 
-1. 安装依赖：
+1. 使用 pnpm 安装依赖（保持 Swift 桥接与 TypeScript 版本一致）：
 ```bash
-npm install
+pnpm install
 ```
 
-2. 构建用于 Apple Reminders 集成的 Swift 二进制文件：
+2. 在启动前构建 TypeScript 与 Swift 二进制：
 ```bash
-npm run build
+pnpm build
 ```
+
+3. 运行全量测试，验证 TypeScript、Swift 桥接和提示模板：
+```bash
+pnpm test
+```
+
+4. 在提交前执行 Biome 检查：
+```bash
+pnpm exec biome check
+```
+
+### 嵌套目录启动
+
+CLI 入口内建项目根目录回退逻辑。即使从 `dist/` 等子目录或编辑器任务运行器启动，服务器也能在向上最多十层目录内定位 `package.json` 并加载随附的 Swift 二进制。若你自定义目录结构，请确保清单文件仍在该查找深度之内，以维持这一保证。
 
 ### 项目结构
 
@@ -427,13 +458,13 @@ npm run build
 
 ### 可用脚本
 
-- `npm run build` - 构建 TypeScript 和 Swift 组件（启动服务器前必需）
-- `npm run build:ts` - 仅构建 TypeScript 代码
-- `npm run build:swift` - 仅构建 Swift 二进制文件
-- `npm run dev` - TypeScript 开发模式，支持文件监视
-- `npm run start` - 启动 MCP 服务器
-- `npm run test` - 运行全面的测试套件
-- `npm run clean` - 清理构建产物
+- `pnpm build` - 同时构建 TypeScript 与 Swift 组件（启动服务器前必需）
+- `pnpm build:ts` - 仅构建 TypeScript 代码
+- `pnpm build:swift` - 仅构建 Swift 二进制文件
+- `pnpm dev` - 以文件监视模式运行 TypeScript 开发服务器
+- `pnpm start` - 通过 stdio 启动 MCP 服务器
+- `pnpm test` - 运行完整的 Jest 测试套件
+- `pnpm exec biome check` - 执行格式化与静态检查
 
 ### 依赖
 
