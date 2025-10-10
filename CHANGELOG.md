@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-10-10
+
+### Added
+
+- Structured prompt registry that consolidates Apple Reminders workflows with shared mission, process, constraint, and quality bar scaffolding.
+- Strongly typed prompt metadata and argument parsing for six guided productivity flows surfaced through MCP `ListPrompts` and `GetPrompt` endpoints.
+
+### Changed
+
+- Refined prompt builder utilities to favor constraint-driven message assembly and consistent output formatting across prompts.
+- Hardened project root detection helpers with fallback traversal support for launches from nested directories.
+
+### Fixed
+
+- Restored project root fallback traversal so CLI startup resolves the bundled Swift bridge reliably during editor integrations.
+
+## [0.8.1] - 2025-10-09
+
+### Changed
+
+- Updated English and Chinese READMEs so integrators discover the 0.8.0 bulk operations and list CRUD workflows without reverse-engineering the API surface.
+
+### Fixed
+
+- Removed redundant apostrophe escaping in the AppleScript string sanitizer to stop single-quote reminder titles from triggering syntax errors while preserving double-quote safety guarantees.
+
 ## [0.8.0] - 2025-09-10
 
 ### Added
