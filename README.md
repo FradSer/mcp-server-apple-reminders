@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 0.8.1](https://img.shields.io/badge/version-0.8.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 0.9.0](https://img.shields.io/badge/version-0.9.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
@@ -162,6 +162,23 @@ The server will:
 - Interact with Apple's native Reminders app
 - Return formatted results to Claude
 - Maintain native integration with macOS
+
+## Structured Prompt Library
+
+The server ships with a consolidated prompt registry exposed via the MCP `ListPrompts` and `GetPrompt` endpoints. Each template shares a mission, context inputs, numbered process, constraints, output format, and quality bar so downstream assistants receive predictable scaffolding instead of brittle free-form examples.
+
+- **daily-task-organizer** — optional `task_category`, `priority_level`, and `time_frame` inputs produce a same-day execution blueprint that keeps priority work balanced with recovery time.
+- **smart-reminder-creator** — requires `task_description`, optionally `context` and `urgency`, yielding a reminder draft that mitigates follow-through gaps by mapping metadata explicitly.
+- **reminder-review-assistant** — optional `review_type` and `list_name` drive inbox triage scripts that surface stale reminders while avoiding destructive edits.
+- **weekly-planning-workflow** — optional `focus_areas` and `week_start_date` guide a Monday-through-Sunday reset with time blocks tied to existing lists.
+- **reminder-cleanup-guide** — optional `cleanup_strategy` lists guardrails and sequencing for stress-free list pruning.
+- **goal-tracking-setup** — required `goal_type` plus optional `time_horizon` assemble recurring reminders and reflection cadences.
+
+### Design constraints and validation
+
+- Prompts are intentionally constrained to native Apple Reminders capabilities (no third-party automations) and ask for missing context before committing to irreversible actions.
+- Shared formatting keeps outputs renderable as Markdown sections or tables without extra parsing glue in client applications.
+- Run `pnpm test -- src/server/prompts.test.ts` to assert metadata, schema compatibility, and narrative assembly each time you amend prompt copy.
 
 ## Available MCP Tools
 
@@ -448,15 +465,29 @@ Contributions welcome! Please read the contributing guidelines first.
 
 ## Development
 
-1. Install dependencies:
+1. Install dependencies with pnpm (keeps the Swift bridge and TypeScript graph in sync):
 ```bash
-npm install
+pnpm install
 ```
 
-2. Build the project (TypeScript and Swift binary):
+2. Build the project (TypeScript and Swift binary) before invoking the CLI:
 ```bash
-npm run build
+pnpm build
 ```
+
+3. Run the full test suite to validate TypeScript, Swift bridge shims, and prompt templates:
+```bash
+pnpm test
+```
+
+4. Lint and format with Biome prior to committing:
+```bash
+pnpm exec biome check
+```
+
+### Launching from nested directories
+
+The CLI entry point includes a project-root fallback, so you can start the server from nested paths (for example `dist/` or editor task runners) without losing access to the bundled Swift binary. The bootstrapper walks up to ten directories to find `package.json`; if you customise the folder layout, keep the manifest reachable within that depth to retain the guarantee.
 
 ### Project Structure
 
@@ -504,13 +535,13 @@ npm run build
 
 ### Available Scripts
 
-- `npm run build` - Build both TypeScript and Swift components (REQUIRED before starting server)
-- `npm run build:ts` - Build TypeScript code only
-- `npm run build:swift` - Build Swift binary only
-- `npm run dev` - TypeScript development mode with file watching
-- `npm run start` - Start the MCP server
-- `npm run test` - Run comprehensive test suite
-- `npm run clean` - Clean build artifacts
+- `pnpm build` - Build both TypeScript and Swift components (required before starting the server)
+- `pnpm build:ts` - Build TypeScript code only
+- `pnpm build:swift` - Build the Swift helper binary only
+- `pnpm dev` - TypeScript development mode with file watching
+- `pnpm start` - Start the MCP server over stdio
+- `pnpm test` - Run the comprehensive Jest suite
+- `pnpm exec biome check` - Enforce formatting and lint rules
 
 ### Dependencies
 
