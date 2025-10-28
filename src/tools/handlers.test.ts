@@ -1,164 +1,166 @@
 /**
  * tests/tools/handlers.test.ts
- * Tests for the refactored tool handlers.
+ * Tests for the refactored, Markdown-outputting tool handlers.
  */
 
-import { reminderRepository } from '../utils/reminderRepository.js';
 import {
   handleCreateReminder,
+  handleCreateReminderList,
   handleDeleteReminder,
+  handleDeleteReminderList,
+  handleMoveReminder,
+  handleReadReminderLists,
   handleReadReminders,
   handleUpdateReminder,
-  handleReadReminderLists,
-  handleCreateReminderList,
   handleUpdateReminderList,
-  handleDeleteReminderList,
 } from '../tools/handlers.js';
-import { MESSAGES } from '../utils/constants.js';
+import { handleAsyncOperation } from '../utils/errorHandling.js';
+import { reminderRepository } from '../utils/reminderRepository.js';
 
-// Mock CLI executor to avoid import.meta issues in tests
-jest.mock('../utils/cliExecutor.js');
-
-// Mock the entire repository
+// Mock the repository and error handling
 jest.mock('../utils/reminderRepository.js');
+jest.mock('../utils/errorHandling.js');
 
-// Typecast the mock for easier use
-const mockReminderRepository = reminderRepository as jest.Mocked<typeof reminderRepository>;
+const mockReminderRepository = reminderRepository as jest.Mocked<
+  typeof reminderRepository
+>;
+const mockHandleAsyncOperation = handleAsyncOperation as jest.Mock;
+
+// Simplified wrapper mock for testing. It mimics the real implementation.
+mockHandleAsyncOperation.mockImplementation(async (operation) => {
+  try {
+    const result = await operation();
+    return { content: [{ type: 'text', text: result }], isError: false };
+  } catch (error) {
+    return {
+      content: [{ type: 'text', text: (error as Error).message }],
+      isError: true,
+    };
+  }
+});
 
 describe('Tool Handlers', () => {
   beforeEach(() => {
-    // Clear all mocks before each test
     jest.clearAllMocks();
   });
 
   // --- Reminder Handlers ---
 
   describe('handleReadReminders', () => {
-    it('should call repository and return reminders', async () => {
-      const mockReminders = [{ id: '1', title: 'Test', isCompleted: false, list: 'Inbox' }];
+    it('should return reminders formatted as Markdown', async () => {
+      const mockReminders = [
+        { id: '1', title: 'Test', isCompleted: false, list: 'Inbox' },
+      ];
       mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
-
       const result = await handleReadReminders({ action: 'read' });
-      const data = JSON.parse(result.content[0].text as string);
-
-      expect(mockReminderRepository.findReminders).toHaveBeenCalled();
-      expect(data.reminders).toEqual(mockReminders);
-      expect(data.total).toBe(1);
+      const content = result.content[0].text as string;
+      expect(content).toContain('### Reminders (Total: 1)');
+      expect(content).toContain('- [ ] Test');
     });
   });
 
   describe('handleCreateReminder', () => {
-    it('should call repository with correct data', async () => {
-      const newReminder = { id: '2', title: 'New Reminder', isCompleted: false, list: 'Inbox' };
+    it('should return a Markdown success message with ID', async () => {
+      const newReminder = {
+        id: 'rem-123',
+        title: 'New Task',
+        isCompleted: false,
+        list: 'Inbox',
+      };
       mockReminderRepository.createReminder.mockResolvedValue(newReminder);
-
-      await handleCreateReminder({ action: 'create', title: 'New Reminder' });
-
-      expect(mockReminderRepository.createReminder).toHaveBeenCalledWith({
-        title: 'New Reminder',
-        list: undefined,
-        notes: undefined,
-        url: undefined,
+      const result = await handleCreateReminder({
+        action: 'create',
+        title: 'New Task',
       });
+      const content = result.content[0].text as string;
+      expect(content).toContain('Successfully created reminder "New Task"');
+      expect(content).toContain('- ID: rem-123');
     });
   });
 
   describe('handleUpdateReminder', () => {
-    it('should find a reminder by title and then update it by ID', async () => {
-      const existingReminder = { id: 'rem-123', title: 'Old Title', isCompleted: false, list: 'Inbox' };
-      mockReminderRepository.findReminderByTitle.mockResolvedValue(existingReminder);
-      mockReminderRepository.updateReminder.mockResolvedValue({ ...existingReminder, title: 'New Title' });
-
-      await handleUpdateReminder({ action: 'update', title: 'Old Title', newTitle: 'New Title' });
-
-      expect(mockReminderRepository.findReminderByTitle).toHaveBeenCalledWith('Old Title', undefined);
-      expect(mockReminderRepository.updateReminder).toHaveBeenCalledWith({
-        id: 'rem-123',
-        newTitle: 'New Title',
-        notes: undefined,
-        url: undefined,
-        isCompleted: undefined,
+    it('should return a Markdown success message with ID', async () => {
+      const updatedReminder = {
+        id: 'rem-456',
+        title: 'Updated Task',
+        isCompleted: true,
+        list: 'Inbox',
+      };
+      mockReminderRepository.updateReminder.mockResolvedValue(updatedReminder);
+      const result = await handleUpdateReminder({
+        action: 'update',
+        id: 'rem-456',
+        title: 'Updated Task',
       });
-    });
-
-    it('should return an error response if the reminder to update is not found', async () => {
-      mockReminderRepository.findReminderByTitle.mockResolvedValue(null);
-
-      const result = await handleUpdateReminder({ action: 'update', title: 'Nonexistent' });
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Reminder "Nonexistent" not found');
+      const content = result.content[0].text as string;
+      expect(content).toContain('Successfully updated reminder "Updated Task"');
+      expect(content).toContain('- ID: rem-456');
     });
   });
 
   describe('handleDeleteReminder', () => {
-    it('should find a reminder by title and then delete it by ID', async () => {
-      const existingReminder = { id: 'rem-456', title: 'Delete Me', isCompleted: false, list: 'Inbox' };
-      mockReminderRepository.findReminderByTitle.mockResolvedValue(existingReminder);
+    it('should return a Markdown success message', async () => {
       mockReminderRepository.deleteReminder.mockResolvedValue(undefined);
-
-      await handleDeleteReminder({ action: 'delete', title: 'Delete Me' });
-
-      expect(mockReminderRepository.findReminderByTitle).toHaveBeenCalledWith('Delete Me', undefined);
-      expect(mockReminderRepository.deleteReminder).toHaveBeenCalledWith('rem-456');
-    });
-
-    it('should return an error response if the reminder to delete is not found', async () => {
-      mockReminderRepository.findReminderByTitle.mockResolvedValue(null);
-
-      const result = await handleDeleteReminder({ action: 'delete', title: 'Nonexistent' });
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Reminder "Nonexistent" not found');
+      const result = await handleDeleteReminder({
+        action: 'delete',
+        id: 'rem-789',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toBe('Successfully deleted reminder with ID: rem-789');
     });
   });
 
   // --- List Handlers ---
 
   describe('handleReadReminderLists', () => {
-    it('should call repository and return lists', async () => {
+    it('should return lists formatted as Markdown', async () => {
       const mockLists = [{ id: 'list-1', title: 'Inbox' }];
       mockReminderRepository.findAllLists.mockResolvedValue(mockLists);
-
       const result = await handleReadReminderLists();
-      const data = JSON.parse(result.content[0].text as string);
-
-      expect(mockReminderRepository.findAllLists).toHaveBeenCalled();
-      expect(data.lists).toEqual(mockLists);
-      expect(data.total).toBe(1);
+      const content = result.content[0].text as string;
+      expect(content).toContain('### Reminder Lists (Total: 1)');
+      expect(content).toContain('- Inbox (ID: list-1)');
     });
   });
 
   describe('handleCreateReminderList', () => {
-    it('should call repository to create a list', async () => {
-      const newList = { id: 'list-2', title: 'New List' };
+    it('should return a Markdown success message with ID', async () => {
+      const newList = { id: 'list-abc', title: 'New List' };
       mockReminderRepository.createReminderList.mockResolvedValue(newList);
-
-      await handleCreateReminderList({ action: 'create', name: 'New List' });
-
-      expect(mockReminderRepository.createReminderList).toHaveBeenCalledWith('New List');
+      const result = await handleCreateReminderList({
+        action: 'create',
+        name: 'New List',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toContain('Successfully created list "New List"');
+      expect(content).toContain('- ID: list-abc');
     });
   });
 
   describe('handleUpdateReminderList', () => {
-    it('should call repository to update a list', async () => {
-      const updatedList = { id: 'list-3', title: 'Updated Name' };
+    it('should return a Markdown success message with ID', async () => {
+      const updatedList = { id: 'list-def', title: 'Updated Name' };
       mockReminderRepository.updateReminderList.mockResolvedValue(updatedList);
-
-      await handleUpdateReminderList({ action: 'update', name: 'Old Name', newName: 'Updated Name' });
-
-      expect(mockReminderRepository.updateReminderList).toHaveBeenCalledWith('Old Name', 'Updated Name');
+      const result = await handleUpdateReminderList({
+        action: 'update',
+        name: 'Old Name',
+        newName: 'Updated Name',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toContain('Successfully updated list to "Updated Name"');
+      expect(content).toContain('- ID: list-def');
     });
   });
 
   describe('handleDeleteReminderList', () => {
-    it('should call repository to delete a list', async () => {
+    it('should return a Markdown success message', async () => {
       mockReminderRepository.deleteReminderList.mockResolvedValue(undefined);
-
-      const result = await handleDeleteReminderList({ action: 'delete', name: 'Old List' });
-
-      expect(mockReminderRepository.deleteReminderList).toHaveBeenCalledWith('Old List');
-      expect(result.content[0].text).toBe(MESSAGES.SUCCESS.LIST_DELETED('Old List'));
+      const result = await handleDeleteReminderList({
+        action: 'delete',
+        name: 'Old List',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toBe('Successfully deleted list "Old List".');
     });
   });
 });

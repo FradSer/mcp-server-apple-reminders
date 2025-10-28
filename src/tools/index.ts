@@ -9,9 +9,6 @@ import { MESSAGES } from '../utils/constants.js';
 import { debugLog } from '../utils/logger.js';
 import { TOOLS } from './definitions.js';
 import {
-  handleBulkCreateReminders,
-  handleBulkDeleteReminders,
-  handleBulkUpdateReminders,
   handleCreateReminder,
   handleCreateReminderList,
   handleDeleteReminder,
@@ -47,12 +44,6 @@ export async function handleToolCall(
           return handleUpdateReminder(args);
         case 'delete':
           return handleDeleteReminder(args);
-        case 'bulk_create':
-          return handleBulkCreateReminders(args);
-        case 'bulk_update':
-          return handleBulkUpdateReminders(args);
-        case 'bulk_delete':
-          return handleBulkDeleteReminders(args);
         default:
           return {
             content: [

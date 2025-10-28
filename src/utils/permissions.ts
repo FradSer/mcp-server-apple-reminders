@@ -49,12 +49,8 @@ function getBinaryPath(): string | null {
 
   try {
     const projectRoot = findProjectRoot();
-    // The binary name is now RemindersCLI
     const binaryName = 'RemindersCLI';
-    const possiblePaths = [
-      path.resolve(projectRoot, BINARY_PATHS.DIST_PATH, binaryName),
-      path.resolve(projectRoot, BINARY_PATHS.SRC_PATH, binaryName),
-    ];
+    const possiblePaths = [path.resolve(projectRoot, 'bin', binaryName)];
 
     const { path: securePath } = findSecureBinaryPath(
       possiblePaths,

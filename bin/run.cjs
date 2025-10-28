@@ -14,21 +14,16 @@ async function run() {
       return;
     } catch (error) {
       console.warn(
-        `⚠️  Failed to load compiled entry at ${distEntry}: ${error?.message || error}. Falling back to TypeScript runtime.`,
+        `Failed to load compiled entry at ${distEntry}: ${error?.message || error}. Falling back to TypeScript runtime.`,
       );
     }
   }
 
   const { register } = require('tsx/cjs/api');
-  const unregister = register();
+  register();
+  require('../src/index.ts');
 
-  try {
-    require('../src/index.ts');
-  } finally {
-    if (typeof unregister === 'function') {
-      unregister();
-    }
-  }
+  console.log('[DEBUG] SCRIPT EXECUTION FINISHED');
 }
 
 run().catch((error) => {

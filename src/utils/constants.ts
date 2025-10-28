@@ -56,24 +56,7 @@ export const FILE_SYSTEM = {
   PACKAGE_JSON_FILENAME: 'package.json',
 
   /** Swift binary filename */
-  SWIFT_BINARY_NAME: 'GetReminders',
-} as const;
-
-/**
- * Binary path configurations
- */
-export const BINARY_PATHS = {
-  /** Primary binary path (built distribution) */
-  DIST_PATH: 'dist/swift/bin',
-
-  /** Development binary path (source) */
-  SRC_PATH: 'src/swift/bin',
-
-  /** Fallback binary path */
-  FALLBACK_PATH: 'swift/bin',
-
-  /** Mock binary path for tests */
-  MOCK_PATH: '/mock/path/to/binary',
+  SWIFT_BINARY_NAME: 'RemindersCLI',
 } as const;
 
 /**
@@ -165,9 +148,9 @@ export const MESSAGES = {
     LIST_DELETED: (name: string) =>
       `Successfully deleted reminder list: ${name}`,
 
-    ALL_PERMISSIONS_GRANTED: '✅ All permissions granted successfully',
+    ALL_PERMISSIONS_GRANTED: 'All permissions granted successfully',
 
-    PERMISSIONS_VERIFIED: '✅ All permissions verified successfully',
+    PERMISSIONS_VERIFIED: 'All permissions verified successfully',
   },
 
   /** Error messages */
@@ -191,6 +174,6 @@ export const MESSAGES = {
     PERMISSION_CHECK_FAILED: (type: string, error: string) =>
       `Failed to check ${type} permissions: ${error}`,
 
-    INSUFFICIENT_PERMISSIONS: '🚫 Insufficient permissions detected',
+    INSUFFICIENT_PERMISSIONS: 'Insufficient permissions detected',
   },
 } as const;

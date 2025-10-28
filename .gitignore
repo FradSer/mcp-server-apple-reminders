@@ -160,8 +160,8 @@ dist
 
 .vscode-test
 
-# Swift binaries (generated files)
-src/swift/bin/
+# Compiled Swift binaries
+/bin/RemindersCLI
 
 # yarn v2
 
@@ -178,8 +178,4 @@ src/swift/bin/
 .DS_Store
 
 # Swift compiled binaries
-src/swift/bin/
-dist/swift/bin/
 *.swiftmodule
-*.swiftdoc
-*.swiftsourceinfo

@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build": "npm run build:swift",
-    "build:swift": "node scripts/build-swift.mjs && mkdir -p dist/swift/bin && cp -p src/swift/bin/RemindersCLI dist/swift/bin/RemindersCLI",
+    "build:swift": "node scripts/build-swift.mjs",
     "dev": "node ./bin/run-dev.cjs",
     "start": "node ./bin/run.cjs",
     "test": "jest"
