@@ -136,11 +136,6 @@ export const UpdateReminderSchema = z.object({
   targetList: SafeListNameSchema,
 });
 
-export const MoveReminderSchema = z.object({
-  id: SafeIdSchema,
-  toList: RequiredListNameSchema,
-});
-
 export const DeleteReminderSchema = z.object({
   id: SafeIdSchema,
 });

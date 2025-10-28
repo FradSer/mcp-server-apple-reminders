@@ -50,10 +50,7 @@ export type ReminderAction =
   | 'list'
   | 'create'
   | 'update'
-  | 'delete'
-  | 'bulk_create'
-  | 'bulk_update'
-  | 'bulk_delete';
+  | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
 export type DueWithinOption =
   | 'today'
@@ -95,31 +92,6 @@ export interface RemindersToolArgs extends BaseToolArgs {
   completed?: boolean;
   // Target list for create/update operations
   targetList?: string;
-  // Bulk operation parameters
-  items?: Array<{
-    title: string;
-    dueDate?: string;
-    note?: string;
-    url?: string;
-    targetList?: string;
-  }>;
-  criteria?: {
-    search?: string;
-    dueWithin?: DueWithinOption;
-    completed?: boolean;
-    sourceList?: string;
-  };
-  updates?: {
-    newTitle?: string;
-    dueDate?: string;
-    note?: string;
-    url?: string;
-    completed?: boolean;
-    targetList?: string;
-  };
-  // Organize parameters for bulk_update
-  organizeBy?: OrganizeStrategy;
-  createLists?: boolean;
 }
 
 export interface ListsToolArgs extends BaseToolArgs {
@@ -161,44 +133,6 @@ export type DeleteReminderArgs = {
   action: 'delete';
   title: string;
   filterList?: string;
-};
-export type BulkCreateReminderArgs = {
-  action: 'bulk_create';
-  items: Array<{
-    title: string;
-    dueDate?: string;
-    note?: string;
-    url?: string;
-    targetList?: string;
-  }>;
-};
-export type BulkUpdateReminderArgs = {
-  action: 'bulk_update';
-  criteria: {
-    search?: string;
-    dueWithin?: DueWithinOption;
-    completed?: boolean;
-    sourceList?: string;
-  };
-  updates: {
-    newTitle?: string;
-    dueDate?: string;
-    note?: string;
-    url?: string;
-    completed?: boolean;
-    targetList?: string;
-  };
-  organizeBy?: OrganizeStrategy;
-  createLists?: boolean;
-};
-export type BulkDeleteReminderArgs = {
-  action: 'bulk_delete';
-  criteria: {
-    search?: string;
-    dueWithin?: DueWithinOption;
-    completed?: boolean;
-    sourceList?: string;
-  };
 };
 
 export type CreateListArgs = { action: 'create'; name: string };

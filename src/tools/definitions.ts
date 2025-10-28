@@ -19,7 +19,7 @@ export const TOOLS: Tool[] = [
   {
     name: 'reminders',
     description:
-      'Manages reminders. Supports reading, creating, updating, deleting, and moving reminders.',
+      'Manages reminders. Supports reading, creating, updating, and deleting reminders.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -32,7 +32,7 @@ export const TOOLS: Tool[] = [
         id: {
           type: 'string',
           description:
-            'The unique identifier of the reminder (REQUIRED for update, delete, move; optional for read to get single reminder).',
+            'The unique identifier of the reminder (REQUIRED for update, delete; optional for read to get single reminder).',
         },
         // Creation/Update properties
         title: {
