@@ -8,7 +8,6 @@ import type {
   MoveReminderData,
   UpdateReminderData,
 } from '../utils/reminderRepository.js';
-import { remindersManager } from '../utils/reminders.js';
 import {
   handleDeleteReminder,
   handleListReminders,
@@ -389,7 +388,7 @@ describe('handleListReminders', () => {
         return allReminders;
       }
       // If specific list filter, return only reminders from that list
-      return allReminders.filter(r => r.list === filters.list);
+      return allReminders.filter((r) => r.list === filters.list);
     });
 
     const result = await handleListReminders({ action: 'list' });
@@ -434,7 +433,7 @@ describe('handleListReminders', () => {
         return allReminders;
       }
       // If specific list filter, return only reminders from that list
-      return allReminders.filter(r => r.list === filters.list);
+      return allReminders.filter((r) => r.list === filters.list);
     });
 
     const result = await handleListReminders({ action: 'list' });
@@ -471,7 +470,7 @@ describe('handleListReminders', () => {
         return allReminders;
       }
       // If specific list filter, return only reminders from that list
-      return allReminders.filter(r => r.list === filters.list);
+      return allReminders.filter((r) => r.list === filters.list);
     });
 
     const result = await handleListReminders({ action: 'list' });
@@ -504,19 +503,21 @@ describe('handleListReminders', () => {
       >
     ).mockImplementation(async (filters) => {
       let filtered = allReminders;
-      
+
       // Filter by completion status
       if (filters?.showCompleted !== undefined) {
-        filtered = filtered.filter(r => filters.showCompleted || !r.isCompleted);
+        filtered = filtered.filter(
+          (r) => filters.showCompleted || !r.isCompleted,
+        );
       }
-      
+
       // If no list filter, return all for list discovery
       if (!filters || !filters.list) {
         return filtered;
       }
-      
+
       // Filter by list
-      return filtered.filter(r => r.list === filters.list);
+      return filtered.filter((r) => r.list === filters.list);
     });
 
     const result = await handleListReminders({
@@ -534,7 +535,7 @@ describe('handleListReminders', () => {
       isCompleted: false,
       dueDate: null,
       notes: null,
-      url: null
+      url: null,
     });
   });
 
@@ -590,7 +591,7 @@ describe('handleListReminders', () => {
       isCompleted: true,
       dueDate: '2024-03-12 10:00:00',
       notes: 'Test notes',
-      url: null
+      url: null,
     });
   });
 
@@ -618,10 +619,13 @@ describe('handleListReminders', () => {
         return allReminders;
       }
       // Filter by list
-      return allReminders.filter(r => r.list === filters.list);
+      return allReminders.filter((r) => r.list === filters.list);
     });
 
-    const result = await handleListReminders({ action: 'list', filterList: 'Work' });
+    const result = await handleListReminders({
+      action: 'list',
+      filterList: 'Work',
+    });
 
     validateJsonResponse(result);
     const parsedJson = JSON.parse(result.content[0].text as string);
@@ -658,21 +662,22 @@ describe('handleListReminders', () => {
       >
     ).mockImplementation(async (filters) => {
       let filtered = allReminders;
-      
+
       // Apply search filter first
       if (filters?.search) {
         const searchLower = filters.search.toLowerCase();
-        filtered = filtered.filter(r => 
-          r.title.toLowerCase().includes(searchLower) ||
-          r.notes?.toLowerCase().includes(searchLower)
+        filtered = filtered.filter(
+          (r) =>
+            r.title.toLowerCase().includes(searchLower) ||
+            r.notes?.toLowerCase().includes(searchLower),
         );
       }
-      
+
       // Apply list filter if specified
       if (filters?.list) {
-        filtered = filtered.filter(r => r.list === filters.list);
+        filtered = filtered.filter((r) => r.list === filters.list);
       }
-      
+
       return filtered;
     });
 

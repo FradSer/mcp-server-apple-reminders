@@ -109,15 +109,16 @@ async function safeSystemCommand(
     childProcess.stdout?.on('data', (data) => {
       stdout += data.toString();
     });
-    
+
     childProcess.stderr?.on('data', (data) => {
       stderr += data.toString();
     });
 
     childProcess.on('close', (code) => {
-      const result = code === 0 
-        ? resolve(stdout.trim()) 
-        : reject(new Error(`Command failed: ${stderr}`));
+      const result =
+        code === 0
+          ? resolve(stdout.trim())
+          : reject(new Error(`Command failed: ${stderr}`));
       return result;
     });
 
@@ -213,7 +214,7 @@ function createDateFormatErrorMessage(dateStr: string): string {
  */
 function formatDate(dateStr: string, isDateOnly: boolean): string {
   let parsedDate: moment.Moment;
-  
+
   try {
     parsedDate = moment(
       dateStr,
@@ -237,10 +238,10 @@ function formatDate(dateStr: string, isDateOnly: boolean): string {
   }
 
   // Format based on system preference
-  const format = get24HourPreference() 
-    ? DATETIME_FORMAT_24_HOUR 
+  const format = get24HourPreference()
+    ? DATETIME_FORMAT_24_HOUR
     : DATETIME_FORMAT_12_HOUR;
-  
+
   return englishMoment.format(format);
 }
 

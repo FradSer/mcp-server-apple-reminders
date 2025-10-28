@@ -8,27 +8,31 @@
  * @param notes - The note content to parse
  * @returns Array of extracted URLs
  */
-export function extractUrlsFromNotes(notes: string | null | undefined): string[] {
+export function extractUrlsFromNotes(
+  notes: string | null | undefined,
+): string[] {
   if (!notes) return [];
-  
+
   // Look for all structured URLs sections
-  const urlSectionMatches = notes.matchAll(/\n\nURLs:\n((?:- https?:\/\/[^\s\n]+\n?)+)/g);
+  const urlSectionMatches = notes.matchAll(
+    /\n\nURLs:\n((?:- https?:\/\/[^\s\n]+\n?)+)/g,
+  );
   const allUrls = [];
-  
+
   for (const match of urlSectionMatches) {
     // Extract URLs from structured format
     const urlLines = match[1];
     const sectionUrls = urlLines
       .split('\n')
-      .map(line => line.replace(/^- /, '').trim())
-      .filter(url => url.length > 0);
+      .map((line) => line.replace(/^- /, '').trim())
+      .filter((url) => url.length > 0);
     allUrls.push(...sectionUrls);
   }
-  
+
   if (allUrls.length > 0) {
     return allUrls;
   }
-  
+
   // Fallback: extract any URLs using regex for backward compatibility
   const urlRegex = /https?:\/\/[^\s]+/g;
   return notes.match(urlRegex) || [];
@@ -40,20 +44,23 @@ export function extractUrlsFromNotes(notes: string | null | undefined): string[]
  * @param urls - Array of URLs to append
  * @returns Formatted note content with structured URLs
  */
-export function formatNoteWithUrls(note: string | undefined | null, urls: string[]): string {
+export function formatNoteWithUrls(
+  note: string | undefined | null,
+  urls: string[],
+): string {
   const cleanNote = removeUrlSections(note || '').trim();
-  const validUrls = urls.filter(url => url && isValidUrl(url));
-  
+  const validUrls = urls.filter((url) => url && isValidUrl(url));
+
   if (validUrls.length === 0) {
     return cleanNote;
   }
-  
+
   const urlSection = formatUrlSection(validUrls);
-  
+
   if (!cleanNote) {
     return urlSection;
   }
-  
+
   return `${cleanNote}\n\n${urlSection}`;
 }
 
@@ -64,8 +71,8 @@ export function formatNoteWithUrls(note: string | undefined | null, urls: string
  */
 export function formatUrlSection(urls: string[]): string {
   if (urls.length === 0) return '';
-  
-  const urlList = urls.map(url => `- ${url}`).join('\n');
+
+  const urlList = urls.map((url) => `- ${url}`).join('\n');
   return `URLs:\n${urlList}`;
 }
 
@@ -76,7 +83,7 @@ export function formatUrlSection(urls: string[]): string {
  */
 export function removeUrlSections(notes: string | null | undefined): string {
   if (!notes) return '';
-  
+
   // Remove structured URL sections
   return notes
     .replace(/\n\nURLs:\n(?:- https?:\/\/[^\s\n]+\n?)+/g, '')
@@ -91,10 +98,13 @@ export function removeUrlSections(notes: string | null | undefined): string {
  * @param url - The URL to add
  * @returns Combined content in structured format
  */
-export function combineNoteWithUrl(note: string | undefined | null, url: string | undefined | null): string {
+export function combineNoteWithUrl(
+  note: string | undefined | null,
+  url: string | undefined | null,
+): string {
   if (!url) return note || '';
   if (!isValidUrl(url)) return note || '';
-  
+
   return formatNoteWithUrls(note, [url]);
 }
 
@@ -103,9 +113,11 @@ export function combineNoteWithUrl(note: string | undefined | null, url: string 
  * @param url - String to validate
  * @returns True if valid URL
  */
-export function isValidUrl(url: string | null | undefined): boolean {
-  if (!url || typeof url !== 'string') return false;
-  
+export function isValidUrl(url: unknown): url is string {
+  if (typeof url !== 'string' || url.length === 0) {
+    return false;
+  }
+
   try {
     new URL(url);
     return /^https?:\/\//.test(url);
@@ -135,10 +147,10 @@ export function parseReminderNote(notes: string | null | undefined): {
   if (!notes) {
     return { note: '', urls: [] };
   }
-  
+
   const urls = extractUrlsFromNotes(notes);
   const note = extractNoteContent(notes);
-  
+
   return { note, urls };
 }
 
@@ -148,7 +160,10 @@ export function parseReminderNote(notes: string | null | undefined): {
  * @param newUrls - New URLs to add or replace with
  * @returns Updated note content with structured URLs
  */
-export function updateNoteWithUrls(existingNotes: string | null | undefined, newUrls: string[]): string {
+export function updateNoteWithUrls(
+  existingNotes: string | null | undefined,
+  newUrls: string[],
+): string {
   const cleanNote = extractNoteContent(existingNotes);
   return formatNoteWithUrls(cleanNote, newUrls);
 }

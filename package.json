@@ -28,7 +28,8 @@
     "build": "npm run build:swift && npm run build:ts",
     "build:ts": "tsc",
     "build:swift": "src/swift/build.sh && mkdir -p dist/swift/bin && cp -p src/swift/bin/GetReminders dist/swift/bin/GetReminders",
-    "dev": "tsc --watch",
+    "dev": "node ./bin/run-dev.cjs",
+    "dev:watch": "tsc --watch",
     "start": "node dist/index.js",
     "test": "jest"
   },
@@ -45,6 +46,7 @@
     "babel-plugin-transform-import-meta": "^2.3.3",
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.8.2"
   },
   "peerDependencies": {

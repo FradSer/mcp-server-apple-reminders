@@ -4,14 +4,13 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
+import type { z } from 'zod';
 import type {
   DueWithinOption,
   ListsToolArgs,
   Reminder,
   RemindersToolArgs,
 } from '../types/index.js';
-import { debugLog } from '../utils/logger.js';
 import { MESSAGES } from '../utils/constants.js';
 import type { ReminderFilters } from '../utils/dateFiltering.js';
 import {
@@ -19,6 +18,7 @@ import {
   handleAsyncOperation,
   handleJsonAsyncOperation,
 } from '../utils/errorHandling.js';
+import { debugLog } from '../utils/logger.js';
 import { ReminderOrganizer } from '../utils/organizationStrategies.js';
 import {
   type CreateReminderData,
@@ -34,19 +34,20 @@ import {
   CreateReminderSchema,
   DeleteReminderListSchema,
   DeleteReminderSchema,
+  MoveReminderSchema,
   ReadReminderListsSchema,
   ReadRemindersSchema,
   UpdateReminderListSchema,
   UpdateReminderSchema,
   validateInput,
-  type BulkCreateRemindersInput,
-  type BulkDeleteRemindersInput,
-  type BulkUpdateRemindersInput,
-  type CreateReminderInput,
-  type DeleteReminderInput,
-  type ReadRemindersInput,
-  type UpdateReminderInput,
 } from '../validation/schemas.js';
+
+type BulkUpdateArgs = z.infer<typeof BulkUpdateRemindersSchema>;
+type BulkUpdateCriteria = BulkUpdateArgs['criteria'];
+type BulkUpdateChanges = BulkUpdateArgs['updates'];
+type BulkDeleteCriteria = z.infer<typeof BulkDeleteRemindersSchema>['criteria'];
+type MoveReminderArgs = z.infer<typeof MoveReminderSchema>;
+type BulkOperationCriteria = BulkUpdateCriteria | BulkDeleteCriteria;
 
 /**
  * Extracts validated arguments from tool args by removing the action field
@@ -119,8 +120,6 @@ export const handleUpdateReminder = async (
   );
 };
 
-
-
 /**
  * Processes grouped reminders for batch organization
  */
@@ -168,8 +167,10 @@ const moveRemindersToGroup = async (
   groupName: string,
   results: string[],
 ): Promise<void> => {
-  const remindersToMove = reminders.filter(reminder => reminder.list !== groupName);
-  
+  const remindersToMove = reminders.filter(
+    (reminder) => reminder.list !== groupName,
+  );
+
   for (const reminder of remindersToMove) {
     try {
       const moveData: MoveReminderData = {
@@ -212,7 +213,6 @@ export const handleDeleteReminder = async (
   );
 };
 
-
 /**
  * Reads all reminder lists or creates a new one with simplified logic
  * @param args - Optional arguments for creating a new list
@@ -228,13 +228,16 @@ export const handleReadReminderLists = async (
     }
 
     const { action: _, ...rest } = args;
-    const validatedArgs = rest && Object.keys(rest).length > 0 
-      ? validateInput(ReadReminderListsSchema, rest) 
-      : undefined;
+    const validatedArgs =
+      rest && Object.keys(rest).length > 0
+        ? validateInput(ReadReminderListsSchema, rest)
+        : undefined;
 
     if (validatedArgs?.createNew) {
       await reminderRepository.createReminderList(validatedArgs.createNew.name);
-      return { message: `List "${validatedArgs.createNew.name}" created successfully` };
+      return {
+        message: `List "${validatedArgs.createNew.name}" created successfully`,
+      };
     }
 
     const lists = await reminderRepository.findAllLists();
@@ -260,20 +263,24 @@ export const handleReadReminders = async (
 ): Promise<CallToolResult> => {
   return handleJsonAsyncOperation(async () => {
     const validatedArgs = extractAndValidateArgs(args, ReadRemindersSchema);
-    
+
     // Handle intelligent default list selection when no filterList is provided
     // Only apply default list selection if no other filters are specified
     let effectiveFilterList = validatedArgs.filterList;
-    
-    if (!effectiveFilterList && !validatedArgs.search && !validatedArgs.dueWithin) {
+
+    if (
+      !effectiveFilterList &&
+      !validatedArgs.search &&
+      !validatedArgs.dueWithin
+    ) {
       // Get all reminders to determine available lists
       const allReminders = await reminderRepository.findReminders({
-        showCompleted: validatedArgs.showCompleted
+        showCompleted: validatedArgs.showCompleted,
       });
-      
+
       // Extract unique lists from reminders
-      const availableLists = [...new Set(allReminders.map(r => r.list))];
-      
+      const availableLists = [...new Set(allReminders.map((r) => r.list))];
+
       // Apply intelligent default list selection logic
       if (availableLists.includes('Reminders')) {
         effectiveFilterList = 'Reminders';
@@ -283,12 +290,12 @@ export const handleReadReminders = async (
         effectiveFilterList = availableLists[0]; // First available list in order found
       }
     }
-    
+
     const filters = buildReadReminderFilters({
       ...validatedArgs,
-      filterList: effectiveFilterList
+      filterList: effectiveFilterList,
     });
-    
+
     const reminders = await reminderRepository.findReminders(filters);
     return createReminderReadResponse(reminders, filters);
   }, 'read reminders');
@@ -307,16 +314,23 @@ export const handleMoveReminder = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const { title, fromList, toList } = args as any; // Simple validation for backward compatibility
-      
+      const validatedArgs: MoveReminderArgs = extractAndValidateArgs(
+        args,
+        MoveReminderSchema,
+      );
+
       const moveData: MoveReminderData = {
-        title,
-        fromList,
-        toList,
+        title: validatedArgs.title,
+        fromList: validatedArgs.fromList,
+        toList: validatedArgs.toList,
       };
 
       await reminderRepository.moveReminder(moveData);
-      return `Moved "${title}" from "${fromList}" to "${toList}"`;
+      return MESSAGES.SUCCESS.REMINDER_MOVED(
+        validatedArgs.title,
+        validatedArgs.fromList,
+        validatedArgs.toList,
+      );
     },
     'move reminder',
     ErrorResponseFactory.createSuccessResponse,
@@ -345,7 +359,7 @@ const createReminderReadResponse = (
   reminders: Reminder[],
   filters: ReminderFilters,
 ) => {
-  const mappedReminders = reminders.map(reminder => ({
+  const mappedReminders = reminders.map((reminder) => ({
     title: reminder.title,
     list: reminder.list,
     isCompleted: reminder.isCompleted === true,
@@ -376,7 +390,10 @@ export const handleCreateReminderList = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const validatedArgs = extractAndValidateArgs(args, CreateReminderListSchema);
+      const validatedArgs = extractAndValidateArgs(
+        args,
+        CreateReminderListSchema,
+      );
       await reminderRepository.createReminderList(validatedArgs.name);
       return MESSAGES.SUCCESS.LIST_CREATED(validatedArgs.name);
     },
@@ -395,9 +412,18 @@ export const handleUpdateReminderList = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const validatedArgs = extractAndValidateArgs(args, UpdateReminderListSchema);
-      await reminderRepository.updateReminderList(validatedArgs.name, validatedArgs.newName);
-      return MESSAGES.SUCCESS.LIST_UPDATED(validatedArgs.name, validatedArgs.newName);
+      const validatedArgs = extractAndValidateArgs(
+        args,
+        UpdateReminderListSchema,
+      );
+      await reminderRepository.updateReminderList(
+        validatedArgs.name,
+        validatedArgs.newName,
+      );
+      return MESSAGES.SUCCESS.LIST_UPDATED(
+        validatedArgs.name,
+        validatedArgs.newName,
+      );
     },
     'update reminder list',
     ErrorResponseFactory.createSuccessResponse,
@@ -414,7 +440,10 @@ export const handleDeleteReminderList = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const validatedArgs = extractAndValidateArgs(args, DeleteReminderListSchema);
+      const validatedArgs = extractAndValidateArgs(
+        args,
+        DeleteReminderListSchema,
+      );
       await reminderRepository.deleteReminderList(validatedArgs.name);
       return MESSAGES.SUCCESS.LIST_DELETED(validatedArgs.name);
     },
@@ -422,7 +451,6 @@ export const handleDeleteReminderList = async (
     ErrorResponseFactory.createSuccessResponse,
   );
 };
-
 
 /**
  * Creates multiple reminders in bulk
@@ -434,8 +462,11 @@ export const handleBulkCreateReminders = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const validatedArgs = extractAndValidateArgs(args, BulkCreateRemindersSchema);
-      
+      const validatedArgs = extractAndValidateArgs(
+        args,
+        BulkCreateRemindersSchema,
+      );
+
       const results = await Promise.allSettled(
         validatedArgs.items.map(async (item) => {
           const reminderData: CreateReminderData = {
@@ -445,18 +476,18 @@ export const handleBulkCreateReminders = async (
             url: item.url,
             list: item.targetList,
           };
-          
+
           await reminderRepository.createReminder(reminderData);
           return `Created: ${item.title}`;
-        })
+        }),
       );
-      
-      const messages = results.map((result, index) => 
-        result.status === 'fulfilled' 
-          ? result.value 
-          : `Failed to create "${validatedArgs.items[index].title}": ${result.reason?.message ?? 'Unknown error'}`
+
+      const messages = results.map((result, index) =>
+        result.status === 'fulfilled'
+          ? result.value
+          : `Failed to create "${validatedArgs.items[index].title}": ${result.reason?.message ?? 'Unknown error'}`,
       );
-      
+
       return `Bulk creation complete:\n${messages.join('\n')}`;
     },
     'bulk create reminders',
@@ -468,20 +499,23 @@ export const handleBulkCreateReminders = async (
  * Handles organization of reminders using specified strategy
  */
 const handleReminderOrganization = async (validatedArgs: {
-  organizeBy: string;
-  criteria: any;
-  createLists?: boolean;
+  organizeBy: NonNullable<BulkUpdateArgs['organizeBy']>;
+  criteria: BulkUpdateCriteria;
+  createLists?: BulkUpdateArgs['createLists'];
 }): Promise<string> => {
   const filters = buildBulkFilters(validatedArgs.criteria);
   const reminders = await reminderRepository.findReminders(filters);
-  
+
   if (reminders.length === 0) {
     return 'No reminders found matching the specified criteria for organization.';
   }
-  
-  const groups = ReminderOrganizer.organizeReminders(reminders, validatedArgs.organizeBy);
+
+  const groups = ReminderOrganizer.organizeReminders(
+    reminders,
+    validatedArgs.organizeBy,
+  );
   const shouldCreateLists = validatedArgs.createLists !== false;
-  
+
   const results = await processBatchGroups(groups, shouldCreateLists);
   return `Organization complete using ${validatedArgs.organizeBy} strategy:\n${results.join('\n')}`;
 };
@@ -490,16 +524,16 @@ const handleReminderOrganization = async (validatedArgs: {
  * Handles regular bulk updates of reminders
  */
 const handleRegularBulkUpdate = async (validatedArgs: {
-  criteria: any;
-  updates: any;
+  criteria: BulkUpdateCriteria;
+  updates: BulkUpdateChanges;
 }): Promise<string> => {
   const filters = buildBulkFilters(validatedArgs.criteria);
   const reminders = await reminderRepository.findReminders(filters);
-  
+
   if (reminders.length === 0) {
     return 'No reminders found matching the specified criteria for bulk update.';
   }
-  
+
   const results = await Promise.allSettled(
     reminders.map(async (reminder) => {
       const updateData: UpdateReminderData = {
@@ -511,18 +545,18 @@ const handleRegularBulkUpdate = async (validatedArgs: {
         completed: validatedArgs.updates.completed,
         list: validatedArgs.updates.targetList,
       };
-      
+
       await reminderRepository.updateReminder(updateData);
       return `Updated: ${reminder.title}`;
-    })
+    }),
   );
-  
-  const messages = results.map((result, index) => 
-    result.status === 'fulfilled' 
-      ? result.value 
-      : `Failed to update "${reminders[index].title}": ${result.reason?.message ?? 'Unknown error'}`
+
+  const messages = results.map((result, index) =>
+    result.status === 'fulfilled'
+      ? result.value
+      : `Failed to update "${reminders[index].title}": ${result.reason?.message ?? 'Unknown error'}`,
   );
-  
+
   return `Bulk update complete (${messages.length} reminders):\n${messages.join('\n')}`;
 };
 
@@ -536,8 +570,11 @@ export const handleBulkUpdateReminders = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const validatedArgs = extractAndValidateArgs(args, BulkUpdateRemindersSchema);
-      
+      const validatedArgs = extractAndValidateArgs(
+        args,
+        BulkUpdateRemindersSchema,
+      );
+
       return validatedArgs.organizeBy
         ? handleReminderOrganization({
             organizeBy: validatedArgs.organizeBy,
@@ -561,28 +598,34 @@ export const handleBulkDeleteReminders = async (
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(
     async () => {
-      const validatedArgs = extractAndValidateArgs(args, BulkDeleteRemindersSchema);
-      
+      const validatedArgs = extractAndValidateArgs(
+        args,
+        BulkDeleteRemindersSchema,
+      );
+
       const filters = buildBulkFilters(validatedArgs.criteria);
       const reminders = await reminderRepository.findReminders(filters);
-      
+
       if (reminders.length === 0) {
         return 'No reminders found matching the specified criteria for bulk deletion.';
       }
-      
+
       const results = await Promise.allSettled(
         reminders.map(async (reminder) => {
-          await reminderRepository.deleteReminder(reminder.title, reminder.list);
+          await reminderRepository.deleteReminder(
+            reminder.title,
+            reminder.list,
+          );
           return `Deleted: ${reminder.title}`;
-        })
+        }),
       );
-      
-      const messages = results.map((result, index) => 
-        result.status === 'fulfilled' 
-          ? result.value 
-          : `Failed to delete "${reminders[index].title}": ${result.reason?.message ?? 'Unknown error'}`
+
+      const messages = results.map((result, index) =>
+        result.status === 'fulfilled'
+          ? result.value
+          : `Failed to delete "${reminders[index].title}": ${result.reason?.message ?? 'Unknown error'}`,
       );
-      
+
       return `Bulk deletion complete (${messages.length} reminders):\n${messages.join('\n')}`;
     },
     'bulk delete reminders',
@@ -593,12 +636,9 @@ export const handleBulkDeleteReminders = async (
 /**
  * Builds filter criteria for bulk operations
  */
-const buildBulkFilters = (criteria: {
-  search?: string;
-  dueWithin?: DueWithinOption;
-  completed?: boolean;
-  sourceList?: string;
-}): ReminderFilters => ({
+const buildBulkFilters = (
+  criteria: BulkOperationCriteria,
+): ReminderFilters => ({
   list: criteria.sourceList,
   showCompleted: criteria.completed,
   search: criteria.search,

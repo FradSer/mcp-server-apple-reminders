@@ -157,7 +157,10 @@ export class ReminderRepository {
   /**
    * Updates a reminder list name
    */
-  async updateReminderList(currentName: string, newName: string): Promise<void> {
+  async updateReminderList(
+    currentName: string,
+    newName: string,
+  ): Promise<void> {
     const builder = new ReminderListUpdateBuilder(currentName, newName);
     const script = builder.build();
 

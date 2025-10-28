@@ -5,14 +5,19 @@
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
-import type { ReminderAction, ListAction, DueWithinOption, OrganizeStrategy } from '../types/index.js';
+import type {
+  DueWithinOption,
+  ListAction,
+  OrganizeStrategy,
+  ReminderAction,
+} from '../types/index.js';
 
 /**
  * Const assertions for tool schema validation
  */
 const REMINDER_ACTIONS: readonly ReminderAction[] = [
   'read',
-  'create', 
+  'create',
   'update',
   'delete',
   'bulk_create',
@@ -20,12 +25,17 @@ const REMINDER_ACTIONS: readonly ReminderAction[] = [
   'bulk_delete',
 ] as const;
 
-const LIST_ACTIONS: readonly ListAction[] = ['read', 'create', 'update', 'delete'] as const;
+const LIST_ACTIONS: readonly ListAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
 
 const DUE_WITHIN_OPTIONS: readonly DueWithinOption[] = [
   'today',
   'tomorrow',
-  'this-week', 
+  'this-week',
   'overdue',
   'no-date',
 ] as const;
@@ -211,11 +221,13 @@ export const TOOLS: Tool[] = [
         organizeBy: {
           type: 'string',
           enum: ORGANIZE_STRATEGIES,
-          description: 'Strategy for organizing reminders in bulk_update operations',
+          description:
+            'Strategy for organizing reminders in bulk_update operations',
         },
         createLists: {
           type: 'boolean',
-          description: 'Create new lists automatically during bulk organization',
+          description:
+            'Create new lists automatically during bulk organization',
           default: true,
         },
       },

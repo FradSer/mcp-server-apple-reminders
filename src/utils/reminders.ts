@@ -1,5 +1,4 @@
 import { spawn } from 'node:child_process';
-import fs from 'node:fs';
 import path from 'node:path';
 import type { Reminder, ReminderList } from '../types/index.js';
 import {
@@ -11,8 +10,8 @@ import {
 import { logger } from './logger.js';
 import {
   findProjectRoot,
-  locateProjectRoot,
   getFallbackSearchDirectory,
+  locateProjectRoot,
 } from './projectUtils.js';
 
 const MAX_ROOT_SEARCH_DEPTH = 10;
@@ -53,7 +52,10 @@ export class RemindersManager {
       // First try using the centralized utility (works when run from project dir)
       return findProjectRoot();
     } catch (error) {
-      logger.debug('Error using findProjectRoot utility, falling back to file location:', error);
+      logger.debug(
+        'Error using findProjectRoot utility, falling back to file location:',
+        error,
+      );
       return this.findProjectRootFromFileLocation();
     }
   }
@@ -79,17 +81,14 @@ export class RemindersManager {
       if (process.env.NODE_ENV === 'test') {
         return this.findProjectRootFromCwd();
       }
-      
+
       // Get the directory of the current file
       const currentFileUrl = import.meta.url;
       const currentFilePath = new URL(currentFileUrl).pathname;
       const currentDir = path.dirname(currentFilePath);
 
       // Start from the current file's directory and go up to find package.json
-      const projectRoot = locateProjectRoot(
-        currentDir,
-        MAX_ROOT_SEARCH_DEPTH,
-      );
+      const projectRoot = locateProjectRoot(currentDir, MAX_ROOT_SEARCH_DEPTH);
 
       if (projectRoot) {
         logger.debug(`Project root found from file location: ${projectRoot}`);
@@ -120,7 +119,10 @@ export class RemindersManager {
   /**
    * Selects the appropriate binary path from available options
    */
-  private selectBinaryPath(possiblePaths: string[], projectRoot: string): string {
+  private selectBinaryPath(
+    possiblePaths: string[],
+    projectRoot: string,
+  ): string {
     const { path: securePath } = findSecureBinaryPath(
       possiblePaths,
       getEnvironmentBinaryConfig(),
@@ -132,7 +134,13 @@ export class RemindersManager {
     }
 
     // Fallback to default path
-    const defaultPath = path.resolve(projectRoot, 'dist', 'swift', 'bin', 'GetReminders');
+    const defaultPath = path.resolve(
+      projectRoot,
+      'dist',
+      'swift',
+      'bin',
+      'GetReminders',
+    );
     logger.warn(`⚠️  Using fallback binary path: ${defaultPath}`);
     return defaultPath;
   }
@@ -286,14 +294,16 @@ Or rebuild the binary:
     const sections = this.splitIntoSections(output);
     const lists = this.parseLists(sections.lists);
     const rawReminders = this.parseReminders(sections.reminders);
-    
+
     // Normalize reminder completion status
     const reminders = rawReminders.map((reminder) => ({
       ...reminder,
       isCompleted: this.normalizeIsCompleted(reminder.isCompleted),
     }));
 
-    logger.debug(`Finished parsing: ${lists.length} lists, ${reminders.length} reminders`);
+    logger.debug(
+      `Finished parsing: ${lists.length} lists, ${reminders.length} reminders`,
+    );
     return { lists, reminders };
   }
 
@@ -377,13 +387,27 @@ Or rebuild the binary:
     const reminder: Partial<Reminder> = { isCompleted: false };
 
     const fieldParsers: Record<string, (value: string) => void> = {
-      'Title:': (value) => reminder.title = value.trim(),
-      'Due Date:': (value) => reminder.dueDate = value.trim(),
-      'Notes:': (value) => reminder.notes = value.trim(),
-      'URL:': (value) => reminder.url = value.trim(),
-      'List:': (value) => reminder.list = value.trim(),
-      'Status:': (value) => reminder.isCompleted = value.trim() === 'Status: Completed',
-      'Raw isCompleted value:': (value) => reminder.isCompleted = value.trim().toLowerCase() === 'true'
+      'Title:': (value) => {
+        reminder.title = value.trim();
+      },
+      'Due Date:': (value) => {
+        reminder.dueDate = value.trim();
+      },
+      'Notes:': (value) => {
+        reminder.notes = value.trim();
+      },
+      'URL:': (value) => {
+        reminder.url = value.trim();
+      },
+      'List:': (value) => {
+        reminder.list = value.trim();
+      },
+      'Status:': (value) => {
+        reminder.isCompleted = value.trim() === 'Status: Completed';
+      },
+      'Raw isCompleted value:': (value) => {
+        reminder.isCompleted = value.trim().toLowerCase() === 'true';
+      },
     };
 
     for (const line of lines) {

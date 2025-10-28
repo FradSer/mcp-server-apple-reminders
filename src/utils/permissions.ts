@@ -392,21 +392,21 @@ export async function requestEventKitPermissions(): Promise<PermissionStatus> {
   }
 
   logger.debug('Attempting to request EventKit permissions...');
-  
+
   return new Promise((resolve) => {
     const process = spawn(binaryPath, []);
-    
-    let stdout = '';
+
+    let _stdout = '';
     let stderr = '';
-    
+
     process.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
+      _stdout += data.toString();
     });
-    
+
     process.stderr.on('data', (data: Buffer) => {
       stderr += data.toString();
     });
-    
+
     process.on('close', (code: number | null) => {
       // If the Swift binary succeeds (code 0), it means permissions were granted
       if (code === 0) {
@@ -419,23 +419,30 @@ export async function requestEventKitPermissions(): Promise<PermissionStatus> {
         resolve(createPermissionFailure(errorMessage, true));
       }
     });
-    
+
     process.on('error', (error: Error) => {
-      logger.error('Failed to execute Swift binary for permission request:', error);
-      resolve(createPermissionFailure(
-        `Failed to request EventKit permissions: ${error.message}`,
-        true
-      ));
+      logger.error(
+        'Failed to execute Swift binary for permission request:',
+        error,
+      );
+      resolve(
+        createPermissionFailure(
+          `Failed to request EventKit permissions: ${error.message}`,
+          true,
+        ),
+      );
     });
-    
+
     // Extended timeout for user interaction with permission dialog
     setTimeout(() => {
       if (!process.killed) {
         process.kill();
-        resolve(createPermissionFailure(
-          'Permission request timed out - user may have dismissed the dialog',
-          true
-        ));
+        resolve(
+          createPermissionFailure(
+            'Permission request timed out - user may have dismissed the dialog',
+            true,
+          ),
+        );
       }
     }, TIMEOUTS.EVENTKIT_PERMISSION_CHECK * 3); // Triple timeout for user interaction
   });
@@ -452,18 +459,21 @@ export async function ensurePermissions(): Promise<void> {
   // If permissions aren't granted, try to request them
   if (!permissions.allGranted) {
     logger.debug('Permissions not granted, attempting to request them...');
-    
+
     // Attempt to request EventKit permissions if they're the issue
     if (!permissions.eventKit.granted) {
       logger.debug('Requesting EventKit permissions...');
       const requestResult = await requestEventKitPermissions();
-      
+
       if (requestResult.granted) {
         logger.debug('EventKit permissions granted after request');
         // Re-check all permissions after successful request
         permissions = await checkAllPermissions();
       } else {
-        logger.debug('EventKit permission request failed:', requestResult.error);
+        logger.debug(
+          'EventKit permission request failed:',
+          requestResult.error,
+        );
       }
     }
   }

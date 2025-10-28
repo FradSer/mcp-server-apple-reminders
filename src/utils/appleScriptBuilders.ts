@@ -8,7 +8,7 @@ import {
   quoteAppleScriptString,
 } from './applescript.js';
 import { generateDateProperty, parseDateWithType } from './date.js';
-import { combineNoteWithUrl, formatNoteWithUrls, extractNoteContent, extractUrlsFromNotes } from "./urlHelpers.js";
+import { combineNoteWithUrl, formatNoteWithUrls } from './urlHelpers.js';
 
 interface ReminderProperties {
   title: string;
@@ -189,7 +189,7 @@ export class ReminderUpdateScriptBuilder {
     if (finalNote !== undefined) {
       return `  set body of targetReminder to ${quoteAppleScriptString(finalNote)}`;
     }
-    
+
     // Special case: append URL to existing body using structured format
     if (this.properties.url && this.properties.note === undefined) {
       // We need to handle this case by reading current body and combining it
@@ -198,7 +198,7 @@ export class ReminderUpdateScriptBuilder {
       return [
         '  set currentBody to body of targetReminder',
         '  if currentBody is missing value then set currentBody to ""',
-        `  set body of targetReminder to currentBody & ${quoteAppleScriptString('\n\n' + structuredUrl)}`
+        `  set body of targetReminder to currentBody & ${quoteAppleScriptString(`\n\n${structuredUrl}`)}`,
       ].join('\n');
     }
 
@@ -210,7 +210,7 @@ export class ReminderUpdateScriptBuilder {
 
     if (!url && note === undefined) return undefined;
     if (note === undefined) return undefined; // Special case for URL append
-    
+
     return combineNoteWithUrl(note, url);
   }
 }

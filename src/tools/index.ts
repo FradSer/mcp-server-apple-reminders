@@ -77,10 +77,14 @@ export async function handleToolCall(
           const listArgs = args as ListsToolArgs;
           if (!listArgs.name) {
             return {
-              content: [{
-                type: 'text',
-                text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED('Name is required for list creation')
-              }],
+              content: [
+                {
+                  type: 'text',
+                  text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED(
+                    'Name is required for list creation',
+                  ),
+                },
+              ],
               isError: true,
             };
           }
@@ -93,10 +97,14 @@ export async function handleToolCall(
           const listArgs = args as ListsToolArgs;
           if (!listArgs.name || !listArgs.newName) {
             return {
-              content: [{
-                type: 'text',
-                text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED('Name and newName are required for list update')
-              }],
+              content: [
+                {
+                  type: 'text',
+                  text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED(
+                    'Name and newName are required for list update',
+                  ),
+                },
+              ],
               isError: true,
             };
           }
@@ -110,10 +118,14 @@ export async function handleToolCall(
           const listArgs = args as ListsToolArgs;
           if (!listArgs.name) {
             return {
-              content: [{
-                type: 'text',
-                text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED('Name is required for list deletion')
-              }],
+              content: [
+                {
+                  type: 'text',
+                  text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED(
+                    'Name is required for list deletion',
+                  ),
+                },
+              ],
               isError: true,
             };
           }
