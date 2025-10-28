@@ -79,6 +79,8 @@ interface BaseToolArgs {
  */
 export interface RemindersToolArgs extends BaseToolArgs {
   action: ReminderAction;
+  // ID parameter
+  id?: string;
   // Filtering parameters (for list action)
   filterList?: string;
   showCompleted?: boolean;
@@ -131,6 +133,7 @@ export interface ListsToolArgs extends BaseToolArgs {
  */
 export type ReadReminderArgs = {
   action: 'read';
+  id?: string;
   filterList?: string;
   showCompleted?: boolean;
   search?: string;
