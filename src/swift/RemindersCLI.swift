@@ -195,7 +195,12 @@ class RemindersManager {
         return reminder.toJSON()
     }
 
-    func deleteReminder(id: String) throws { try eventStore.remove(try findReminder(withId: id) ?? { throw NSError(domain: "", code: 404) }(), commit: true) }
+    func deleteReminder(id: String) throws {
+        guard let reminder = findReminder(withId: id) else {
+            throw NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "Reminder with ID '\(id)' not found."])
+        }
+        try eventStore.remove(reminder, commit: true)
+    }
     func createList(title: String) throws -> ListJSON { let list = EKCalendar(for: .reminder, eventStore: eventStore); list.title = title; try eventStore.saveCalendar(list, commit: true); return list.toJSON() }
     func updateList(currentName: String, newName: String) throws -> ListJSON { let list = try findList(named: currentName); list.title = newName; try eventStore.saveCalendar(list, commit: true); return list.toJSON() }
     func deleteList(title: String) throws { try eventStore.removeCalendar(try findList(named: title), commit: true) }

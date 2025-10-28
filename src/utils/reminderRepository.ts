@@ -117,7 +117,7 @@ export class ReminderRepository {
   }
 
   async createReminderList(name: string): Promise<ListJSON> {
-    return executeCli<ListJSON>(['--action', 'create-list', '--title', name]);
+    return executeCli<ListJSON>(['--action', 'create-list', '--name', name]);
   }
 
   async updateReminderList(
@@ -135,7 +135,7 @@ export class ReminderRepository {
   }
 
   async deleteReminderList(name: string): Promise<void> {
-    await executeCli<unknown>(['--action', 'delete-list', '--title', name]);
+    await executeCli<unknown>(['--action', 'delete-list', '--name', name]);
   }
 
   async listExists(name: string): Promise<boolean> {
