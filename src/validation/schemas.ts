@@ -11,7 +11,9 @@ import { debugLog } from '../utils/logger.js';
 // Blocks: control chars (0x00-0x1F except \n\r\t), DEL, dangerous delimiters, Unicode line separators
 // This keeps Chinese/Unicode names working while remaining safe with AppleScript quoting.
 const SAFE_TEXT_PATTERN = /^[\u0020-\u007E\u00A0-\uFFFF\n\r\t]*$/u;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}(\s\d{2}:\d{2}:\d{2})?$/;
+// Support multiple date formats: YYYY-MM-DD, YYYY-MM-DD HH:mm:ss, or ISO 8601
+// Basic validation - detailed parsing handled by Swift
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}.*$/;
 // URL validation that blocks internal/private network addresses and localhost
 // Prevents SSRF attacks while allowing legitimate external URLs
 const URL_PATTERN =
@@ -73,7 +75,7 @@ export const SafeDateSchema = z
   .string()
   .regex(
     DATE_PATTERN,
-    "Date must be in format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:mm:ss'",
+    "Date must be in format 'YYYY-MM-DD', 'YYYY-MM-DD HH:mm:ss', or ISO 8601 (e.g., '2025-10-30T04:00:00Z')",
   )
   .optional();
 
@@ -109,12 +111,15 @@ const FilterCriteria = {
   sourceList: SafeListNameSchema,
 };
 
+export const SafeIdSchema = z.string().min(1, 'ID cannot be empty');
+
 /**
  * Tool-specific validation schemas
  */
 export const CreateReminderSchema = z.object(BaseReminderFields);
 
 export const ReadRemindersSchema = z.object({
+  id: SafeIdSchema.optional(),
   filterList: SafeListNameSchema,
   showCompleted: z.boolean().optional().default(false),
   search: SafeSearchSchema,
@@ -122,20 +127,22 @@ export const ReadRemindersSchema = z.object({
 });
 
 export const UpdateReminderSchema = z.object({
-  ...BaseReminderFields,
-  newTitle: SafeTextSchema.optional(),
+  id: SafeIdSchema,
+  title: SafeTextSchema.optional(),
+  dueDate: SafeDateSchema,
+  note: SafeNoteSchema,
+  url: SafeUrlSchema,
   completed: z.boolean().optional(),
-});
-
-export const DeleteReminderSchema = z.object({
-  title: SafeTextSchema,
-  filterList: SafeListNameSchema,
+  targetList: SafeListNameSchema,
 });
 
 export const MoveReminderSchema = z.object({
-  title: SafeTextSchema,
-  fromList: RequiredListNameSchema,
+  id: SafeIdSchema,
   toList: RequiredListNameSchema,
+});
+
+export const DeleteReminderSchema = z.object({
+  id: SafeIdSchema,
 });
 
 export const ReadReminderListsSchema = z.object({
@@ -245,6 +252,7 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
 export type CreateReminderInput = z.infer<typeof CreateReminderSchema>;
 export type ReadRemindersInput = z.infer<typeof ReadRemindersSchema>;
 export type UpdateReminderInput = z.infer<typeof UpdateReminderSchema>;
+export type MoveReminderInput = z.infer<typeof MoveReminderSchema>;
 export type DeleteReminderInput = z.infer<typeof DeleteReminderSchema>;
 export type BulkCreateRemindersInput = z.infer<
   typeof BulkCreateRemindersSchema
