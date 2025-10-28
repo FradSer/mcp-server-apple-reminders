@@ -3,10 +3,10 @@
  * Repository pattern implementation for reminder data access operations using RemindersCLI.
  */
 
+import type { Reminder, ReminderList } from '../types/index.js';
 import { executeCli } from './cliExecutor.js';
 import type { ReminderFilters } from './dateFiltering.js';
 import { applyReminderFilters } from './dateFiltering.js';
-import type { Reminder, ReminderList } from '../types/index.js';
 
 // Types matching the JSON output from RemindersCLI
 interface ReminderJSON {
@@ -35,6 +35,7 @@ export interface CreateReminderData {
   list?: string;
   notes?: string;
   url?: string;
+  dueDate?: string;
 }
 
 export interface UpdateReminderData {
@@ -44,11 +45,31 @@ export interface UpdateReminderData {
   notes?: string;
   url?: string;
   isCompleted?: boolean;
+  dueDate?: string;
 }
 
 export class ReminderRepository {
   private async readAll(): Promise<ReadResult> {
-    return executeCli<ReadResult>(['--action', 'read', '--showCompleted', 'true']);
+    return executeCli<ReadResult>([
+      '--action',
+      'read',
+      '--showCompleted',
+      'true',
+    ]);
+  }
+
+  async findReminderById(id: string): Promise<Reminder> {
+    const { reminders } = await this.readAll();
+    const reminder = reminders.find((r) => r.id === id);
+    if (!reminder) {
+      throw new Error(`Reminder with ID '${id}' not found.`);
+    }
+    return {
+      ...reminder,
+      notes: reminder.notes ?? undefined,
+      url: reminder.url ?? undefined,
+      dueDate: reminder.dueDate ?? undefined,
+    };
   }
 
   async findReminders(filters: ReminderFilters = {}): Promise<Reminder[]> {
@@ -62,14 +83,6 @@ export class ReminderRepository {
     return applyReminderFilters(mappedReminders, filters);
   }
 
-  async findReminderByTitle(
-    title: string,
-    listName?: string,
-  ): Promise<Reminder | null> {
-    const reminders = await this.findReminders({ list: listName });
-    return reminders.find((r) => r.title === title) ?? null;
-  }
-
   async findAllLists(): Promise<ReminderList[]> {
     const { lists } = await this.readAll();
     return lists;
@@ -77,9 +90,10 @@ export class ReminderRepository {
 
   async createReminder(data: CreateReminderData): Promise<ReminderJSON> {
     const args = ['--action', 'create', '--title', data.title];
-    if (data.list) args.push('--list', data.list);
-    if (data.notes) args.push('--notes', data.notes);
+    if (data.list) args.push('--targetList', data.list);
+    if (data.notes) args.push('--note', data.notes);
     if (data.url) args.push('--url', data.url);
+    if (data.dueDate) args.push('--dueDate', data.dueDate);
 
     return executeCli<ReminderJSON>(args);
   }
@@ -87,9 +101,10 @@ export class ReminderRepository {
   async updateReminder(data: UpdateReminderData): Promise<ReminderJSON> {
     const args = ['--action', 'update', '--id', data.id];
     if (data.newTitle) args.push('--title', data.newTitle);
-    if (data.list) args.push('--list', data.list);
-    if (data.notes) args.push('--notes', data.notes);
+    if (data.list) args.push('--targetList', data.list);
+    if (data.notes) args.push('--note', data.notes);
     if (data.url) args.push('--url', data.url);
+    if (data.dueDate) args.push('--dueDate', data.dueDate);
     if (data.isCompleted !== undefined) {
       args.push('--isCompleted', String(data.isCompleted));
     }
@@ -105,7 +120,10 @@ export class ReminderRepository {
     return executeCli<ListJSON>(['--action', 'create-list', '--title', name]);
   }
 
-  async updateReminderList(currentName: string, newName: string): Promise<ListJSON> {
+  async updateReminderList(
+    currentName: string,
+    newName: string,
+  ): Promise<ListJSON> {
     return executeCli<ListJSON>([
       '--action',
       'update-list',
