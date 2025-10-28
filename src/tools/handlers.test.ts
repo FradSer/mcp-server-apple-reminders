@@ -17,6 +17,11 @@ import {
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 
+// Mock the cliExecutor to avoid import.meta issues
+jest.mock('../utils/cliExecutor.js', () => ({
+  executeCli: jest.fn(),
+}));
+
 // Mock the repository and error handling
 jest.mock('../utils/reminderRepository.js');
 jest.mock('../utils/errorHandling.js');
