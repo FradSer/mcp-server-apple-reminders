@@ -313,9 +313,14 @@ Manage reminder lists - view existing lists or create new ones for organizing re
 }
 ```
 
-**Note about URL fields**: The `url` field is currently limited by Apple's EventKit API restrictions and will typically be `null`. This is a limitation of Apple's EventKit framework, not our implementation. URLs stored in the native URL field of reminders cannot be accessed programmatically.
+**Note about URL fields**: The `url` field is fully supported by EventKit API. When you create or update a reminder with a URL parameter, the URL is stored in two places for maximum compatibility:
 
-**Structured URL Format**: This server now uses a structured format for URLs in reminder notes to ensure consistent parsing and extraction:
+1. **EventKit URL field**: The URL is stored in the native `url` property (visible in Reminders app detail view via the "i" icon)
+2. **Notes field**: The URL is also appended to the notes using a structured format for parsing
+
+**Dual Storage Approach**:
+- **URL field**: Stores a single URL for native Reminders app display
+- **Notes field**: Stores URLs in a structured format for parsing and multiple URL support
 
 ```
 Reminder note content here...
@@ -324,6 +329,8 @@ URLs:
 - https://example.com
 - https://another-url.com
 ```
+
+This ensures URLs are accessible both in the Reminders app UI and through the API/notes for parsing.
 
 **URL Extraction**: You can extract URLs from reminder notes using the structured format or regex fallback:
 ```typescript
