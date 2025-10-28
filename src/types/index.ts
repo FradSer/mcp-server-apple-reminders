@@ -9,6 +9,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
  * Reminder item interface
  */
 export interface Reminder {
+  id: string;
   title: string;
   dueDate?: string;
   notes?: string;
@@ -21,7 +22,7 @@ export interface Reminder {
  * Reminder list interface
  */
 export interface ReminderList {
-  id: number;
+  id: string;
   title: string;
 }
 

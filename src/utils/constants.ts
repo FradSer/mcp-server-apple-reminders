@@ -10,9 +10,6 @@ export const TIMEOUTS = {
   /** Timeout for EventKit permission checks */
   EVENTKIT_PERMISSION_CHECK: 10000,
 
-  /** Timeout for AppleScript permission checks */
-  APPLESCRIPT_PERMISSION_CHECK: 5000,
-
   /** Default timeout for general operations */
   DEFAULT_OPERATION: 5000,
 } as const;
@@ -119,24 +116,6 @@ export const PERMISSIONS = {
     'authorization',
     'not authorized',
   ],
-} as const;
-
-/**
- * AppleScript-related constants
- */
-export const APPLESCRIPT = {
-  /** AppleScript command executable */
-  EXECUTABLE: 'osascript',
-
-  /** Command line flag for executing script */
-  EXECUTE_FLAG: '-e',
-
-  /** Reminders application name */
-  REMINDERS_APP: 'Reminders',
-
-  /** Test script for permission checking */
-  PERMISSION_TEST_SCRIPT:
-    'tell application "Reminders" to get the name of every list',
 } as const;
 
 /**

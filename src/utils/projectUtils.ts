@@ -5,6 +5,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { logger } from './logger.js';
 
 /**
@@ -14,7 +15,10 @@ import { logger } from './logger.js';
  * @throws Error if project root cannot be found
  */
 export function findProjectRoot(maxDepth = 10): string {
-  const root = locateProjectRoot(process.cwd(), maxDepth);
+  // Derive the starting directory from the current module's location for robustness.
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const root = locateProjectRoot(__dirname, maxDepth);
 
   if (root) {
     return root;
