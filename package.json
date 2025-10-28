@@ -25,12 +25,10 @@
     "mcp-server-apple-reminders": "./bin/run.cjs"
   },
   "scripts": {
-    "build": "npm run build:swift && npm run build:ts",
-    "build:ts": "tsc",
+    "build": "npm run build:swift",
     "build:swift": "src/swift/build.sh && mkdir -p dist/swift/bin && cp -p src/swift/bin/GetReminders dist/swift/bin/GetReminders",
     "dev": "node ./bin/run-dev.cjs",
-    "dev:watch": "tsc --watch",
-    "start": "node dist/index.js",
+    "start": "node ./bin/run.cjs",
     "test": "jest"
   },
   "dependencies": {
