@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-10-28
+
+### Added
+
+- Move reminder functionality to transfer reminders between lists
+- Swift CLI implementation for EventKit integration with dual URL storage
+- Support for multiple date formats including ISO 8601
+- ID parameter support for reading single reminder details
+- Enhanced npx execution without build requirements
+- Structured prompt coverage and comprehensive testing
+
+### Fixed
+
+- Due date and URL parameter support for reminder creation
+- Jest configuration for better TypeScript support
+- Reminder type safety enforcement
+- Project root fallback restoration
+
 ## [0.9.0] - 2025-10-10
 
 ### Added
@@ -285,7 +303,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic Apple Reminders integration
 - Foundation for macOS native reminder management
 
-[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.8.0...HEAD
+[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.8.1...v0.9.0
+[0.8.1]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.8.0...v0.8.1
 [0.8.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.7.3...v0.8.0
 [0.7.3]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.7.2...v0.7.3
 [0.7.2]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.7.1...v0.7.2
