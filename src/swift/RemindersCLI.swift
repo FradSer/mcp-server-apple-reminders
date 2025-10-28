@@ -125,8 +125,23 @@ class RemindersManager {
         let reminder = EKReminder(eventStore: eventStore)
         reminder.calendar = try findList(named: listName)
         reminder.title = title
-        if let notes = notes { reminder.notes = notes }
-        if let urlStr = urlString, !urlStr.isEmpty, let url = URL(string: urlStr) { reminder.url = url }
+        
+        // Handle URL: store in both URL field and append to notes
+        var finalNotes = notes
+        if let urlStr = urlString, !urlStr.isEmpty, let url = URL(string: urlStr) {
+            reminder.url = url
+            // Append URL to notes only if it doesn't already exist
+            let urlInNotes = notes?.contains(urlStr) ?? false
+            if !urlInNotes {
+                if let existingNotes = notes, !existingNotes.isEmpty {
+                    finalNotes = existingNotes + "\n\nURLs:\n- " + urlStr
+                } else {
+                    finalNotes = "URLs:\n- " + urlStr
+                }
+            }
+        }
+        if let finalNotes = finalNotes { reminder.notes = finalNotes }
+        
         if let dateStr = dueDateString { reminder.dueDateComponents = parseDateComponents(from: dateStr) }
         try eventStore.save(reminder, commit: true)
         return reminder.toJSON()
@@ -135,8 +150,44 @@ class RemindersManager {
     func updateReminder(id: String, newTitle: String?, listName: String?, notes: String?, urlString: String?, isCompleted: Bool?, dueDateString: String?) throws -> ReminderJSON {
         guard let reminder = findReminder(withId: id) else { throw NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "ID '\(id)' not found."]) }
         if let newTitle = newTitle { reminder.title = newTitle }
-        if let notes = notes { reminder.notes = notes }
-        if let urlStr = urlString, !urlStr.isEmpty, let url = URL(string: urlStr) { reminder.url = url }
+        
+        // Handle URL: store in both URL field and append to notes
+        var finalNotes: String?
+        
+        if let urlStr = urlString, !urlStr.isEmpty, let url = URL(string: urlStr) {
+            reminder.url = url  // Store single URL in URL field
+            // If new notes provided and doesn't contain URL, append URL to new notes
+            if let newNotes = notes {
+                let urlInNewNotes = newNotes.contains(urlStr)
+                if !urlInNewNotes {
+                    // Append URL to new notes
+                    finalNotes = newNotes.isEmpty ? "URLs:\n- " + urlStr : newNotes + "\n\nURLs:\n- " + urlStr
+                } else {
+                    finalNotes = newNotes
+                }
+            } else {
+                // No new notes provided, check if URL exists in existing notes
+                let urlInOriginalNotes = reminder.notes?.contains(urlStr) ?? false
+                if !urlInOriginalNotes {
+                    if let existingNotes = reminder.notes, !existingNotes.isEmpty {
+                        finalNotes = existingNotes + "\n\nURLs:\n- " + urlStr
+                    } else {
+                        finalNotes = "URLs:\n- " + urlStr
+                    }
+                } else {
+                    finalNotes = reminder.notes
+                }
+            }
+        } else if let newNotes = notes {
+            // No URL provided but new notes provided
+            finalNotes = newNotes
+        } else {
+            // No URL and no new notes, keep existing notes
+            finalNotes = reminder.notes
+        }
+        
+        if let finalNotes = finalNotes { reminder.notes = finalNotes }
+        
         if let isCompleted = isCompleted { reminder.isCompleted = isCompleted }
         if let listName = listName { reminder.calendar = try findList(named: listName) }
         if let dateStr = dueDateString { reminder.dueDateComponents = parseDateComponents(from: dateStr) }
