@@ -25,15 +25,10 @@ interface MockPromptArgument {
   description: string;
 }
 
-// Mock the tools and applescript modules
+// Mock the tools and prompts modules
 jest.mock('../tools/index.js', () => ({
   TOOLS: [],
   handleToolCall: jest.fn(),
-}));
-
-jest.mock('../utils/applescript.js', () => ({
-  createRemindersScript: jest.fn((script: string) => script),
-  executeAppleScript: jest.fn((_script: string) => 'Default,Work,Personal'),
 }));
 
 describe('Server Handlers', () => {

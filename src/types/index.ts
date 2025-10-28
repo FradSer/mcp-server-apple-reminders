@@ -9,10 +9,11 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
  * Reminder item interface
  */
 export interface Reminder {
+  id: string;
   title: string;
   dueDate?: string;
   notes?: string;
-  url?: string;           // Native URL field (currently limited by EventKit API)
+  url?: string; // Native URL field (currently limited by EventKit API)
   list: string;
   isCompleted: boolean;
 }
@@ -21,7 +22,7 @@ export interface Reminder {
  * Reminder list interface
  */
 export interface ReminderList {
-  id: number;
+  id: string;
   title: string;
 }
 
@@ -44,10 +45,27 @@ export interface ReminderResult {
 /**
  * Shared type constants for better type safety and consistency
  */
-export type ReminderAction = 'read' | 'list' | 'create' | 'update' | 'delete' | 'bulk_create' | 'bulk_update' | 'bulk_delete';
+export type ReminderAction =
+  | 'read'
+  | 'list'
+  | 'create'
+  | 'update'
+  | 'delete'
+  | 'bulk_create'
+  | 'bulk_update'
+  | 'bulk_delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
-export type DueWithinOption = 'today' | 'tomorrow' | 'this-week' | 'overdue' | 'no-date';
-export type OrganizeStrategy = 'priority' | 'due_date' | 'category' | 'completion_status';
+export type DueWithinOption =
+  | 'today'
+  | 'tomorrow'
+  | 'this-week'
+  | 'overdue'
+  | 'no-date';
+export type OrganizeStrategy =
+  | 'priority'
+  | 'due_date'
+  | 'category'
+  | 'completion_status';
 
 /**
  * Base tool arguments interface
@@ -61,6 +79,8 @@ interface BaseToolArgs {
  */
 export interface RemindersToolArgs extends BaseToolArgs {
   action: ReminderAction;
+  // ID parameter
+  id?: string;
   // Filtering parameters (for list action)
   filterList?: string;
   showCompleted?: boolean;
@@ -111,24 +131,91 @@ export interface ListsToolArgs extends BaseToolArgs {
 /**
  * Specific action argument types for better validation
  */
-export type ReadReminderArgs = { action: 'read'; filterList?: string; showCompleted?: boolean; search?: string; dueWithin?: DueWithinOption };
-export type CreateReminderArgs = { action: 'create'; title: string; dueDate?: string; note?: string; url?: string; targetList?: string };
-export type UpdateReminderArgs = { action: 'update'; title: string; newTitle?: string; dueDate?: string; note?: string; url?: string; completed?: boolean; targetList?: string };
-export type DeleteReminderArgs = { action: 'delete'; title: string; filterList?: string };
-export type BulkCreateReminderArgs = { action: 'bulk_create'; items: Array<{ title: string; dueDate?: string; note?: string; url?: string; targetList?: string }> };
-export type BulkUpdateReminderArgs = { action: 'bulk_update'; criteria: { search?: string; dueWithin?: DueWithinOption; completed?: boolean; sourceList?: string }; updates: { newTitle?: string; dueDate?: string; note?: string; url?: string; completed?: boolean; targetList?: string }; organizeBy?: OrganizeStrategy; createLists?: boolean };
-export type BulkDeleteReminderArgs = { action: 'bulk_delete'; criteria: { search?: string; dueWithin?: DueWithinOption; completed?: boolean; sourceList?: string } };
+export type ReadReminderArgs = {
+  action: 'read';
+  id?: string;
+  filterList?: string;
+  showCompleted?: boolean;
+  search?: string;
+  dueWithin?: DueWithinOption;
+};
+export type CreateReminderArgs = {
+  action: 'create';
+  title: string;
+  dueDate?: string;
+  note?: string;
+  url?: string;
+  targetList?: string;
+};
+export type UpdateReminderArgs = {
+  action: 'update';
+  title: string;
+  newTitle?: string;
+  dueDate?: string;
+  note?: string;
+  url?: string;
+  completed?: boolean;
+  targetList?: string;
+};
+export type DeleteReminderArgs = {
+  action: 'delete';
+  title: string;
+  filterList?: string;
+};
+export type BulkCreateReminderArgs = {
+  action: 'bulk_create';
+  items: Array<{
+    title: string;
+    dueDate?: string;
+    note?: string;
+    url?: string;
+    targetList?: string;
+  }>;
+};
+export type BulkUpdateReminderArgs = {
+  action: 'bulk_update';
+  criteria: {
+    search?: string;
+    dueWithin?: DueWithinOption;
+    completed?: boolean;
+    sourceList?: string;
+  };
+  updates: {
+    newTitle?: string;
+    dueDate?: string;
+    note?: string;
+    url?: string;
+    completed?: boolean;
+    targetList?: string;
+  };
+  organizeBy?: OrganizeStrategy;
+  createLists?: boolean;
+};
+export type BulkDeleteReminderArgs = {
+  action: 'bulk_delete';
+  criteria: {
+    search?: string;
+    dueWithin?: DueWithinOption;
+    completed?: boolean;
+    sourceList?: string;
+  };
+};
 
 export type CreateListArgs = { action: 'create'; name: string };
-export type UpdateListArgs = { action: 'update'; name: string; newName: string };
+export type UpdateListArgs = {
+  action: 'update';
+  name: string;
+  newName: string;
+};
 export type DeleteListArgs = { action: 'delete'; name: string };
 export type ReadListsArgs = { action: 'read' };
-
 
 /**
  * Tool handler function signatures
  */
-export type ReminderToolHandler = (args: RemindersToolArgs) => Promise<CallToolResult>;
+export type ReminderToolHandler = (
+  args: RemindersToolArgs,
+) => Promise<CallToolResult>;
 export type ListToolHandler = (args: ListsToolArgs) => Promise<CallToolResult>;
 export type ToolHandler = ReminderToolHandler | ListToolHandler;
 
@@ -145,19 +232,19 @@ export interface Resource {
  * Prompt-related type exports for consumers that need to interact with the
  * structured MCP prompt registry.
  */
-export {
-  type PromptName,
-  type PromptArgumentDefinition,
-  type PromptMetadata,
-  type PromptMessageContent,
-  type PromptMessage,
-  type PromptResponse,
-  type DailyTaskOrganizerArgs,
-  type SmartReminderCreatorArgs,
-  type ReminderReviewAssistantArgs,
-  type WeeklyPlanningWorkflowArgs,
-  type ReminderCleanupGuideArgs,
-  type GoalTrackingSetupArgs,
-  type PromptArgsByName,
-  type PromptTemplate,
+export type {
+  DailyTaskOrganizerArgs,
+  GoalTrackingSetupArgs,
+  PromptArgsByName,
+  PromptArgumentDefinition,
+  PromptMessage,
+  PromptMessageContent,
+  PromptMetadata,
+  PromptName,
+  PromptResponse,
+  PromptTemplate,
+  ReminderCleanupGuideArgs,
+  ReminderReviewAssistantArgs,
+  SmartReminderCreatorArgs,
+  WeeklyPlanningWorkflowArgs,
 } from './prompts.js';

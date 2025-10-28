@@ -13,6 +13,7 @@ global.console = {
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
+process.env.DEBUG = 'true';
 
 // Mock import.meta.url for Jest
 const mockImportMeta = {
