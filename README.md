@@ -12,7 +12,7 @@ A Model Context Protocol (MCP) server that provides native integration with Appl
 
 ### Core Functionality
 - **List Management**: View all reminders and reminder lists with advanced filtering
-- **Reminder Operations**: Create, update, delete, and move reminders across lists
+- **Reminder Operations**: Create, update, and delete reminders across lists
 - **Rich Content**: Support for titles, notes, due dates, URLs, and completion status
 - **Native Integration**: Seamless integration with macOS Apple Reminders app
 
@@ -190,12 +190,13 @@ This server provides two unified MCP tools for comprehensive Apple Reminders man
 
 A comprehensive tool for managing Apple Reminders with action-based operations. Supports all reminder operations through a single unified interface.
 
-**Actions**: `list`, `create`, `update`, `delete`, `bulk_create`, `bulk_update`, `bulk_delete`, `organize`
+**Actions**: `read`, `list`, `create`, `update`, `delete`
 
 #### Parameters by Action
 
-**List Action** (`action: "list"`):
-- `list` *(optional)*: Name of the reminder list to show
+**Read/List Action** (`action: "read"` or `action: "list"`):
+- `id` *(optional)*: Unique identifier of a specific reminder to read
+- `filterList` *(optional)*: Name of the reminder list to show
 - `showCompleted` *(optional)*: Include completed reminders (default: false)
 - `search` *(optional)*: Search term to filter reminders by title or content
 - `dueWithin` *(optional)*: Filter by due date range ("today", "tomorrow", "this-week", "overdue", "no-date")
@@ -203,37 +204,21 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 **Create Action** (`action: "create"`):
 - `title` *(required)*: Title of the reminder
 - `dueDate` *(optional)*: Due date in format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:mm:ss'
-- `list` *(optional)*: Name of the reminders list to add to
+- `targetList` *(optional)*: Name of the reminders list to add to
 - `note` *(optional)*: Note text to attach to the reminder
 - `url` *(optional)*: URL to associate with the reminder
 
 **Update Action** (`action: "update"`):
-- `title` *(required)*: Current title of the reminder to update
-- `newTitle` *(optional)*: New title for the reminder
+- `id` *(required)*: Unique identifier of the reminder to update
+- `title` *(optional)*: New title for the reminder
 - `dueDate` *(optional)*: New due date in format 'YYYY-MM-DD' or 'YYYY-MM-DD HH:mm:ss'
 - `note` *(optional)*: New note text
-- `completed` *(optional)*: Mark reminder as completed/uncompleted
-- `list` *(optional)*: Name of the list containing the reminder
 - `url` *(optional)*: New URL to attach to the reminder
+- `completed` *(optional)*: Mark reminder as completed/uncompleted
+- `targetList` *(optional)*: Name of the list containing the reminder
 
 **Delete Action** (`action: "delete"`):
-- `title` *(required)*: Title of the reminder to delete
-- `list` *(optional)*: Name of the list containing the reminder
-
-**Bulk Create Action** (`action: "bulk_create"`):
-- `items` *(required)*: Array of reminder objects to create
-
-**Bulk Update Action** (`action: "bulk_update"`):
-- `criteria` *(required)*: Search criteria to find reminders
-- `updates` *(required)*: Properties to update
-
-**Bulk Delete Action** (`action: "bulk_delete"`):
-- `criteria` *(required)*: Search criteria to find reminders to delete
-
-**Organize Action** (`action: "organize"`):
-- `strategy` *(required)*: Organization strategy ("priority", "due_date", "category", "completion_status")
-- `sourceList` *(optional)*: Source list to organize from
-- `createLists` *(optional)*: Create new lists automatically (default: true)
+- `id` *(required)*: Unique identifier of the reminder to delete
 
 #### Example Usage
 
@@ -242,7 +227,7 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
   "action": "create",
   "title": "Buy groceries",
   "dueDate": "2024-03-25 18:00:00",
-  "list": "Shopping",
+  "targetList": "Shopping",
   "note": "Don't forget milk and eggs",
   "url": "https://example.com/shopping-list"
 }
@@ -250,8 +235,8 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 
 ```json
 {
-  "action": "list",
-  "list": "Work",
+  "action": "read",
+  "filterList": "Work",
   "showCompleted": false,
   "dueWithin": "today"
 }
@@ -259,10 +244,8 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 
 ```json
 {
-  "action": "organize",
-  "strategy": "category",
-  "sourceList": "Inbox",
-  "createLists": true
+  "action": "delete",
+  "id": "reminder-123"
 }
 ```
 
@@ -272,11 +255,11 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 
 Manage reminder lists - view existing lists or create new ones for organizing reminders.
 
-**Actions**: `list`, `create`, `update`, `delete`
+**Actions**: `read`, `create`, `update`, `delete`
 
 #### Parameters by Action
 
-**List Action** (`action: "list"`):
+**Read Action** (`action: "read"`):
 - No additional parameters required
 
 **Create Action** (`action: "create"`):
