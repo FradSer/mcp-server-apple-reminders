@@ -13,7 +13,6 @@ import {
   CreateReminderSchema,
   DeleteReminderListSchema,
   DeleteReminderSchema,
-  MoveReminderSchema,
   ReadRemindersSchema,
   UpdateReminderListSchema,
   UpdateReminderSchema,
@@ -74,18 +73,6 @@ export const handleDeleteReminder = async (
   }, 'delete reminder');
 };
 
-export const handleMoveReminder = async (
-  args: RemindersToolArgs,
-): Promise<CallToolResult> => {
-  return handleAsyncOperation(async () => {
-    const validatedArgs = extractAndValidateArgs(args, MoveReminderSchema);
-    const reminder = await reminderRepository.updateReminder({
-      id: validatedArgs.id,
-      list: validatedArgs.toList,
-    });
-    return `Successfully moved reminder to list "${reminder.list}".\n- ID: ${reminder.id}`;
-  }, 'move reminder');
-};
 
 export const handleReadReminders = async (
   args: RemindersToolArgs,

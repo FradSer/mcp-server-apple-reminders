@@ -2,167 +2,213 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Apple Reminders MCP server - Native macOS integration with dual-strategy architecture.
+Apple Reminders MCP server - Native macOS integration using Swift CLI for EventKit operations.
 
 ## Essential Commands
 
 ```bash
-npm run build     # REQUIRED before starting server (builds Swift binary)
-npm run build:ts  # Build TypeScript only
-npm run build:swift  # Build Swift binary only
-npm run dev       # TypeScript watch mode
-npm test          # Run test suite
-npm test -- --watch  # Watch mode testing
-npm start         # Start MCP server
+pnpm install              # Install dependencies (pnpm is preferred over npm)
+pnpm build                # REQUIRED before starting server (compiles Swift binary)
+pnpm start                # Start MCP server over stdio
+pnpm test                 # Run full Jest test suite
+pnpm test -- --watch      # Watch mode testing
+pnpm exec biome check     # Lint and format code
+
+# Single test file
+pnpm test src/utils/cliExecutor.test.ts
+
+# Development with enhanced logging
+NODE_ENV=development pnpm start
 ```
 
-## Critical Requirements
+## Critical Build Requirements
 
-### Swift Binary
-- **MUST run `npm run build` before server startup**
-- Binary: `dist/swift/bin/GetReminders` (EventKit access)
-- Tests mock binary path (`NODE_ENV=test`)
-- Auto-discovery fallbacks: `src/swift/bin/`, `swift/bin/`
-- Requires Xcode Command Line Tools for compilation
+### Swift Binary Compilation
+- **MUST run `pnpm build` before server startup** - compiles `src/swift/RemindersCLI.swift` to `bin/RemindersCLI`
+- Requires **Xcode Command Line Tools** (install via `xcode-select --install`)
+- Build script: `scripts/build-swift.mjs` compiles Swift with EventKit and Foundation frameworks
+- Binary location: `bin/RemindersCLI` (resolved via project root discovery in `cliExecutor.ts`)
+- Test environment: Sets `NODE_ENV=test` to mock binary paths and avoid Swift dependency
 
-### Architecture
-**MCP Server** (`src/server/`) + **Tools** (`src/tools/`) + **Swift Binary** (`src/swift/`)
+### Project Structure Constraints
+- **ES Modules only**: Package type is `"module"`, all imports must use `.js` extensions even for `.ts` files
+- **TypeScript Config**: `moduleResolution: "NodeNext"` requires explicit `.js` in import paths
+- **Project Root Discovery**: `src/utils/projectUtils.ts` walks up to 10 directories to find `package.json` with name `"mcp-server-apple-reminders"`
+- Entry point: `bin/run.cjs` (CommonJS wrapper) → `dist/index.js` (compiled ES module)
 
-**Dual Strategy:**
-- **Read**: Swift + EventKit → `dist/swift/bin/GetReminders`  
-- **Write**: AppleScript → `tell application "Reminders"`
+## Architecture Overview
 
-## MCP Tools Reference
+### Three-Layer System
 
-**Current Implementation: Unified Tool Interface**
+**1. MCP Server Layer** (`src/server/`)
+- `server.ts`: Creates MCP Server instance with stdio transport
+- `handlers.ts`: Registers MCP protocol handlers (tools, prompts, resources)
+- `prompts.ts`: Six structured prompt templates for task management workflows
 
-| Tool | Action | Parameters | Purpose |
-|------|--------|------------|---------|
-| `reminders` | list | list?, showCompleted?, search?, dueWithin? | List reminders with filters (defaults to "Reminders" list when no params) |
-| `reminders` | create | title, dueDate?, list?, note?, url? | Create new reminder |
-| `reminders` | update | title, newTitle?, dueDate?, list?, note?, completed?, url? | Update existing reminder |
-| `reminders` | delete | title, list? | Delete reminder by title |
-| `reminders` | bulk_create | reminders[] | Create multiple reminders at once |
-| `reminders` | bulk_update | updates[] | Update multiple reminders at once |
-| `reminders` | bulk_delete | titles[], list? | Delete multiple reminders at once |
-| `reminders` | organize | strategy, sourceList?, createLists? | Batch organize by priority/due_date/category/completion_status |
-| `lists` | list | - | Get all reminder lists |
-| `lists` | create | name | Create new reminder list |
-| `lists` | update | name, newName | Update reminder list name |
-| `lists` | delete | name | Delete reminder list |
+**2. Tools Layer** (`src/tools/`)
+- `definitions.ts`: MCP tool schemas (JSON Schema format for `reminders` and `lists` tools)
+- `handlers.ts`: Tool implementation - all handlers use `handleAsyncOperation` wrapper for consistent error handling
+- `index.ts`: Routes tool calls by action type (read/create/update/delete/move)
 
-**Advanced Features:**
-- Unified action-based tool interface for simplified MCP integration
-- **Intelligent defaults**: `{"action": "list"}` automatically shows uncompleted reminders from the most appropriate list (tries "Reminders", "提醒事项", etc., or uses first available list)
-- Batch operations for organizing multiple reminders by priority, due date, category, or completion status
-- System-aware 24-hour/12-hour time detection with async initialization
-- Intelligent date parsing with multiple format support
-- URL integration with reminder notes
-- Dynamic list creation and management
+**3. Swift CLI Execution** (`src/swift/RemindersCLI.swift`)
+- **Single source of truth** for all reminder operations - TypeScript layer ONLY calls this binary
+- EventKit integration: Reads and writes reminders via native macOS APIs
+- JSON I/O: Accepts CLI args, returns `{status: "success", result: T}` or `{status: "error", message: string}`
+- Actions: `read`, `create`, `update`, `delete`, `move`, `create-list`, `update-list`, `delete-list`
+
+### Data Flow
+
+```
+User Request → MCP Protocol → tools/index.ts (routing)
+  → tools/handlers.ts (validation via Zod schemas)
+  → utils/reminderRepository.ts (wraps cliExecutor)
+  → utils/cliExecutor.ts (executes Swift binary)
+  → Swift RemindersCLI (EventKit operations)
+  → JSON response back through layers
+```
 
 ## Key Implementation Details
 
-### Date Handling (Moment.js)
-- **Input formats**: ISO_8601, 'YYYY-MM-DD', 'MM/DD/YYYY', 'YYYY-MM-DD HH:mm:ss'
-- **AppleScript output**: "MMMM D, YYYY HH:mm:ss" (English month names, locale-independent)
-- **System integration**: Async initialization of 24-hour vs 12-hour time preference with safe defaults
-- **Error handling**: Detailed error messages with format examples and supported types  
-- **Caching**: System preferences cached for performance, with test-only cache clearing
-- **TimePreferenceManager**: Non-blocking async initialization to avoid startup delays
+### Swift CLI Interface (`src/swift/RemindersCLI.swift`)
 
-### Error Handling
-- **JSON responses**: `{isError: boolean, message: string, data?: any}`
-- **Child process**: Swift binary execution errors
-- **Validation**: Dual validation strategy (Zod + ArkType)
-- **Security**: AppleScript injection prevention with heredoc syntax
-- **Graceful degradation**: Multiple binary path fallbacks
+**Date Handling:**
+- Supports 7 input formats: ISO 8601 variants, `YYYY-MM-DD HH:mm:ss`, `YYYY-MM-DD HH:mm`, `YYYY-MM-DD`
+- Parser: `parseDateComponents()` tries DateFormatter with en_US_POSIX locale, falls back to ISO8601DateFormatter
+- Time detection: Checks for `:` or `T` in input to determine if time components should be included
+- Output: ISO 8601 format via `ISO8601DateFormatter().string(from:)`
 
-### File Locations
-- **Entry**: `src/index.ts` (package.json auto-discovery)
-- **MCP Server**: `src/server/` (@modelcontextprotocol/sdk)
-- **Tools**: `src/tools/` (definitions.ts + handlers.ts for unified tool implementation)
-- **Utils**: `src/utils/` (reminders, AppleScript, date, logger, binaryValidator, moduleHelpers)
-- **Validation**: `src/validation/schemas.ts` (Zod + ArkType schemas)
-- **Types**: `src/types/index.ts` (TypeScript definitions)
-- **Tests**: `src/**/*.test.ts` (Jest + ts-jest)
-- **Swift**: `src/swift/GetReminders.swift` (EventKit integration)
+**URL Storage Strategy:**
+- Dual storage: EventKit `url` field (single URL) + structured format in `notes` field
+- Notes format: `"Original note\n\nURLs:\n- https://url1.com\n- https://url2.com"`
+- TypeScript utilities in `src/utils/urlHelpers.ts`: `extractUrlsFromNotes`, `parseReminderNote`, `formatNoteWithUrls`
 
-### Testing Environment
-- **Config**: `jest.config.mjs` (ESM + TypeScript support)
-- **Setup**: `src/test-setup.ts`
-- **Mocking**: Swift binary paths when `NODE_ENV=test`
-- **Mock Strategy**: Complete isolation of system calls and binary execution
-- **Coverage**: Unit tests for all utilities, integration tests for tools
-- **Test patterns**: `src/**/*.test.ts` and `src/**/*.spec.ts`
+**Permission Handling:**
+- macOS 14+: `requestFullAccessToReminders()`
+- Pre-macOS 14: `requestAccess(to: .reminder)`
+- Blocking: Uses `DispatchSemaphore` to wait for async permission grant before proceeding
 
-### Permissions & Requirements
-- **EventKit**: Reading reminders (macOS 10.15+)
-- **Automation**: AppleScript execution permission
-- **System**: macOS with Xcode Command Line Tools
-- **Runtime**: Node.js with ES modules support
-- **Build**: Swift compiler for native binary compilation
+### Validation Strategy (`src/validation/schemas.ts`)
 
-## Development Workflow
+**Security-First Design:**
+- `SAFE_TEXT_PATTERN`: Blocks control chars (0x00-0x1F except \n\r\t), allows Unicode (CJK, extended Latin)
+- `URL_PATTERN`: Blocks localhost/private IPs (127.*, 192.168.*, 10.*, 0.0.0.0) to prevent SSRF attacks
+- Max lengths: Title 200 chars, Note 2000 chars, List name 100 chars, Search 100 chars
 
-### Common Tasks
-```bash
-# Initial setup
-npm install
-npm run build  # Critical: builds Swift binary
+**Zod Schema Pattern:**
+- Factory functions: `createSafeTextSchema()`, `createOptionalSafeTextSchema()` for DRY principle
+- Action-specific schemas: `CreateReminderSchema`, `UpdateReminderSchema`, `MoveReminderSchema`, etc.
+- Validation function: `validateInput(schema, data)` throws descriptive errors on failure
 
-# Development
-npm run dev    # TypeScript watch mode
-npm test       # Full test suite
-npm test -- --watch  # Watch mode testing
+### Error Handling Conventions
 
-# Single test file
-npm test src/utils/date.test.ts
-
-# Build individual components
-npm run build:ts    # TypeScript compilation only
-npm run build:swift # Swift binary compilation only
-
-# Debugging
-NODE_ENV=development npm start  # Enhanced logging
-NODE_ENV=test npm test  # Test environment
+**Consistent Response Format:**
+```typescript
+{
+  content: [{ type: 'text', text: string }],
+  isError: boolean
+}
 ```
 
-### Build System
-- **TypeScript**: ESM modules with `.js` imports (Node16 resolution)
-- **Swift**: Compiles to `dist/swift/bin/GetReminders` with EventKit framework
-- **Package**: Entry point `dist/index.js` with Node.js shebang
+**Error Wrapper:** `handleAsyncOperation(operation, operationName)` in `src/utils/errorHandling.ts`
+- Catches all errors from async operations
+- Logs errors via `logError()`
+- Returns formatted CallToolResult with `isError: true`
 
+### Testing Strategy (`jest.config.mjs`)
 
-### Architecture Notes
-- **Project Root Discovery**: Auto-detects via package.json search (up to 10 levels)
-- **Binary Management**: Robust path discovery with fallbacks
-- **ES Modules**: Full ESM support with proper `.js` imports
-- **Dual Strategy**: Swift (read) + AppleScript (write) for optimal macOS integration
+**ESM Support:**
+- Preset: `ts-jest/presets/default-esm`
+- Transform: ts-jest with `useESM: true`, module `ES2022`, target `ES2020`
+- Module mapper: `'^(\\.{1,2}/.*)\\.js$': '$1'` - strips `.js` extension for imports
+- Ignores TS diagnostic code `TS151001` (import.meta errors in non-ESM contexts)
 
-## Critical Implementation Notes
+**Mock Strategy:**
+- `src/test-setup.ts`: Mocks console, sets `NODE_ENV=test`, mocks `import.meta`
+- `src/tools/handlers.test.ts`: Mocks `cliExecutor.js` to avoid binary dependency
+- Test isolation: Each handler test mocks `reminderRepository` methods
 
-### Swift Binary Management
-- Binary MUST exist at `dist/swift/bin/GetReminders` before server start
-- Test environment mocks binary path to avoid compilation dependency
-- EventKit framework linking required: `-framework EventKit -framework Foundation`
-- Multiple path fallbacks for robust deployment
+**Critical:** Obsolete test files (`projectUtils.test.ts`, `reminders.test.ts`) have been removed - they tested AppleScript implementation replaced by Swift CLI.
 
-### AppleScript Security
-- Use heredoc syntax to prevent injection: `cat <<'EOF'...EOF`
-- Never interpolate user input directly into AppleScript strings
-- URL handling integrated with notes field, not separate properties
+## Common Development Workflows
 
-### MCP Protocol Implementation
-- 2 unified tools (`reminders` and `lists`) with action-based operations
-- Complete CRUD operations: Create, Read, Update, Delete for both reminders and lists
-- Bulk operation support for creating, updating, and deleting multiple reminders
-- Batch organization strategies for automatic categorization
-- Consistent error response format across all tools
-- Tool parameter validation using dual schema approach (Zod + ArkType)
-- Action-based design reduces tool complexity and improves MCP client compatibility
+### Adding a New Reminder Field
 
-### Environment Considerations
-- macOS-only due to EventKit and AppleScript dependencies
-- System permission dialogs will appear on first run
-- 24-hour time preference affects date formatting output
-- Requires EventKit and Automation permissions
+1. **Swift binary** (`src/swift/RemindersCLI.swift`):
+   - Add parameter to `ArgumentParser.get()` in main switch cases
+   - Add parameter to `RemindersManager` method (e.g., `createReminder()`)
+   - Update `ReminderJSON` struct with new field
+   - Update `toJSON()` extension method
+
+2. **TypeScript schemas** (`src/validation/schemas.ts`):
+   - Add Zod schema for new field (e.g., `SafePrioritySchema`)
+   - Add field to action schemas (e.g., `CreateReminderSchema.shape`)
+
+3. **Tool definitions** (`src/tools/definitions.ts`):
+   - Add field to `inputSchema.properties` with description and type
+
+4. **Repository layer** (`src/utils/reminderRepository.ts`):
+   - Add field to `CreateReminderData` or `UpdateReminderData` interface
+   - Pass new field to `executeCli()` args array
+
+5. **Tests**:
+   - Add test cases in `src/tools/handlers.test.ts`
+   - Run `pnpm test` to verify
+
+### Debugging Swift Binary Issues
+
+```bash
+# Manual CLI invocation to test Swift binary
+./bin/RemindersCLI --action read --showCompleted true
+
+# Check binary exists and is executable
+ls -la bin/RemindersCLI
+
+# Rebuild Swift binary
+pnpm build
+
+# View Swift compiler warnings
+pnpm build 2>&1 | grep warning
+
+# Test with enhanced logging
+NODE_ENV=development ./bin/RemindersCLI --action read
+```
+
+### Updating MCP Protocol Version
+
+When `@modelcontextprotocol/sdk` is updated:
+1. Check breaking changes in SDK changelog
+2. Update `src/server/server.ts` capabilities if needed
+3. Update `src/server/handlers.ts` for new request types
+4. Update `src/tools/definitions.ts` for schema changes
+5. Run full test suite: `pnpm test`
+
+## Prompt Templates (`src/server/prompts.ts`)
+
+Six production-ready templates with shared structure: mission statement, numbered process steps, constraints, output format, quality criteria.
+
+- `daily-task-organizer`: Same-day execution blueprint with time blocks
+- `smart-reminder-creator`: Converts task descriptions to structured reminders
+- `reminder-review-assistant`: Inbox triage with stale reminder detection
+- `weekly-planning-workflow`: Monday-to-Sunday planning with focus areas
+- `reminder-cleanup-guide`: Safe list pruning strategies
+- `goal-tracking-setup`: Recurring reminders for long-term goals
+
+**Design Principle:** Prompts request missing context before destructive actions (e.g., "Which list should I organize?" vs. blindly organizing all lists).
+
+**Testing:** `src/server/prompts.test.ts` validates metadata completeness, argument schemas, and output format consistency.
+
+## macOS-Specific Considerations
+
+- **Permissions**: First run triggers system dialogs for EventKit and Automation access
+- **Platform Check**: Build script exits on non-macOS platforms
+- **Swift Compiler**: Uses `swiftc` with `-framework EventKit -framework Foundation`
+- **Locale Handling**: Swift uses `en_US_POSIX` locale for date parsing to avoid user locale issues
+- **Unicode Support**: Full CJK character support for Chinese reminder lists (e.g., "提醒事项")
+
+## Known Constraints
+
+- **ID-based operations**: Update/delete/move require unique reminder IDs from prior read operations
+- **Single URL in EventKit field**: EventKit `url` property stores one URL; multiple URLs use notes field
+- **No recurring reminders**: EventKit recurrence rules not exposed in current implementation
+- **Synchronous Swift execution**: Uses `DispatchSemaphore` to block async EventKit operations (acceptable for CLI context)
+- **Binary path resolution**: Project root must be within 10 directory levels of execution context

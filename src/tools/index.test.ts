@@ -10,7 +10,6 @@ jest.mock('./handlers.js', () => ({
   handleReadReminders: jest.fn(),
   handleUpdateReminder: jest.fn(),
   handleDeleteReminder: jest.fn(),
-  handleMoveReminder: jest.fn(),
   handleCreateReminderList: jest.fn(),
 }));
 
@@ -27,7 +26,6 @@ import {
   handleCreateReminder,
   handleCreateReminderList,
   handleDeleteReminder,
-  handleMoveReminder,
   handleReadReminderLists,
   handleReadReminders,
   handleUpdateReminder,
@@ -48,9 +46,6 @@ const mockHandleUpdateReminder = handleUpdateReminder as jest.MockedFunction<
 >;
 const mockHandleDeleteReminder = handleDeleteReminder as jest.MockedFunction<
   typeof handleDeleteReminder
->;
-const mockHandleMoveReminder = handleMoveReminder as jest.MockedFunction<
-  typeof handleMoveReminder
 >;
 const _mockHandleCreateReminderList =
   handleCreateReminderList as jest.MockedFunction<
@@ -143,26 +138,7 @@ describe('Tools Index', () => {
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route reminders action=move to handleMoveReminder', async () => {
-      const args = {
-        action: 'move',
-        title: 'Move me',
-        fromList: 'A',
-        toList: 'B',
-      };
-      const expectedResult: CallToolResult = {
-        content: [{ type: 'text', text: 'Moved' }],
-        isError: false,
-      };
-
-      mockHandleMoveReminder.mockResolvedValue(expectedResult);
-
-      const result = await handleToolCall('reminders', args);
-
-      expect(mockHandleMoveReminder).toHaveBeenCalledWith(args);
-      expect(result).toEqual(expectedResult);
-    });
-
+  
     test('should return error for unknown tool', async () => {
       const result = await handleToolCall('unknown_tool', {});
 
@@ -182,7 +158,6 @@ describe('Tools Index', () => {
       expect(mockHandleReadReminderLists).not.toHaveBeenCalled();
       expect(mockHandleUpdateReminder).not.toHaveBeenCalled();
       expect(mockHandleDeleteReminder).not.toHaveBeenCalled();
-      expect(mockHandleMoveReminder).not.toHaveBeenCalled();
     });
 
     test('should handle empty tool name', async () => {

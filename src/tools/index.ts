@@ -13,7 +13,6 @@ import {
   handleCreateReminderList,
   handleDeleteReminder,
   handleDeleteReminderList,
-  handleMoveReminder,
   handleReadReminderLists,
   handleReadReminders,
   handleUpdateReminder,
@@ -45,8 +44,6 @@ export async function handleToolCall(
           return handleUpdateReminder(args);
         case 'delete':
           return handleDeleteReminder(args);
-        case 'move':
-          return handleMoveReminder(args);
         default:
           return {
             content: [

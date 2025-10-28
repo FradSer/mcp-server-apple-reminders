@@ -1,8 +1,8 @@
-# Apple Reminders MCP Server ![Version 0.10.0](https://img.shields.io/badge/version-0.10.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 0.11.0](https://img.shields.io/badge/version-0.11.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
-[English](README.md) | 简体中文
+English | [简体中文](README.zh-CN.md)
 
 一个为 macOS 提供原生 Apple Reminders 集成的 Model Context Protocol (MCP) 服务器。该服务器允许你通过标准化接口与 Apple Reminders 进行交互，具有全面的管理功能。
 
@@ -11,21 +11,21 @@
 ## 功能特性
 
 ### 核心功能
-- **列表管理**：查看所有提醒事项和列表的高级过滤功能
-- **提醒事项操作**：创建、更新、删除和移动提醒事项
+- **列表管理**：查看所有提醒事项和提醒事项列表的高级过滤功能
+- **提醒事项操作**：创建、更新和删除提醒事项
 - **丰富内容**：支持标题、备注、截止日期、URL 和完成状态
 - **原生集成**：与 macOS Apple Reminders 应用的无缝集成
 
 ### 高级功能
 - **智能组织**：按优先级、截止日期、类别或完成状态自动分类
-- **强大的搜索**：按完成状态、截止日期和搜索词过滤提醒事项
+- **强大搜索**：按完成状态、截止日期和搜索词过滤提醒事项
 - **批量操作**：使用智能策略组织多个提醒事项
 - **权限管理**：主动验证系统权限
-- **灵活的日期处理**：支持仅日期和日期时间格式，并考虑区域设置
+- **灵活日期处理**：支持仅日期和日期时间格式，具有区域设置感知能力
 - **Unicode 支持**：完整的国际字符支持和验证
 
 ### 技术优势
-- **统一 API**：基于操作的工具架构简化了复杂性
+- **统一 API**：基于操作的简化工具架构
 - **类型安全**：全面的 TypeScript 覆盖和 Zod 验证
 - **性能优化**：用于性能关键操作的 Swift 二进制文件
 - **错误处理**：一致的错误响应和详细反馈
@@ -135,6 +135,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 创建一个带URL的提醒"查看这个网站：https://google.com"。
 ```
 
+
 ### 更新提醒事项
 ```
 将"买杂货"提醒的标题更新为"买有机杂货"。
@@ -164,20 +165,20 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ## 结构化提示库
 
-该服务器提供统一的提示注册表，可通过 MCP 的 `ListPrompts` 和 `GetPrompt` 端点访问。所有模板共享“使命、上下文输入、编号流程、约束、输出格式和质量标准”六个部分，让下游助手不必再从零解析松散示例即可生成稳定指令。
+该服务器提供统一的提示注册表，可通过 MCP 的 `ListPrompts` 和 `GetPrompt` 端点访问。每个模板都共享使命、上下文输入、编号流程、约束、输出格式和质量标准，让下游助手获得可预测的框架，而无需解析松散的自由格式示例。
 
-- **daily-task-organizer** —— 可选的 `task_category`、`priority_level`、`time_frame` 输入会生成当日执行蓝图，在高优先级任务与休息窗口之间取得平衡。
-- **smart-reminder-creator** —— 必填 `task_description`，可选 `context` 与 `urgency`，输出的提醒草案会显式映射元数据，降低执行失败风险。
-- **reminder-review-assistant** —— 可选 `review_type` 和 `list_name`，聚焦收件箱盘点并避免破坏性批量操作。
-- **weekly-planning-workflow** —— 可选 `focus_areas`、`week_start_date`，用于构建周一至周日的复盘与时间区块规划。
-- **reminder-cleanup-guide** —— 可选 `cleanup_strategy`，提供逐步检查清单和安全护栏，帮助安心清理列表。
-- **goal-tracking-setup** —— 必填 `goal_type`，可选 `time_horizon`，拼装周期性提醒、里程碑和反思节奏。
+- **daily-task-organizer** —— 可选的 `task_category`、`priority_level` 和 `time_frame` 输入会生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。
+- **smart-reminder-creator** —— 要求 `task_description`，可选 `context` 和 `urgency`，生成的提醒草案通过显式映射元数据来减少后续跟进的差距。
+- **reminder-review-assistant** —— 可选 `review_type` 和 `list_name` 驱动收件箱盘点脚本，突出陈旧提醒事项，同时避免破坏性编辑。
+- **weekly-planning-workflow** —— 可选 `focus_areas` 和 `week_start_date` 指导周一至周日的重置，时间区块与现有列表相关联。
+- **reminder-cleanup-guide** —— 可选 `cleanup_strategy` 列出无压力列表修剪的护栏和顺序。
+- **goal-tracking-setup** —— 要求 `goal_type`，可选 `time_horizon` 组装周期性提醒和反思节奏。
 
 ### 设计约束与验证
 
-- 提示严格限制在 Apple Reminders 原生能力范围内（无第三方自动化），在执行不可逆动作前会主动确认缺失信息。
-- 统一的 Markdown 片段保证客户端无需额外解析即可呈现表格或清单。
-- 修改提示文案后运行 `pnpm test -- src/server/prompts.test.ts`，即可验证元数据、模式兼容性以及分段叙述是否保持一致。
+- 提示严格限制在 Apple Reminders 原生能力范围内（无第三方自动化），并在提交不可逆操作前询问缺失上下文。
+- 共享格式使输出可渲染为 Markdown 部分或表格，无需客户端应用程序的额外解析胶水。
+- 每次修改提示文案后运行 `pnpm test -- src/server/prompts.test.ts` 以断言元数据、模式兼容性和叙述组装。
 
 ## 可用的 MCP 工具
 
@@ -189,12 +190,13 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 一个支持基于操作的 Apple Reminders 管理的综合工具。通过单个统一接口支持所有提醒事项操作。
 
-**操作**：`list`, `create`, `update`, `delete`, `bulk_create`, `bulk_update`, `bulk_delete`, `organize`
+**操作**：`read`, `list`, `create`, `update`, `delete`
 
 #### 按操作的参数
 
-**列表操作**（`action: "list"`）：
-- `list` *(可选)*：要显示的提醒事项列表名称
+**读取/列表操作**（`action: "read"` 或 `action: "list"`）：
+- `id` *(可选)*：要读取的特定提醒事项的唯一标识符
+- `filterList` *(可选)*：要显示的提醒事项列表名称
 - `showCompleted` *(可选)*：包含已完成的提醒事项（默认：false）
 - `search` *(可选)*：按标题或内容搜索提醒事项
 - `dueWithin` *(可选)*：按截止日期范围筛选（"today"、"tomorrow"、"this-week"、"overdue"、"no-date"）
@@ -202,37 +204,21 @@ code %APPDATA%\Claude\claude_desktop_config.json
 **创建操作**（`action: "create"`）：
 - `title` *(必需)*：提醒事项标题
 - `dueDate` *(可选)*：截止日期，格式为 'YYYY-MM-DD' 或 'YYYY-MM-DD HH:mm:ss'
-- `list` *(可选)*：要添加到的提醒事项列表名称
+- `targetList` *(可选)*：要添加到的提醒事项列表名称
 - `note` *(可选)*：要附加到提醒事项的备注文本
 - `url` *(可选)*：要与提醒事项关联的 URL
 
 **更新操作**（`action: "update"`）：
-- `title` *(必需)*：要更新的提醒事项的当前标题
-- `newTitle` *(可选)*：提醒事项的新标题
+- `id` *(必需)*：要更新的提醒事项的唯一标识符
+- `title` *(可选)*：提醒事项的新标题
 - `dueDate` *(可选)*：新的截止日期，格式为 'YYYY-MM-DD' 或 'YYYY-MM-DD HH:mm:ss'
 - `note` *(可选)*：新的备注文本
-- `completed` *(可选)*：将提醒事项标记为已完成/未完成
-- `list` *(可选)*：包含提醒事项的列表名称
 - `url` *(可选)*：要附加到提醒事项的新 URL
+- `completed` *(可选)*：将提醒事项标记为已完成/未完成
+- `targetList` *(可选)*：包含提醒事项的列表名称
 
 **删除操作**（`action: "delete"`）：
-- `title` *(必需)*：要删除的提醒事项标题
-- `list` *(可选)*：包含提醒事项的列表名称
-
-**批量创建操作**（`action: "bulk_create"`）：
-- `items` *(必需)*：要创建的提醒事项对象数组
-
-**批量更新操作**（`action: "bulk_update"`）：
-- `criteria` *(必需)*：查找提醒事项的搜索条件
-- `updates` *(必需)*：要更新的属性
-
-**批量删除操作**（`action: "bulk_delete"`）：
-- `criteria` *(必需)*：查找要删除的提醒事项的搜索条件
-
-**组织操作**（`action: "organize"`）：
-- `strategy` *(必需)*：组织策略（"priority"、"due_date"、"category"、"completion_status"）
-- `sourceList` *(可选)*：要组织的源列表
-- `createLists` *(可选)*：自动创建新列表（默认：true）
+- `id` *(必需)*：要删除的提醒事项的唯一标识符
 
 #### 使用示例
 
@@ -241,7 +227,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
   "action": "create",
   "title": "购买杂货",
   "dueDate": "2024-03-25 18:00:00",
-  "list": "购物",
+  "targetList": "购物",
   "note": "别忘了牛奶和鸡蛋",
   "url": "https://example.com/shopping-list"
 }
@@ -249,8 +235,8 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ```json
 {
-  "action": "list",
-  "list": "工作",
+  "action": "read",
+  "filterList": "工作",
   "showCompleted": false,
   "dueWithin": "today"
 }
@@ -258,10 +244,8 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ```json
 {
-  "action": "organize",
-  "strategy": "category",
-  "sourceList": "收件箱",
-  "createLists": true
+  "action": "delete",
+  "id": "reminder-123"
 }
 ```
 
@@ -271,11 +255,11 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 管理提醒事项列表 - 查看现有列表或创建新列表用于组织提醒事项。
 
-**操作**：`list`, `create`, `update`, `delete`
+**操作**：`read`, `create`, `update`, `delete`
 
 #### 按操作的参数
 
-**列表操作**（`action: "list"`）：
+**读取操作**（`action: "read"`）：
 - 无需额外参数
 
 **创建操作**（`action: "create"`）：
@@ -305,12 +289,52 @@ code %APPDATA%\Claude\claude_desktop_config.json
   "content": [
     {
       "type": "text",
-      "text": "成功创建提醒事项：购买杂货"
+      "text": "Successfully created reminder: Buy groceries"
     }
   ],
   "isError": false
 }
 ```
+
+**URL 字段说明**：`url` 字段完全支持 EventKit API。当您创建或更新带有 URL 参数的提醒事项时，URL 会存储在两个位置以实现最大兼容性：
+
+1. **EventKit URL 字段**：URL 存储在原生 `url` 属性中（在 Reminders 应用详细视图中通过 "i" 图标可见）
+2. **备注字段**：URL 也以结构化格式附加到备注中，便于解析和多个 URL 支持
+
+**双重存储方法**：
+- **URL 字段**：为 Reminders 应用 UI 显示存储单个 URL
+- **备注字段**：以结构化格式存储 URL，支持多个 URL
+
+```
+Reminder note content here...
+
+URLs:
+- https://example.com
+- https://another-url.com
+```
+
+这确保了 URL 在 Reminders 应用 UI 和通过 API/备注解析中都可访问。
+
+**URL 提取**：你可以使用结构化格式或正则表达式回退从提醒事项备注中提取 URL：
+```typescript
+// 使用结构化格式（推荐）
+import { extractUrlsFromNotes, parseReminderNote } from './urlHelpers';
+
+// 仅提取 URL
+const urls = extractUrlsFromNotes(reminder.notes);
+
+// 解析为单独的备注内容和 URL
+const { note, urls } = parseReminderNote(reminder.notes);
+
+// 传统正则表达式方法（回退用于非结构化内容）
+const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
+```
+
+**结构化格式的优势**：
+- **一致解析**：URL 始终位于可预测的位置
+- **多 URL 支持**：可靠地处理每个提醒事项的多个 URL
+- **清晰分离**：备注内容和 URL 明确分离
+- **向后兼容**：非结构化 URL 仍作为回退检测
 
 **列表响应**：
 ```json
@@ -321,7 +345,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
       "list": "购物",
       "isCompleted": false,
       "dueDate": "2024-03-25 18:00:00",
-      "notes": "别忘了牛奶",
+      "notes": "别忘了牛奶\n\nURLs:\n- https://grocery-store.com\n- https://shopping-list.com",
       "url": null
     }
   ],
