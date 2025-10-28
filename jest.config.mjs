@@ -17,6 +17,9 @@ export default {
           isolatedModules: true,
           types: ['jest', 'node'],
         },
+        diagnostics: {
+          ignoreCodes: ['TS151001'],
+        },
       },
     ],
   },
@@ -33,9 +36,4 @@ export default {
     '!src/**/__mocks__/**',
   ],
   setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
-  globals: {
-    'import.meta': {
-      url: 'file:///mock-url',
-    },
-  },
 };

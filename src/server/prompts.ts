@@ -3,17 +3,17 @@
  * Central registry for MCP prompts and their runtime helpers
  */
 
-import {
-  type DailyTaskOrganizerArgs,
-  type GoalTrackingSetupArgs,
-  type PromptMetadata,
-  type PromptName,
-  type PromptResponse,
-  type PromptTemplate,
-  type ReminderCleanupGuideArgs,
-  type ReminderReviewAssistantArgs,
-  type SmartReminderCreatorArgs,
-  type WeeklyPlanningWorkflowArgs,
+import type {
+  DailyTaskOrganizerArgs,
+  GoalTrackingSetupArgs,
+  PromptMetadata,
+  PromptName,
+  PromptResponse,
+  PromptTemplate,
+  ReminderCleanupGuideArgs,
+  ReminderReviewAssistantArgs,
+  SmartReminderCreatorArgs,
+  WeeklyPlanningWorkflowArgs,
 } from '../types/prompts.js';
 
 interface PromptRegistry {
@@ -102,8 +102,7 @@ const buildDailyTaskOrganizerPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission:
-            `Mission: Design a realistic ${timeFrame} execution plan in Apple Reminders that keeps ${taskCategory} work flowing while balancing ${priorityLevel} priorities.`,
+          mission: `Mission: Design a realistic ${timeFrame} execution plan in Apple Reminders that keeps ${taskCategory} work flowing while balancing ${priorityLevel} priorities.`,
           contextInputs: [
             `Task category focus: ${taskCategory}`,
             `Priority emphasis: ${priorityLevel}`,
@@ -148,12 +147,12 @@ const buildSmartReminderCreatorPrompt = (
   const urgency = args.urgency ?? 'medium';
 
   return {
-    description: 'Intelligent reminder creation with optimal scheduling and context',
+    description:
+      'Intelligent reminder creation with optimal scheduling and context',
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission:
-            `Mission: Produce an Apple Reminders entry for "${args.task_description}" that respects context and ${urgency} urgency while preventing follow-through failures.`,
+          mission: `Mission: Produce an Apple Reminders entry for "${args.task_description}" that respects context and ${urgency} urgency while preventing follow-through failures.`,
           contextInputs: [
             `Task description: ${args.task_description}`,
             `User-provided context: ${context || 'none supplied'}`,
@@ -198,12 +197,12 @@ const buildReminderReviewAssistantPrompt = (
   const listName = args.list_name ?? 'all lists';
 
   return {
-    description: 'Analyze and optimize existing reminders for better productivity',
+    description:
+      'Analyze and optimize existing reminders for better productivity',
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission:
-            `Mission: Audit ${reviewType} reminders in ${listName} and deliver actionable clean-up, scheduling, and habit recommendations that boost completion rates.`,
+          mission: `Mission: Audit ${reviewType} reminders in ${listName} and deliver actionable clean-up, scheduling, and habit recommendations that boost completion rates.`,
           contextInputs: [
             `Review scope: ${reviewType}`,
             `Focus list: ${listName}`,
@@ -252,8 +251,7 @@ const buildWeeklyPlanningWorkflowPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission:
-            `Mission: Build a resilient weekly execution playbook starting ${weekStartDate} that advances ${focusAreas} while safeguarding energy and commitments.`,
+          mission: `Mission: Build a resilient weekly execution playbook starting ${weekStartDate} that advances ${focusAreas} while safeguarding energy and commitments.`,
           contextInputs: [
             `Focus areas: ${focusAreas}`,
             `Week start: ${weekStartDate}`,
@@ -301,8 +299,7 @@ const buildReminderCleanupGuidePrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission:
-            `Mission: Execute a ${cleanupStrategy} clean-up that restores clarity, reduces reminder noise, and establishes sustainable upkeep habits.`,
+          mission: `Mission: Execute a ${cleanupStrategy} clean-up that restores clarity, reduces reminder noise, and establishes sustainable upkeep habits.`,
           contextInputs: [
             `Selected clean-up strategy: ${cleanupStrategy}`,
             'Number of active lists and notable shared lists (if known).',
@@ -346,12 +343,12 @@ const buildGoalTrackingSetupPrompt = (
   const timeHorizon = args.time_horizon ?? 'monthly';
 
   return {
-    description: 'Set up a comprehensive goal tracking system with Apple Reminders',
+    description:
+      'Set up a comprehensive goal tracking system with Apple Reminders',
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission:
-            `Mission: Build an Apple Reminders based tracking system that keeps ${args.goal_type} goals progressing within a ${timeHorizon} horizon.`,
+          mission: `Mission: Build an Apple Reminders based tracking system that keeps ${args.goal_type} goals progressing within a ${timeHorizon} horizon.`,
           contextInputs: [
             `Goal domain: ${args.goal_type}`,
             `Primary time horizon: ${timeHorizon}`,
@@ -410,7 +407,8 @@ export const PROMPTS: PromptRegistry = {
         },
         {
           name: 'time_frame',
-          description: 'Time frame for tasks (e.g., today, this week, later this month)',
+          description:
+            'Time frame for tasks (e.g., today, this week, later this month)',
           required: false,
         },
       ],
@@ -438,7 +436,8 @@ export const PROMPTS: PromptRegistry = {
         },
         {
           name: 'context',
-          description: 'Additional context or background information for the task',
+          description:
+            'Additional context or background information for the task',
           required: false,
         },
         {
@@ -505,7 +504,8 @@ export const PROMPTS: PromptRegistry = {
         },
         {
           name: 'week_start_date',
-          description: 'Preferred starting point for the week (e.g., today, next Monday, upcoming sprint)',
+          description:
+            'Preferred starting point for the week (e.g., today, next Monday, upcoming sprint)',
           required: false,
         },
       ],

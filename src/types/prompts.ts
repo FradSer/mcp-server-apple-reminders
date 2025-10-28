@@ -120,7 +120,5 @@ export interface PromptArgsByName {
 export interface PromptTemplate<Name extends PromptName> {
   metadata: PromptMetadata<Name>;
   parseArgs(rawArgs: unknown): PromptArgsByName[Name];
-  buildPrompt(
-    args: PromptArgsByName[Name],
-  ): PromptResponse;
+  buildPrompt(args: PromptArgsByName[Name]): PromptResponse;
 }

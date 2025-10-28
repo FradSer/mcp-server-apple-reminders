@@ -6,8 +6,8 @@ import { handleToolCall, TOOLS } from './index.js';
 // Mock all handler functions
 jest.mock('./handlers.js', () => ({
   handleCreateReminder: jest.fn(),
-  handleListReminderLists: jest.fn(),
-  handleListReminders: jest.fn(),
+  handleReadReminderLists: jest.fn(),
+  handleReadReminders: jest.fn(),
   handleUpdateReminder: jest.fn(),
   handleDeleteReminder: jest.fn(),
   handleMoveReminder: jest.fn(),
@@ -27,21 +27,21 @@ import {
   handleCreateReminder,
   handleCreateReminderList,
   handleDeleteReminder,
-  handleListReminderLists,
-  handleListReminders,
   handleMoveReminder,
+  handleReadReminderLists,
+  handleReadReminders,
   handleUpdateReminder,
 } from './handlers.js';
 
 const mockHandleCreateReminder = handleCreateReminder as jest.MockedFunction<
   typeof handleCreateReminder
 >;
-const mockHandleListReminderLists =
-  handleListReminderLists as jest.MockedFunction<
-    typeof handleListReminderLists
+const mockHandleReadReminderLists =
+  handleReadReminderLists as jest.MockedFunction<
+    typeof handleReadReminderLists
   >;
-const mockHandleListReminders = handleListReminders as jest.MockedFunction<
-  typeof handleListReminders
+const mockHandleReadReminders = handleReadReminders as jest.MockedFunction<
+  typeof handleReadReminders
 >;
 const mockHandleUpdateReminder = handleUpdateReminder as jest.MockedFunction<
   typeof handleUpdateReminder
@@ -85,11 +85,11 @@ describe('Tools Index', () => {
         isError: false,
       };
 
-      mockHandleListReminders.mockResolvedValue(expectedResult);
+      mockHandleReadReminders.mockResolvedValue(expectedResult);
 
       const result = await handleToolCall('reminders', args);
 
-      expect(mockHandleListReminders).toHaveBeenCalledWith(args);
+      expect(mockHandleReadReminders).toHaveBeenCalledWith(args);
       expect(result).toEqual(expectedResult);
     });
 
@@ -99,11 +99,13 @@ describe('Tools Index', () => {
         isError: false,
       };
 
-      mockHandleListReminderLists.mockResolvedValue(expectedResult);
+      mockHandleReadReminderLists.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('lists', { action: 'list' });
+      const result = await handleToolCall('lists', { action: 'read' });
 
-      expect(mockHandleListReminderLists).toHaveBeenCalledWith({});
+      expect(mockHandleReadReminderLists).toHaveBeenCalledWith({
+        action: 'read',
+      });
       expect(result).toEqual(expectedResult);
     });
 
@@ -176,8 +178,8 @@ describe('Tools Index', () => {
 
       // Verify no handlers were called
       expect(mockHandleCreateReminder).not.toHaveBeenCalled();
-      expect(mockHandleListReminders).not.toHaveBeenCalled();
-      expect(mockHandleListReminderLists).not.toHaveBeenCalled();
+      expect(mockHandleReadReminders).not.toHaveBeenCalled();
+      expect(mockHandleReadReminderLists).not.toHaveBeenCalled();
       expect(mockHandleUpdateReminder).not.toHaveBeenCalled();
       expect(mockHandleDeleteReminder).not.toHaveBeenCalled();
       expect(mockHandleMoveReminder).not.toHaveBeenCalled();
@@ -243,7 +245,7 @@ describe('Tools Index', () => {
         {
           tool: 'reminders',
           args: { action: 'list' },
-          handler: mockHandleListReminders,
+          handler: mockHandleReadReminders,
           result: {
             content: [
               {

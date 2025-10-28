@@ -4,30 +4,40 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { ValidationError } from '../validation/schemas.js';
+
+/**
+ * Creates a descriptive error message, showing validation details in dev mode.
+ */
+function createErrorMessage(operation: string, error: unknown): string {
+  const message =
+    error instanceof Error ? error.message : 'System error occurred';
+  const isDev = process.env.NODE_ENV === 'development' || process.env.DEBUG;
+
+  // For validation errors, always return the detailed message.
+  if (error instanceof ValidationError) {
+    return message;
+  }
+
+  // For other errors, be generic in production.
+  return isDev
+    ? `Failed to ${operation}: ${message}`
+    : `Failed to ${operation}: System error occurred`;
+}
 
 /**
  * Simplified error handling utilities
  */
 export const ErrorResponseFactory = {
   createErrorResponse(operation: string, error: unknown): CallToolResult {
-    const message =
-      error instanceof Error ? error.message : 'System error occurred';
-    const isDev = process.env.NODE_ENV === 'development' || process.env.DEBUG;
-    const errorMessage = isDev
-      ? `Failed to ${operation}: ${message}`
-      : `Failed to ${operation}: System error occurred`;
-
     return {
-      content: [{ type: 'text', text: errorMessage }],
+      content: [{ type: 'text', text: createErrorMessage(operation, error) }],
       isError: true,
     };
   },
 
   createJsonErrorResponse(operation: string, error: unknown): CallToolResult {
-    const message =
-      error instanceof Error ? error.message : 'System error occurred';
-    const data = { error: `Failed to ${operation}: ${message}`, isError: true };
-
+    const data = { error: createErrorMessage(operation, error), isError: true };
     return {
       content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
       isError: true,
@@ -52,15 +62,13 @@ export const ErrorResponseFactory = {
 /**
  * Utility for handling async operations with consistent error handling
  */
-export async function handleAsyncOperation<T>(
-  operation: () => Promise<T>,
+export async function handleAsyncOperation(
+  operation: () => Promise<string>,
   operationName: string,
-  responseFactory: (result: T) => CallToolResult = (result) =>
-    ErrorResponseFactory.createSuccessResponse(String(result)),
 ): Promise<CallToolResult> {
   try {
     const result = await operation();
-    return responseFactory(result);
+    return ErrorResponseFactory.createSuccessResponse(result);
   } catch (error) {
     return ErrorResponseFactory.createErrorResponse(operationName, error);
   }

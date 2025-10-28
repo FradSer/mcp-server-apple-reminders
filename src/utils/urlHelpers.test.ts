@@ -3,17 +3,17 @@
  * Tests for URL handling utilities
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 import {
+  combineNoteWithUrl,
+  extractNoteContent,
   extractUrlsFromNotes,
   formatNoteWithUrls,
   formatUrlSection,
-  removeUrlSections,
-  combineNoteWithUrl,
   isValidUrl,
-  extractNoteContent,
   parseReminderNote,
-  updateNoteWithUrls
+  removeUrlSections,
+  updateNoteWithUrls,
 } from './urlHelpers.js';
 
 describe('extractUrlsFromNotes', () => {
@@ -83,7 +83,12 @@ URLs:
 - https://fourth.com`;
 
     const urls = extractUrlsFromNotes(notes);
-    expect(urls).toEqual(['https://first.com', 'https://second.com', 'https://third.com', 'https://fourth.com']);
+    expect(urls).toEqual([
+      'https://first.com',
+      'https://second.com',
+      'https://third.com',
+      'https://fourth.com',
+    ]);
   });
 
   test('should handle notes with single URL in multiple sections', () => {
@@ -104,8 +109,10 @@ URLs:
 
 describe('formatNoteWithUrls', () => {
   test('should format note with single URL', () => {
-    const result = formatNoteWithUrls('Task description', ['https://example.com']);
-    
+    const result = formatNoteWithUrls('Task description', [
+      'https://example.com',
+    ]);
+
     expect(result).toBe(`Task description
 
 URLs:
@@ -115,9 +122,9 @@ URLs:
   test('should format note with multiple URLs', () => {
     const result = formatNoteWithUrls('Task description', [
       'https://example.com',
-      'https://test.com'
+      'https://test.com',
     ]);
-    
+
     expect(result).toBe(`Task description
 
 URLs:
@@ -127,21 +134,21 @@ URLs:
 
   test('should handle empty note with URLs', () => {
     const result = formatNoteWithUrls('', ['https://example.com']);
-    
+
     expect(result).toBe(`URLs:
 - https://example.com`);
   });
 
   test('should handle null/undefined note with URLs', () => {
     const result = formatNoteWithUrls(null, ['https://example.com']);
-    
+
     expect(result).toBe(`URLs:
 - https://example.com`);
   });
 
   test('should return note content when no URLs provided', () => {
     const result = formatNoteWithUrls('Just a note', []);
-    
+
     expect(result).toBe('Just a note');
   });
 
@@ -150,9 +157,9 @@ URLs:
       'https://valid.com',
       'invalid-url',
       'ftp://not-http.com',
-      'http://valid-too.com'
+      'http://valid-too.com',
     ]);
-    
+
     expect(result).toBe(`Task
 
 URLs:
@@ -167,8 +174,10 @@ URLs:
 - https://old.com
 - https://existing.com`;
 
-    const result = formatNoteWithUrls(noteWithExistingUrls, ['https://new.com']);
-    
+    const result = formatNoteWithUrls(noteWithExistingUrls, [
+      'https://new.com',
+    ]);
+
     expect(result).toBe(`Task description
 
 URLs:
@@ -186,8 +195,10 @@ Content
 URLs:
 - https://second.com`;
 
-    const result = formatNoteWithUrls(noteWithMultipleUrlSections, ['https://replacement.com']);
-    
+    const result = formatNoteWithUrls(noteWithMultipleUrlSections, [
+      'https://replacement.com',
+    ]);
+
     expect(result).toBe(`Task
 Content
 
@@ -199,14 +210,17 @@ URLs:
 describe('formatUrlSection', () => {
   test('should format single URL section', () => {
     const result = formatUrlSection(['https://example.com']);
-    
+
     expect(result).toBe(`URLs:
 - https://example.com`);
   });
 
   test('should format multiple URLs section', () => {
-    const result = formatUrlSection(['https://example.com', 'https://test.com']);
-    
+    const result = formatUrlSection([
+      'https://example.com',
+      'https://test.com',
+    ]);
+
     expect(result).toBe(`URLs:
 - https://example.com
 - https://test.com`);
@@ -214,7 +228,7 @@ describe('formatUrlSection', () => {
 
   test('should return empty string for empty URLs', () => {
     const result = formatUrlSection([]);
-    
+
     expect(result).toBe('');
   });
 });
@@ -268,7 +282,7 @@ URL: https://legacy.com`;
 describe('combineNoteWithUrl', () => {
   test('should combine note with URL', () => {
     const result = combineNoteWithUrl('Task note', 'https://example.com');
-    
+
     expect(result).toBe(`Task note
 
 URLs:
@@ -277,7 +291,7 @@ URLs:
 
   test('should handle empty note with URL', () => {
     const result = combineNoteWithUrl('', 'https://example.com');
-    
+
     expect(result).toBe(`URLs:
 - https://example.com`);
   });
@@ -320,9 +334,9 @@ describe('isValidUrl', () => {
   });
 
   test('should reject non-string inputs', () => {
-    expect(isValidUrl(123 as any)).toBe(false);
-    expect(isValidUrl({} as any)).toBe(false);
-    expect(isValidUrl([] as any)).toBe(false);
+    expect(isValidUrl(123)).toBe(false);
+    expect(isValidUrl({})).toBe(false);
+    expect(isValidUrl([])).toBe(false);
   });
 });
 
@@ -358,33 +372,33 @@ URLs:
 - https://test.com`;
 
     const result = parseReminderNote(notes);
-    
+
     expect(result).toEqual({
       note: 'Task description',
-      urls: ['https://example.com', 'https://test.com']
+      urls: ['https://example.com', 'https://test.com'],
     });
   });
 
   test('should parse note without URLs', () => {
     const notes = 'Just a regular note';
-    
+
     const result = parseReminderNote(notes);
-    
+
     expect(result).toEqual({
       note: 'Just a regular note',
-      urls: []
+      urls: [],
     });
   });
 
   test('should handle empty/null input', () => {
     expect(parseReminderNote(null)).toEqual({
       note: '',
-      urls: []
+      urls: [],
     });
-    
+
     expect(parseReminderNote('')).toEqual({
       note: '',
-      urls: []
+      urls: [],
     });
   });
 });
@@ -396,8 +410,11 @@ describe('updateNoteWithUrls', () => {
 URLs:
 - https://old.com`;
 
-    const result = updateNoteWithUrls(existingNotes, ['https://new.com', 'https://another.com']);
-    
+    const result = updateNoteWithUrls(existingNotes, [
+      'https://new.com',
+      'https://another.com',
+    ]);
+
     expect(result).toBe(`Old task
 
 URLs:
@@ -407,7 +424,7 @@ URLs:
 
   test('should create note with URLs when existing is empty', () => {
     const result = updateNoteWithUrls('', ['https://new.com']);
-    
+
     expect(result).toBe(`URLs:
 - https://new.com`);
   });
@@ -424,7 +441,7 @@ URLs:
 
   test('should handle null existing notes', () => {
     const result = updateNoteWithUrls(null, ['https://new.com']);
-    
+
     expect(result).toBe(`URLs:
 - https://new.com`);
   });
