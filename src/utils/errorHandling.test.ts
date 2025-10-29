@@ -86,5 +86,77 @@ describe('ErrorHandling', () => {
 
       process.env.NODE_ENV = originalEnv;
     });
+
+    it('should show generic error in production mode', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      const originalDebug = process.env.DEBUG;
+      delete process.env.DEBUG;
+      process.env.NODE_ENV = 'production';
+
+      const mockOperation = jest
+        .fn()
+        .mockRejectedValue(new Error('Detailed error'));
+
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
+
+      expect(result.content[0].text).toBe(
+        'Failed to test operation: System error occurred',
+      );
+
+      process.env.NODE_ENV = originalNodeEnv;
+      if (originalDebug) process.env.DEBUG = originalDebug;
+    });
+
+    it('should handle non-Error exceptions', async () => {
+      const mockOperation = jest.fn().mockRejectedValue('String error');
+
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toBe(
+        'Failed to test operation: System error occurred',
+      );
+    });
+
+    it('should handle object errors', async () => {
+      const mockOperation = jest.fn().mockRejectedValue({ code: 'ERROR' });
+
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toBe(
+        'Failed to test operation: System error occurred',
+      );
+    });
+
+    it('should show detailed error when DEBUG is set', async () => {
+      process.env.DEBUG = '1';
+      process.env.NODE_ENV = 'production';
+
+      const mockOperation = jest
+        .fn()
+        .mockRejectedValue(new Error('Debug error'));
+
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
+
+      expect(result.content[0].text).toBe(
+        'Failed to test operation: Debug error',
+      );
+
+      delete process.env.DEBUG;
+      process.env.NODE_ENV = originalEnv;
+    });
   });
 });

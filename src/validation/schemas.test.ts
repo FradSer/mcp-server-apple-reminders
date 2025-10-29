@@ -7,6 +7,7 @@ import { z } from 'zod';
 import {
   CreateReminderListSchema,
   CreateReminderSchema,
+  createOptionalSafeTextSchema,
   DeleteReminderSchema,
   ReadRemindersSchema,
   RequiredListNameSchema,
@@ -76,6 +77,38 @@ describe('ValidationSchemas', () => {
       it('should allow multiline notes', () => {
         const multilineNote = 'Line 1\nLine 2\r\nLine 3';
         expect(() => SafeNoteSchema.parse(multilineNote)).not.toThrow();
+      });
+
+      it('should use default fieldName when not provided', () => {
+        // Test that createOptionalSafeTextSchema works with default fieldName
+        // This covers line 44 in schemas.ts - the default parameter branch
+        // Call without fieldName parameter to test default 'Text'
+        const schemaWithDefault = createOptionalSafeTextSchema(100);
+        expect(() => schemaWithDefault.parse(undefined)).not.toThrow();
+        expect(() => schemaWithDefault.parse('Valid')).not.toThrow();
+
+        // Test error message uses default 'Text' fieldName
+        const longText = 'a'.repeat(101);
+        try {
+          schemaWithDefault.parse(longText);
+          expect(true).toBe(false); // Should throw
+        } catch (error) {
+          // Error message should use default 'Text' fieldName
+          expect((error as Error).message).toContain('Text');
+        }
+      });
+
+      it('should use custom fieldName when provided', () => {
+        // Test that createOptionalSafeTextSchema uses custom fieldName
+        // SafeNoteSchema uses 'Note' as fieldName
+        const longText = 'a'.repeat(2001);
+        try {
+          SafeNoteSchema.parse(longText);
+          expect(true).toBe(false); // Should throw
+        } catch (error) {
+          // Error message should use custom 'Note' fieldName
+          expect((error as Error).message).toContain('Note');
+        }
       });
     });
 
@@ -366,6 +399,37 @@ describe('ValidationSchemas', () => {
       const error = new ValidationError('Test error');
 
       expect(error.details).toBeUndefined();
+    });
+  });
+
+  describe('validateInput error handling', () => {
+    it('should handle non-ZodError exceptions', () => {
+      const schema = z.object({ name: z.string() });
+      // Mock schema.parse to throw a non-ZodError
+      const originalParse = schema.parse;
+      schema.parse = jest.fn(() => {
+        throw new Error('Unknown error');
+      });
+
+      expect(() => validateInput(schema, { name: 'test' })).toThrow(
+        ValidationError,
+      );
+
+      const thrownError = (() => {
+        try {
+          validateInput(schema, { name: 'test' });
+          return null;
+        } catch (error) {
+          return error;
+        }
+      })();
+
+      expect(thrownError).toBeInstanceOf(ValidationError);
+      expect((thrownError as ValidationError).message).toBe(
+        'Input validation failed: Unknown error',
+      );
+
+      schema.parse = originalParse;
     });
   });
 });
