@@ -3,7 +3,7 @@
  * Tests for reminder repository
  */
 
-import type { Reminder } from '../types/index.js';
+import type { Reminder, ReminderList } from '../types/index.js';
 import { executeCli } from './cliExecutor.js';
 import type { ReminderFilters } from './dateFiltering.js';
 import { applyReminderFilters } from './dateFiltering.js';
@@ -33,11 +33,11 @@ describe('ReminderRepository', () => {
 
   describe('findReminderById', () => {
     it('should return reminder when found', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         { id: '1', title: 'Test 1', isCompleted: false, list: 'Default' },
         { id: '2', title: 'Test 2', isCompleted: true, list: 'Work' },
       ];
-      const mockLists: any[] = [];
+      const mockLists: ReminderList[] = [];
 
       mockExecuteCli.mockResolvedValue({
         reminders: mockReminders,
@@ -65,7 +65,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should throw error when reminder not found', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         { id: '1', title: 'Test 1', isCompleted: false, list: 'Default' },
       ];
 
@@ -80,7 +80,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should handle reminders with notes and url', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         {
           id: '1',
           title: 'Test',
@@ -105,7 +105,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should handle null notes and url as undefined', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         {
           id: '1',
           title: 'Test',
@@ -132,11 +132,11 @@ describe('ReminderRepository', () => {
 
   describe('findReminders', () => {
     it('should return filtered reminders', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         { id: '1', title: 'Test 1', isCompleted: false, list: 'Default' },
         { id: '2', title: 'Test 2', isCompleted: true, list: 'Work' },
       ];
-      const mockLists: any[] = [];
+      const mockLists: ReminderList[] = [];
       const filters: ReminderFilters = { showCompleted: false };
       const filteredReminders: Reminder[] = [
         { id: '1', title: 'Test 1', isCompleted: false, list: 'Default' },
@@ -164,7 +164,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should convert JSON reminders to proper Reminder objects', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         {
           id: '1',
           title: 'Test',
@@ -196,7 +196,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should handle empty filters', async () => {
-      const mockReminders: any[] = [
+      const mockReminders: Partial<Reminder>[] = [
         { id: '1', title: 'Test', isCompleted: false, list: 'Default' },
       ];
 
@@ -214,7 +214,7 @@ describe('ReminderRepository', () => {
 
   describe('findAllLists', () => {
     it('should return all reminder lists', async () => {
-      const mockLists: any[] = [
+      const mockLists: ReminderList[] = [
         { id: '1', title: 'Default' },
         { id: '2', title: 'Work' },
       ];
@@ -250,7 +250,12 @@ describe('ReminderRepository', () => {
         url: 'https://example.com',
         dueDate: '2024-01-15',
       };
-      const mockResult: any = { id: '123', title: 'New Reminder' };
+      const mockResult: Reminder = {
+        id: '123',
+        title: 'New Reminder',
+        isCompleted: false,
+        list: 'Default',
+      };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -277,7 +282,12 @@ describe('ReminderRepository', () => {
       const data: CreateReminderData = {
         title: 'Simple Reminder',
       };
-      const mockResult: any = { id: '123', title: 'Simple Reminder' };
+      const mockResult: Reminder = {
+        id: '123',
+        title: 'Simple Reminder',
+        isCompleted: false,
+        list: 'Default',
+      };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -298,7 +308,12 @@ describe('ReminderRepository', () => {
         list: 'Work',
         // notes, url, dueDate omitted
       };
-      const mockResult: any = { id: '123', title: 'Test' };
+      const mockResult: Reminder = {
+        id: '123',
+        title: 'Test',
+        isCompleted: false,
+        list: 'Default',
+      };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -322,7 +337,12 @@ describe('ReminderRepository', () => {
         isCompleted: true,
         dueDate: '2024-01-20',
       };
-      const mockResult: any = { id: '123', title: 'Updated Title' };
+      const mockResult: Reminder = {
+        id: '123',
+        title: 'Updated Title',
+        isCompleted: false,
+        list: 'Default',
+      };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -353,7 +373,7 @@ describe('ReminderRepository', () => {
       const data: UpdateReminderData = {
         id: '123',
       };
-      const mockResult: any = { id: '123' };
+      const mockResult: { id: string } = { id: '123' };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -416,7 +436,7 @@ describe('ReminderRepository', () => {
 
   describe('createReminderList', () => {
     it('should create reminder list', async () => {
-      const mockResult: any = { id: '456', title: 'New List' };
+      const mockResult: ReminderList = { id: '456', title: 'New List' };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -434,7 +454,7 @@ describe('ReminderRepository', () => {
 
   describe('updateReminderList', () => {
     it('should update reminder list', async () => {
-      const mockResult: any = { id: '456', title: 'Updated List' };
+      const mockResult: ReminderList = { id: '456', title: 'Updated List' };
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
@@ -472,7 +492,7 @@ describe('ReminderRepository', () => {
 
   describe('listExists', () => {
     it('should return true when list exists', async () => {
-      const mockLists: any[] = [
+      const mockLists: ReminderList[] = [
         { id: '1', title: 'Work' },
         { id: '2', title: 'Personal' },
       ];
@@ -488,7 +508,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should return false when list does not exist', async () => {
-      const mockLists: any[] = [{ id: '1', title: 'Work' }];
+      const mockLists: ReminderList[] = [{ id: '1', title: 'Work' }];
 
       mockExecuteCli.mockResolvedValue({
         reminders: [],
@@ -501,7 +521,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should be case sensitive', async () => {
-      const mockLists: any[] = [{ id: '1', title: 'Work' }];
+      const mockLists: ReminderList[] = [{ id: '1', title: 'Work' }];
 
       mockExecuteCli.mockResolvedValue({
         reminders: [],

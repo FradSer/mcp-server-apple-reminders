@@ -19,14 +19,14 @@ describe('DateFiltering', () => {
 
   beforeEach(() => {
     global.Date = class extends RealDate {
-      constructor(...args: any[]) {
+      constructor(...args: ConstructorParameters<typeof RealDate>) {
         if (args.length === 0) {
           super(mockNow);
         } else {
           super(...args);
         }
       }
-    } as any;
+    } as typeof global.Date;
   });
 
   afterEach(() => {
