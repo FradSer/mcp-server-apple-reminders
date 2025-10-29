@@ -111,9 +111,9 @@ describe('ReminderRepository', () => {
           title: 'Test',
           isCompleted: false,
           list: 'Default',
-          notes: null,
-          url: null,
-          dueDate: null,
+          notes: undefined,
+          url: undefined,
+          dueDate: undefined,
         },
       ];
 
