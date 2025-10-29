@@ -41,11 +41,7 @@ const createSafeTextSchema = (
       `${fieldName} contains invalid characters. Only alphanumeric, spaces, and basic punctuation allowed`,
     );
 
-// Export for testing to achieve 100% coverage of default parameter branch
-export const createOptionalSafeTextSchema = (
-  maxLength: number,
-  fieldName = 'Text',
-) =>
+const createOptionalSafeTextSchema = (maxLength: number, fieldName = 'Text') =>
   z
     .string()
     .max(maxLength, `${fieldName} cannot exceed ${maxLength} characters`)

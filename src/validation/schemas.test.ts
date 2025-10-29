@@ -7,7 +7,6 @@ import { z } from 'zod';
 import {
   CreateReminderListSchema,
   CreateReminderSchema,
-  createOptionalSafeTextSchema,
   DeleteReminderSchema,
   ReadRemindersSchema,
   RequiredListNameSchema,
@@ -20,14 +19,6 @@ import {
   ValidationError,
   validateInput,
 } from './schemas.js';
-
-// Local enum constants for testing
-const DueWithinEnum = z
-  .enum(['today', 'tomorrow', 'this-week', 'overdue', 'no-date'])
-  .optional();
-const OrganizeByEnum = z
-  .enum(['priority', 'due_date', 'category', 'completion_status'])
-  .optional();
 
 describe('ValidationSchemas', () => {
   beforeEach(() => {
@@ -79,27 +70,7 @@ describe('ValidationSchemas', () => {
         expect(() => SafeNoteSchema.parse(multilineNote)).not.toThrow();
       });
 
-      it('should use default fieldName when not provided', () => {
-        // Test that createOptionalSafeTextSchema works with default fieldName
-        // This covers line 44 in schemas.ts - the default parameter branch
-        // Call without fieldName parameter to test default 'Text'
-        const schemaWithDefault = createOptionalSafeTextSchema(100);
-        expect(() => schemaWithDefault.parse(undefined)).not.toThrow();
-        expect(() => schemaWithDefault.parse('Valid')).not.toThrow();
-
-        // Test error message uses default 'Text' fieldName
-        const longText = 'a'.repeat(101);
-        try {
-          schemaWithDefault.parse(longText);
-          expect(true).toBe(false); // Should throw
-        } catch (error) {
-          // Error message should use default 'Text' fieldName
-          expect((error as Error).message).toContain('Text');
-        }
-      });
-
-      it('should use custom fieldName when provided', () => {
-        // Test that createOptionalSafeTextSchema uses custom fieldName
+      it('should use custom fieldName in error messages', () => {
         // SafeNoteSchema uses 'Note' as fieldName
         const longText = 'a'.repeat(2001);
         try {
@@ -176,25 +147,6 @@ describe('ValidationSchemas', () => {
       it('should reject invalid URL formats', () => {
         expect(() => SafeUrlSchema.parse('not-a-url')).toThrow();
         expect(() => SafeUrlSchema.parse('ftp://example.com')).toThrow();
-      });
-    });
-
-    describe('Enums', () => {
-      it('should validate DueWithinEnum values', () => {
-        expect(() => DueWithinEnum.parse('today')).not.toThrow();
-        expect(() => DueWithinEnum.parse('tomorrow')).not.toThrow();
-        expect(() => DueWithinEnum.parse('this-week')).not.toThrow();
-        expect(() => DueWithinEnum.parse('overdue')).not.toThrow();
-        expect(() => DueWithinEnum.parse('no-date')).not.toThrow();
-        expect(() => DueWithinEnum.parse('invalid')).toThrow();
-      });
-
-      it('should validate OrganizeByEnum values', () => {
-        expect(() => OrganizeByEnum.parse('priority')).not.toThrow();
-        expect(() => OrganizeByEnum.parse('due_date')).not.toThrow();
-        expect(() => OrganizeByEnum.parse('category')).not.toThrow();
-        expect(() => OrganizeByEnum.parse('completion_status')).not.toThrow();
-        expect(() => OrganizeByEnum.parse('invalid')).toThrow();
       });
     });
   });
