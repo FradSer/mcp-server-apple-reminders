@@ -7,12 +7,7 @@ import type { Reminder, ReminderList } from '../types/index.js';
 import { executeCli } from './cliExecutor.js';
 import type { ReminderFilters } from './dateFiltering.js';
 import { applyReminderFilters } from './dateFiltering.js';
-import {
-  type CreateReminderData,
-  ReminderRepository,
-  reminderRepository,
-  type UpdateReminderData,
-} from './reminderRepository.js';
+import { reminderRepository } from './reminderRepository.js';
 
 // Mock dependencies
 jest.mock('./cliExecutor.js');
@@ -24,11 +19,10 @@ const mockApplyReminderFilters = applyReminderFilters as jest.MockedFunction<
 >;
 
 describe('ReminderRepository', () => {
-  let repository: ReminderRepository;
+  const repository = reminderRepository;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    repository = new ReminderRepository();
   });
 
   describe('findReminderById', () => {
@@ -243,7 +237,7 @@ describe('ReminderRepository', () => {
 
   describe('createReminder', () => {
     it('should create reminder with all fields', async () => {
-      const data: CreateReminderData = {
+      const data = {
         title: 'New Reminder',
         list: 'Work',
         notes: 'Some notes',
@@ -279,7 +273,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should create reminder with minimal fields', async () => {
-      const data: CreateReminderData = {
+      const data = {
         title: 'Simple Reminder',
       };
       const mockResult: Reminder = {
@@ -303,7 +297,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should handle optional fields correctly', async () => {
-      const data: CreateReminderData = {
+      const data = {
         title: 'Test',
         list: 'Work',
         // notes, url, dueDate omitted
@@ -328,7 +322,7 @@ describe('ReminderRepository', () => {
 
   describe('updateReminder', () => {
     it('should update reminder with all fields', async () => {
-      const data: UpdateReminderData = {
+      const data = {
         id: '123',
         newTitle: 'Updated Title',
         list: 'Work',
@@ -370,7 +364,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should update reminder with minimal fields', async () => {
-      const data: UpdateReminderData = {
+      const data = {
         id: '123',
       };
       const mockResult: { id: string } = { id: '123' };
@@ -389,7 +383,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should handle optional isCompleted field', async () => {
-      const data: UpdateReminderData = {
+      const data = {
         id: '123',
         isCompleted: false,
       };
@@ -404,7 +398,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should skip isCompleted when undefined', async () => {
-      const data: UpdateReminderData = {
+      const data = {
         id: '123',
         newTitle: 'Updated',
         // isCompleted not provided
@@ -491,8 +485,9 @@ describe('ReminderRepository', () => {
   });
 
   describe('reminderRepository instance', () => {
-    it('should export a ReminderRepository instance', () => {
-      expect(reminderRepository).toBeInstanceOf(ReminderRepository);
+    it('should export a reminderRepository instance', () => {
+      expect(reminderRepository).toBeDefined();
+      expect(typeof reminderRepository.findReminders).toBe('function');
     });
   });
 });

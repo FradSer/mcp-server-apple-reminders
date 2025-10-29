@@ -30,7 +30,7 @@ interface ReadResult {
 }
 
 // Data interfaces for repository methods
-export interface CreateReminderData {
+interface CreateReminderData {
   title: string;
   list?: string;
   notes?: string;
@@ -38,7 +38,7 @@ export interface CreateReminderData {
   dueDate?: string;
 }
 
-export interface UpdateReminderData {
+interface UpdateReminderData {
   id: string;
   newTitle?: string;
   list?: string;
@@ -48,7 +48,7 @@ export interface UpdateReminderData {
   dueDate?: string;
 }
 
-export class ReminderRepository {
+class ReminderRepository {
   private async readAll(): Promise<ReadResult> {
     return executeCli<ReadResult>([
       '--action',
