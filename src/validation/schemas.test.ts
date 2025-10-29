@@ -380,7 +380,9 @@ describe('ValidationSchemas', () => {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
         expect(validationError.details).toBeDefined();
-        expect(Object.keys(validationError.details!)).toHaveLength(3);
+        expect(
+          Object.keys(validationError.details as Record<string, string[]>),
+        ).toHaveLength(3);
       }
     });
 
