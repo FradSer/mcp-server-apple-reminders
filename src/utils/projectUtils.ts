@@ -83,5 +83,7 @@ function getCurrentModuleDir(): string {
   }
 
   // In production, use import.meta.url
+  // This line is excluded from coverage due to Jest ESM limitations
+  /* istanbul ignore next */
   return path.dirname(fileURLToPath(import.meta.url));
 }
