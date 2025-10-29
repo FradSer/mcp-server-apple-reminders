@@ -137,11 +137,6 @@ export class ReminderRepository {
   async deleteReminderList(name: string): Promise<void> {
     await executeCli<unknown>(['--action', 'delete-list', '--name', name]);
   }
-
-  async listExists(name: string): Promise<boolean> {
-    const lists = await this.findAllLists();
-    return lists.some((list) => list.title === name);
-  }
 }
 
 export const reminderRepository = new ReminderRepository();

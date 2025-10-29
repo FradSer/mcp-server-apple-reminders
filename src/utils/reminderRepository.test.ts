@@ -490,50 +490,6 @@ describe('ReminderRepository', () => {
     });
   });
 
-  describe('listExists', () => {
-    it('should return true when list exists', async () => {
-      const mockLists: ReminderList[] = [
-        { id: '1', title: 'Work' },
-        { id: '2', title: 'Personal' },
-      ];
-
-      mockExecuteCli.mockResolvedValue({
-        reminders: [],
-        lists: mockLists,
-      });
-
-      const result = await repository.listExists('Work');
-
-      expect(result).toBe(true);
-    });
-
-    it('should return false when list does not exist', async () => {
-      const mockLists: ReminderList[] = [{ id: '1', title: 'Work' }];
-
-      mockExecuteCli.mockResolvedValue({
-        reminders: [],
-        lists: mockLists,
-      });
-
-      const result = await repository.listExists('Personal');
-
-      expect(result).toBe(false);
-    });
-
-    it('should be case sensitive', async () => {
-      const mockLists: ReminderList[] = [{ id: '1', title: 'Work' }];
-
-      mockExecuteCli.mockResolvedValue({
-        reminders: [],
-        lists: mockLists,
-      });
-
-      const result = await repository.listExists('work');
-
-      expect(result).toBe(false);
-    });
-  });
-
   describe('reminderRepository instance', () => {
     it('should export a ReminderRepository instance', () => {
       expect(reminderRepository).toBeInstanceOf(ReminderRepository);
