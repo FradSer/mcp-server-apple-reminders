@@ -38,8 +38,7 @@ interface StructuredPromptConfig {
   calibration?: string[];
 }
 
-// Export for testing to achieve 100% coverage
-export const createStructuredPrompt = ({
+const createStructuredPrompt = ({
   mission,
   contextInputs,
   process,
@@ -401,7 +400,7 @@ const buildGoalTrackingSetupPrompt = (
   };
 };
 
-export const PROMPTS: PromptRegistry = {
+const PROMPTS: PromptRegistry = {
   'daily-task-organizer': {
     metadata: {
       name: 'daily-task-organizer',
