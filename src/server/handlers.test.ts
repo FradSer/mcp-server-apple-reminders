@@ -298,8 +298,12 @@ describe('Server Handlers - Prompts', () => {
           }
           return originalSetRequestHandler.call(
             testServer,
-            schema as any,
-            handler as any,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
           );
         },
       );
@@ -344,8 +348,12 @@ describe('Server Handlers - Prompts', () => {
           }
           return originalSetRequestHandler.call(
             testServer,
-            schema as any,
-            handler as any,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
           );
         },
       );
@@ -393,8 +401,12 @@ describe('Server Handlers - Prompts', () => {
           }
           return originalSetRequestHandler.call(
             testServer,
-            schema as any,
-            handler as any,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
           );
         },
       );
