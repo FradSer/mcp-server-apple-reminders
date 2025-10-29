@@ -6,7 +6,6 @@
 import type { Reminder } from '../types/index.js';
 import {
   applyReminderFilters,
-  categorizeReminderByDueDate,
   createDateBoundaries,
   filterRemindersByDate,
   type ReminderFilters,
@@ -150,82 +149,6 @@ describe('DateFiltering', () => {
       const result = filterRemindersByDate(reminders, 'today');
 
       expect(result.every((r) => r.dueDate)).toBe(true);
-    });
-  });
-
-  describe('categorizeReminderByDueDate', () => {
-    it('should categorize reminder with no due date', () => {
-      const reminder: Reminder = {
-        id: '1',
-        title: 'Test',
-        list: 'Default',
-        isCompleted: false,
-      };
-
-      const category = categorizeReminderByDueDate(reminder);
-      expect(category).toBe('No Due Date');
-    });
-
-    it('should categorize overdue reminder', () => {
-      const reminder: Reminder = {
-        id: '1',
-        title: 'Test',
-        dueDate: '2024-01-10T08:00:00Z',
-        list: 'Default',
-        isCompleted: false,
-      };
-
-      const category = categorizeReminderByDueDate(reminder);
-      expect(category).toBe('Overdue');
-    });
-
-    it('should categorize reminder due today', () => {
-      // Create a reminder due in the current day
-      const now = new Date();
-      const todayDue = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        12,
-        0,
-        0,
-      );
-      const reminder: Reminder = {
-        id: '1',
-        title: 'Test',
-        dueDate: todayDue.toISOString(),
-        list: 'Default',
-        isCompleted: false,
-      };
-
-      const category = categorizeReminderByDueDate(reminder);
-      expect(['Due Today', 'Due This Week']).toContain(category);
-    });
-
-    it('should categorize reminder due this week', () => {
-      const reminder: Reminder = {
-        id: '1',
-        title: 'Test',
-        dueDate: '2024-01-18T10:00:00Z',
-        list: 'Default',
-        isCompleted: false,
-      };
-
-      const category = categorizeReminderByDueDate(reminder);
-      expect(category).toBe('Due This Week');
-    });
-
-    it('should categorize reminder due later', () => {
-      const reminder: Reminder = {
-        id: '1',
-        title: 'Test',
-        dueDate: '2024-02-15T10:00:00Z',
-        list: 'Default',
-        isCompleted: false,
-      };
-
-      const category = categorizeReminderByDueDate(reminder);
-      expect(category).toBe('Due Later');
     });
   });
 
