@@ -38,7 +38,8 @@ interface StructuredPromptConfig {
   calibration?: string[];
 }
 
-const createStructuredPrompt = ({
+// Export for testing to achieve 100% coverage
+export const createStructuredPrompt = ({
   mission,
   contextInputs,
   process,

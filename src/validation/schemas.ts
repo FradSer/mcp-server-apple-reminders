@@ -41,7 +41,11 @@ const createSafeTextSchema = (
       `${fieldName} contains invalid characters. Only alphanumeric, spaces, and basic punctuation allowed`,
     );
 
-const createOptionalSafeTextSchema = (maxLength: number, fieldName = 'Text') =>
+// Export for testing to achieve 100% coverage of default parameter branch
+export const createOptionalSafeTextSchema = (
+  maxLength: number,
+  fieldName = 'Text',
+) =>
   z
     .string()
     .max(maxLength, `${fieldName} cannot exceed ${maxLength} characters`)
@@ -186,14 +190,3 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
     throw new ValidationError('Input validation failed: Unknown error');
   }
 };
-
-/**
- * Type exports for TypeScript integration
- */
-export type CreateReminderInput = z.infer<typeof CreateReminderSchema>;
-export type ReadRemindersInput = z.infer<typeof ReadRemindersSchema>;
-export type UpdateReminderInput = z.infer<typeof UpdateReminderSchema>;
-export type DeleteReminderInput = z.infer<typeof DeleteReminderSchema>;
-export type CreateReminderListInput = z.infer<typeof CreateReminderListSchema>;
-export type UpdateReminderListInput = z.infer<typeof UpdateReminderListSchema>;
-export type DeleteReminderListInput = z.infer<typeof DeleteReminderListSchema>;
