@@ -3,7 +3,7 @@
  * Tests for URL handling utilities
  */
 
-import { describe, expect, test } from '@jest/globals';
+// Jest globals are available automatically
 import {
   combineNoteWithUrl,
   extractNoteContent,

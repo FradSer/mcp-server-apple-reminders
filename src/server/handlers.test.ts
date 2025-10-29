@@ -9,7 +9,7 @@ import { registerHandlers } from './handlers.js';
 // Mock server type for testing
 interface MockServer {
   setRequestHandler: jest.MockedFunction<
-    (schema: unknown, handler: unknown) => void
+    (schema: any, handler: any) => void
   >;
 }
 
@@ -23,6 +23,7 @@ interface MockPrompt {
 interface MockPromptArgument {
   name: string;
   description: string;
+  required?: boolean;
 }
 
 // Mock the tools and prompts modules
@@ -46,7 +47,7 @@ describe('Server Handlers', () => {
 
   describe('registerHandlers', () => {
     test('should register all required handlers', () => {
-      registerHandlers(mockServer);
+      registerHandlers(mockServer as any);
 
       // Verify that all handlers are registered
       expect(mockServer.setRequestHandler).toHaveBeenCalledTimes(4);
@@ -61,13 +62,13 @@ describe('Server Handlers', () => {
   });
 
   describe('Prompts Handlers', () => {
-    let listPromptsHandler: jest.MockedFunction<() => Promise<unknown>>;
+    let listPromptsHandler: jest.MockedFunction<() => Promise<any>>;
     let getPromptHandler: jest.MockedFunction<
-      (args: unknown) => Promise<unknown>
+      (args: any) => Promise<any>
     >;
 
     beforeEach(() => {
-      registerHandlers(mockServer);
+      registerHandlers(mockServer as any);
 
       // Extract handlers from mock calls
       const calls = mockServer.setRequestHandler.mock.calls;
@@ -235,14 +236,14 @@ describe('Server Handlers - Prompts', () => {
         { capabilities: { prompts: {}, resources: {}, tools: {} } },
       );
 
-      let listPromptsHandler: jest.MockedFunction<() => Promise<unknown>>;
+      let listPromptsHandler: jest.MockedFunction<() => Promise<any>> | undefined;
 
       // Mock setRequestHandler to capture the handler
       const originalSetRequestHandler = testServer.setRequestHandler;
       testServer.setRequestHandler = jest.fn(
-        (schema: unknown, handler: unknown) => {
+        (schema: any, handler: any) => {
           if (schema === ListPromptsRequestSchema) {
-            listPromptsHandler = handler;
+            listPromptsHandler = handler as jest.MockedFunction<() => Promise<any>>;
           }
           return originalSetRequestHandler.call(testServer, schema, handler);
         },
@@ -251,7 +252,7 @@ describe('Server Handlers - Prompts', () => {
       registerHandlers(testServer);
 
       expect(listPromptsHandler).toBeDefined();
-      const response = await listPromptsHandler();
+      const response = await listPromptsHandler!();
 
       expect(response).toHaveProperty('prompts');
       expect(Array.isArray(response.prompts)).toBe(true);
@@ -273,20 +274,21 @@ describe('Server Handlers - Prompts', () => {
         { capabilities: { prompts: {}, resources: {}, tools: {} } },
       );
 
-      let listPromptsHandler: jest.MockedFunction<() => Promise<unknown>>;
+      let listPromptsHandler: jest.MockedFunction<() => Promise<any>> | undefined;
 
       const originalSetRequestHandler = testServer.setRequestHandler;
       testServer.setRequestHandler = jest.fn(
-        (schema: unknown, handler: unknown) => {
+        (schema: any, handler: any) => {
           if (schema === ListPromptsRequestSchema) {
-            listPromptsHandler = handler;
+            listPromptsHandler = handler as jest.MockedFunction<() => Promise<any>>;
           }
           return originalSetRequestHandler.call(testServer, schema, handler);
         },
       );
 
       registerHandlers(testServer);
-      const response = await listPromptsHandler();
+      expect(listPromptsHandler).toBeDefined();
+      const response = await listPromptsHandler!();
 
       response.prompts.forEach((prompt: MockPrompt) => {
         expect(prompt).toHaveProperty('name');
@@ -307,7 +309,7 @@ describe('Server Handlers - Prompts', () => {
 
   describe('GetPromptRequestSchema', () => {
     let getPromptHandler: jest.MockedFunction<
-      (args: unknown) => Promise<unknown>
+      (args: any) => Promise<any>
     >;
 
     beforeEach(() => {
@@ -318,9 +320,9 @@ describe('Server Handlers - Prompts', () => {
 
       const originalSetRequestHandler = testServer.setRequestHandler;
       testServer.setRequestHandler = jest.fn(
-        (schema: unknown, handler: unknown) => {
+        (schema: any, handler: any) => {
           if (schema === GetPromptRequestSchema) {
-            getPromptHandler = handler;
+            getPromptHandler = handler as jest.MockedFunction<(args: any) => Promise<any>>;
           }
           return originalSetRequestHandler.call(testServer, schema, handler);
         },

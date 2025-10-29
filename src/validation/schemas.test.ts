@@ -378,8 +378,9 @@ describe('ValidationSchemas', () => {
         fail('Should have thrown ValidationError');
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
-        expect(error.details).toBeDefined();
-        expect(Object.keys(error.details)).toHaveLength(3);
+        const validationError = error as ValidationError;
+        expect(validationError.details).toBeDefined();
+        expect(Object.keys(validationError.details!)).toHaveLength(3);
       }
     });
 
@@ -392,7 +393,7 @@ describe('ValidationSchemas', () => {
         fail('Should have thrown ValidationError');
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
-        expect(error.message).toContain('cannot be empty');
+        expect((error as Error).message).toContain('cannot be empty');
       }
     });
   });

@@ -139,7 +139,7 @@ describe('ErrorHandling', () => {
           'error',
         );
 
-        const parsed = JSON.parse(result.content[0].text);
+        const parsed = JSON.parse(result.content[0].text as string);
         expect(parsed).toEqual({
           error: 'Failed to test: System error occurred',
           isError: true,
@@ -186,7 +186,7 @@ describe('ErrorHandling', () => {
         };
         const result = ErrorResponseFactory.createJsonSuccessResponse(data);
 
-        const parsed = JSON.parse(result.content[0].text);
+        const parsed = JSON.parse(result.content[0].text as string);
         expect(parsed).toEqual(data);
       });
     });
@@ -248,7 +248,7 @@ describe('ErrorHandling', () => {
       expect(mockOperation).toHaveBeenCalled();
       expect(result.isError).toBe(false);
 
-      const parsed = JSON.parse(result.content[0].text);
+      const parsed = JSON.parse(result.content[0].text as string);
       expect(parsed).toEqual(mockData);
     });
 
@@ -265,7 +265,7 @@ describe('ErrorHandling', () => {
       expect(mockOperation).toHaveBeenCalled();
       expect(result.isError).toBe(true);
 
-      const parsed = JSON.parse(result.content[0].text);
+      const parsed = JSON.parse(result.content[0].text as string);
       expect(parsed.error).toContain('Failed to test operation');
       expect(parsed.isError).toBe(true);
     });
@@ -285,7 +285,7 @@ describe('ErrorHandling', () => {
         'fetch reminders',
       );
 
-      const parsed = JSON.parse(result.content[0].text);
+      const parsed = JSON.parse(result.content[0].text as string);
       expect(parsed).toEqual(mockData);
     });
   });
