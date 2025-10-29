@@ -310,7 +310,7 @@ describe('Server Handlers - Prompts', () => {
       const response = await listPromptsHandler?.();
 
       expect(response).toBeDefined();
-      expect(response!).toHaveProperty('prompts');
+      expect(response as ListPromptsResponse).toHaveProperty('prompts');
       expect(Array.isArray(response?.prompts)).toBe(true);
       expect(response?.prompts.length).toBe(6);
 
