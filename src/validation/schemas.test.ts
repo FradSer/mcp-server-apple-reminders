@@ -5,11 +5,9 @@
 
 import { z } from 'zod';
 import {
-  BulkCreateRemindersSchema,
   CreateReminderListSchema,
   CreateReminderSchema,
   DeleteReminderSchema,
-  MoveReminderSchema,
   ReadRemindersSchema,
   RequiredListNameSchema,
   SafeDateSchema,
@@ -263,25 +261,6 @@ describe('ValidationSchemas', () => {
       });
     });
 
-    describe('MoveReminderSchema', () => {
-      it('should validate move reminder input', () => {
-        const validInput = {
-          id: '123',
-          targetList: 'Work',
-        };
-
-        expect(() => MoveReminderSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require both id and targetList', () => {
-        expect(() => MoveReminderSchema.parse({ id: '123' })).toThrow();
-        expect(() =>
-          MoveReminderSchema.parse({ targetList: 'Work' }),
-        ).toThrow();
-        expect(() => MoveReminderSchema.parse({})).toThrow();
-      });
-    });
-
     describe('CreateReminderListSchema', () => {
       it('should validate create list input', () => {
         const validInput = {
@@ -311,39 +290,6 @@ describe('ValidationSchemas', () => {
         expect(() =>
           UpdateReminderListSchema.parse({ newName: 'New' }),
         ).toThrow();
-      });
-    });
-
-    describe('BulkCreateRemindersSchema', () => {
-      it('should validate bulk create input', () => {
-        const validInput = {
-          items: [
-            { title: 'Reminder 1', targetList: 'Work' },
-            { title: 'Reminder 2', dueDate: '2024-01-15' },
-          ],
-        };
-
-        expect(() => BulkCreateRemindersSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require at least one item', () => {
-        const invalidInput = {
-          items: [],
-        };
-
-        expect(() => BulkCreateRemindersSchema.parse(invalidInput)).toThrow();
-      });
-
-      it('should limit maximum items', () => {
-        const tooManyItems = Array.from({ length: 51 }, (_, i) => ({
-          title: `Reminder ${i}`,
-        }));
-
-        const invalidInput = {
-          items: tooManyItems,
-        };
-
-        expect(() => BulkCreateRemindersSchema.parse(invalidInput)).toThrow();
       });
     });
   });

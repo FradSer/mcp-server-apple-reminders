@@ -88,9 +88,6 @@ export const SafeUrlSchema = z
 const DueWithinEnum = z
   .enum(['today', 'tomorrow', 'this-week', 'overdue', 'no-date'])
   .optional();
-const OrganizeByEnum = z
-  .enum(['priority', 'due_date', 'category', 'completion_status'])
-  .optional();
 
 /**
  * Common field combinations for reusability
@@ -101,13 +98,6 @@ const BaseReminderFields = {
   note: SafeNoteSchema,
   url: SafeUrlSchema,
   targetList: SafeListNameSchema,
-};
-
-const FilterCriteria = {
-  search: SafeSearchSchema,
-  dueWithin: DueWithinEnum,
-  completed: z.boolean().optional(),
-  sourceList: SafeListNameSchema,
 };
 
 export const SafeIdSchema = z.string().min(1, 'ID cannot be empty');
@@ -139,15 +129,6 @@ export const DeleteReminderSchema = z.object({
   id: SafeIdSchema,
 });
 
-export const MoveReminderSchema = z.object({
-  id: SafeIdSchema,
-  targetList: RequiredListNameSchema,
-});
-
-export const ReadReminderListsSchema = z.object({
-  createNew: z.object({ name: RequiredListNameSchema }).optional(),
-});
-
 export const CreateReminderListSchema = z.object({
   name: RequiredListNameSchema,
 });
@@ -159,34 +140,6 @@ export const UpdateReminderListSchema = z.object({
 
 export const DeleteReminderListSchema = z.object({
   name: RequiredListNameSchema,
-});
-
-/**
- * Bulk operation schemas using reusable components
- */
-export const BulkCreateRemindersSchema = z.object({
-  items: z
-    .array(z.object(BaseReminderFields))
-    .min(1, 'At least one item is required for bulk creation')
-    .max(50, 'Cannot create more than 50 reminders at once'),
-});
-
-export const BulkUpdateRemindersSchema = z.object({
-  criteria: z.object(FilterCriteria),
-  updates: z.object({
-    newTitle: SafeTextSchema.optional(),
-    dueDate: SafeDateSchema,
-    note: SafeNoteSchema,
-    url: SafeUrlSchema,
-    completed: z.boolean().optional(),
-    targetList: SafeListNameSchema,
-  }),
-  organizeBy: OrganizeByEnum,
-  createLists: z.boolean().optional().default(true),
-});
-
-export const BulkDeleteRemindersSchema = z.object({
-  criteria: z.object(FilterCriteria),
 });
 
 /**
@@ -241,16 +194,6 @@ export type CreateReminderInput = z.infer<typeof CreateReminderSchema>;
 export type ReadRemindersInput = z.infer<typeof ReadRemindersSchema>;
 export type UpdateReminderInput = z.infer<typeof UpdateReminderSchema>;
 export type DeleteReminderInput = z.infer<typeof DeleteReminderSchema>;
-export type BulkCreateRemindersInput = z.infer<
-  typeof BulkCreateRemindersSchema
->;
-export type BulkUpdateRemindersInput = z.infer<
-  typeof BulkUpdateRemindersSchema
->;
-export type BulkDeleteRemindersInput = z.infer<
-  typeof BulkDeleteRemindersSchema
->;
-export type ReadReminderListsInput = z.infer<typeof ReadReminderListsSchema>;
 export type CreateReminderListInput = z.infer<typeof CreateReminderListSchema>;
 export type UpdateReminderListInput = z.infer<typeof UpdateReminderListSchema>;
 export type DeleteReminderListInput = z.infer<typeof DeleteReminderListSchema>;
