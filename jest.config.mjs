@@ -25,7 +25,11 @@ export default {
   },
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^import-meta$': '<rootDir>/src/__mocks__/importMeta.js',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(supertest)/)',
+  ],
   testMatch: ['<rootDir>/src/**/*.test.ts', '<rootDir>/src/**/*.spec.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/', '<rootDir>/dist/'],
   collectCoverageFrom: [

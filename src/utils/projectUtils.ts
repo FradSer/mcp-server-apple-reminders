@@ -16,9 +16,8 @@ import { logger } from './logger.js';
  */
 export function findProjectRoot(maxDepth = 10): string {
   // Derive the starting directory from the current module's location for robustness.
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const root = locateProjectRoot(__dirname, maxDepth);
+  const currentDir = getCurrentModuleDir();
+  const root = locateProjectRoot(currentDir, maxDepth);
 
   if (root) {
     return root;
@@ -110,4 +109,17 @@ export function getFallbackSearchDirectory(
   }
 
   return currentDir;
+}
+
+/**
+ * Get the current module's directory
+ * Handles both production and test environments
+ */
+function getCurrentModuleDir(): string {
+  if (process.env.NODE_ENV === 'test') {
+    return path.join(process.cwd(), 'src', 'utils');
+  }
+
+  // In production, use import.meta.url
+  return path.dirname(fileURLToPath(import.meta.url));
 }

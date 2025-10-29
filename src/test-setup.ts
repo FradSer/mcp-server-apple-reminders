@@ -15,9 +15,9 @@ global.console = {
 process.env.NODE_ENV = 'test';
 process.env.DEBUG = 'true';
 
-// Mock import.meta.url for Jest
+// Mock import.meta.url for Jest - provide a valid file path
 const mockImportMeta = {
-  url: `file://${__dirname}/reminders.ts`,
+  url: `file://${process.cwd()}/src/index.ts`,
 };
 
 // Add import.meta to global
