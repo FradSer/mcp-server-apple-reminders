@@ -74,41 +74,6 @@ export function isCorrectProjectRoot(dir: string): boolean {
 }
 
 /**
- * Resolves a path relative to the project root
- * @param relativePath - Path relative to project root
- * @returns Absolute path
- */
-export function resolveFromProjectRoot(relativePath: string): string {
-  const projectRoot = findProjectRoot();
-  return path.resolve(projectRoot, relativePath);
-}
-
-/**
- * Provides a fallback directory when the project root cannot be located.
- * @param startDir - Directory where the search began
- * @param maxDepth - Maximum directories to traverse upwards
- * @returns The last directory evaluated during the search
- */
-export function getFallbackSearchDirectory(
-  startDir: string,
-  maxDepth = 10,
-): string {
-  let currentDir = startDir;
-  let depth = 0;
-
-  while (depth < maxDepth) {
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      break;
-    }
-    currentDir = parentDir;
-    depth++;
-  }
-
-  return currentDir;
-}
-
-/**
  * Get the current module's directory
  * Handles both production and test environments
  */
