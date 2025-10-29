@@ -31,7 +31,7 @@ export function findProjectRoot(maxDepth = 10): string {
  * @param maxDepth - Maximum directory levels to traverse upward
  * @returns The project root when found, otherwise `undefined`
  */
-export function locateProjectRoot(
+function locateProjectRoot(
   startDir: string,
   maxDepth = 10,
 ): string | undefined {
@@ -58,7 +58,7 @@ export function locateProjectRoot(
 /**
  * Checks if a directory contains the correct package.json for this project
  */
-export function isCorrectProjectRoot(dir: string): boolean {
+function isCorrectProjectRoot(dir: string): boolean {
   const packageJsonPath = path.join(dir, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
     return false;
