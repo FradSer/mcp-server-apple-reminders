@@ -4,33 +4,23 @@
  */
 
 import { z } from 'zod';
-import { debugLog } from '../utils/logger.js';
 import {
-  SafeTextSchema,
-  SafeNoteSchema,
-  SafeListNameSchema,
-  RequiredListNameSchema,
-  SafeSearchSchema,
-  SafeDateSchema,
-  SafeUrlSchema,
+  BulkCreateRemindersSchema,
+  CreateReminderListSchema,
   CreateReminderSchema,
-  ReadRemindersSchema,
-  UpdateReminderSchema,
   DeleteReminderSchema,
   MoveReminderSchema,
-  ReadReminderListsSchema,
-  CreateReminderListSchema,
+  ReadRemindersSchema,
+  RequiredListNameSchema,
+  SafeDateSchema,
+  SafeNoteSchema,
+  SafeTextSchema,
+  SafeUrlSchema,
   UpdateReminderListSchema,
-  DeleteReminderListSchema,
-  BulkCreateRemindersSchema,
-  BulkUpdateRemindersSchema,
-  BulkDeleteRemindersSchema,
-  validateInput,
+  UpdateReminderSchema,
   ValidationError,
+  validateInput,
 } from './schemas.js';
-
-// Mock debugLog
-jest.mock('../utils/logger.js');
 
 // Local enum constants for testing
 const DueWithinEnum = z
@@ -49,13 +39,17 @@ describe('ValidationSchemas', () => {
     describe('SafeTextSchema', () => {
       it('should validate safe text', () => {
         expect(() => SafeTextSchema.parse('Valid text')).not.toThrow();
-        expect(() => SafeTextSchema.parse('Text with numbers 123')).not.toThrow();
-        expect(() => SafeTextSchema.parse('Text with punctuation!')).not.toThrow();
+        expect(() =>
+          SafeTextSchema.parse('Text with numbers 123'),
+        ).not.toThrow();
+        expect(() =>
+          SafeTextSchema.parse('Text with punctuation!'),
+        ).not.toThrow();
       });
 
-    it('should reject empty text', () => {
-      expect(() => SafeTextSchema.parse('')).toThrow();
-    });
+      it('should reject empty text', () => {
+        expect(() => SafeTextSchema.parse('')).toThrow();
+      });
 
       it('should reject text that is too long', () => {
         const longText = 'a'.repeat(201);
@@ -63,7 +57,9 @@ describe('ValidationSchemas', () => {
       });
 
       it('should reject text with invalid characters', () => {
-        expect(() => SafeTextSchema.parse('Text with control char \x00')).toThrow();
+        expect(() =>
+          SafeTextSchema.parse('Text with control char \x00'),
+        ).toThrow();
         // Note: \u200E (Right-to-left mark) is allowed by SAFE_TEXT_PATTERN as it's in the Unicode range
       });
     });
@@ -105,33 +101,37 @@ describe('ValidationSchemas', () => {
       it('should validate ISO date formats', () => {
         expect(() => SafeDateSchema.parse('2024-01-15')).not.toThrow();
         expect(() => SafeDateSchema.parse('2024-01-15 10:30:00')).not.toThrow();
-        expect(() => SafeDateSchema.parse('2024-01-15T10:30:00Z')).not.toThrow();
+        expect(() =>
+          SafeDateSchema.parse('2024-01-15T10:30:00Z'),
+        ).not.toThrow();
       });
 
       it('should accept undefined dates', () => {
         expect(() => SafeDateSchema.parse(undefined)).not.toThrow();
       });
 
-    it('should reject invalid date formats', () => {
-      expect(() => SafeDateSchema.parse('01/15/2024')).toThrow();
-      expect(() => SafeDateSchema.parse('not-a-date')).toThrow();
-      // Note: DATE_PATTERN only checks basic format, doesn't validate date ranges
-      expect(() => SafeDateSchema.parse('2024-13-45')).not.toThrow();
-    });
+      it('should reject invalid date formats', () => {
+        expect(() => SafeDateSchema.parse('01/15/2024')).toThrow();
+        expect(() => SafeDateSchema.parse('not-a-date')).toThrow();
+        // Note: DATE_PATTERN only checks basic format, doesn't validate date ranges
+        expect(() => SafeDateSchema.parse('2024-13-45')).not.toThrow();
+      });
     });
 
     describe('SafeUrlSchema', () => {
-    it('should validate safe URLs', () => {
-      expect(() => SafeUrlSchema.parse('https://example.com')).not.toThrow();
-      expect(() => SafeUrlSchema.parse('https://api.example.com/v1/users')).not.toThrow();
-    });
+      it('should validate safe URLs', () => {
+        expect(() => SafeUrlSchema.parse('https://example.com')).not.toThrow();
+        expect(() =>
+          SafeUrlSchema.parse('https://api.example.com/v1/users'),
+        ).not.toThrow();
+      });
 
       it('should accept undefined URLs', () => {
         expect(() => SafeUrlSchema.parse(undefined)).not.toThrow();
       });
 
       it('should reject URLs that are too long', () => {
-        const longUrl = 'https://example.com/' + 'a'.repeat(500);
+        const longUrl = `https://example.com/${'a'.repeat(500)}`;
         expect(() => SafeUrlSchema.parse(longUrl)).toThrow();
       });
 
@@ -275,7 +275,9 @@ describe('ValidationSchemas', () => {
 
       it('should require both id and targetList', () => {
         expect(() => MoveReminderSchema.parse({ id: '123' })).toThrow();
-        expect(() => MoveReminderSchema.parse({ targetList: 'Work' })).toThrow();
+        expect(() =>
+          MoveReminderSchema.parse({ targetList: 'Work' }),
+        ).toThrow();
         expect(() => MoveReminderSchema.parse({})).toThrow();
       });
     });
@@ -306,7 +308,9 @@ describe('ValidationSchemas', () => {
 
       it('should require both name and newName', () => {
         expect(() => UpdateReminderListSchema.parse({ name: 'Old' })).toThrow();
-        expect(() => UpdateReminderListSchema.parse({ newName: 'New' })).toThrow();
+        expect(() =>
+          UpdateReminderListSchema.parse({ newName: 'New' }),
+        ).toThrow();
       });
     });
 
@@ -377,19 +381,6 @@ describe('ValidationSchemas', () => {
         expect(error.details).toBeDefined();
         expect(Object.keys(error.details)).toHaveLength(3);
       }
-    });
-
-    it('should log validation failures in development', () => {
-      const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
-
-      const schema = z.string().email();
-      const input = 'invalid-email';
-
-      expect(() => validateInput(schema, input)).toThrow();
-      expect(debugLog).toHaveBeenCalled();
-
-      process.env.NODE_ENV = originalEnv;
     });
 
     it('should handle ValidationError instances specially', () => {

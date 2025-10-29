@@ -6,7 +6,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { debugLog } from './logger.js';
 
 /**
  * Security configuration for binary validation
@@ -59,9 +58,6 @@ export function validateBinaryPath(
 
   // Normalize path to prevent traversal attacks
   const normalizedPath = path.normalize(binaryPath);
-  if (normalizedPath !== binaryPath) {
-    debugLog(`Path normalized from ${binaryPath} to ${normalizedPath}`);
-  }
 
   // Check for path traversal attempts
   if (normalizedPath.includes('..')) {
@@ -145,15 +141,8 @@ export function validateBinaryIntegrity(
     const actualHash = calculateBinaryHash(binaryPath);
     const isValid = actualHash === expectedHash;
 
-    if (!isValid) {
-      debugLog(`Binary integrity check failed:`);
-      debugLog(`  Expected: ${expectedHash}`);
-      debugLog(`  Actual:   ${actualHash}`);
-    }
-
     return isValid;
-  } catch (error) {
-    debugLog(`Binary integrity validation error: ${(error as Error).message}`);
+  } catch {
     return false;
   }
 }
@@ -189,9 +178,6 @@ export function validateBinarySecurity(
         errors.push('Binary integrity check failed - hash mismatch');
       }
     }
-
-    debugLog(`Binary security validation passed for: ${binaryPath}`);
-    debugLog(`Binary hash: ${hash}`);
   } catch (error) {
     if (error instanceof BinaryValidationError) {
       errors.push(`${error.code}: ${error.message}`);
@@ -217,24 +203,14 @@ export function findSecureBinaryPath(
   path: string | null;
   validationResult?: ReturnType<typeof validateBinarySecurity>;
 } {
-  debugLog('Searching for secure binary path...');
-
   for (const binaryPath of possiblePaths) {
-    debugLog(`Validating path: ${binaryPath}`);
-
     const validationResult = validateBinarySecurity(binaryPath, config);
 
     if (validationResult.isValid) {
-      debugLog(`✅ Secure binary found at: ${binaryPath}`);
       return { path: binaryPath, validationResult };
-    } else {
-      debugLog(
-        `❌ Binary validation failed: ${validationResult.errors.join(', ')}`,
-      );
     }
   }
 
-  debugLog('❌ No secure binary path found');
   return { path: null };
 }
 

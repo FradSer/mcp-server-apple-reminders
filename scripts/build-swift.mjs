@@ -1,7 +1,7 @@
-import { exec } from 'child_process';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { promisify } from 'util';
+import { exec } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { promisify } from 'node:util';
 
 const execAsync = promisify(exec);
 
@@ -17,7 +17,7 @@ async function main() {
 
   try {
     await execAsync('which swiftc');
-  } catch (error) {
+  } catch (_error) {
     console.error('Error: Swift compiler (swiftc) not found.');
     console.error(
       'Please install Xcode or Xcode Command Line Tools: xcode-select --install',
@@ -32,7 +32,7 @@ async function main() {
 
   try {
     await fs.access(sourceFile);
-  } catch (error) {
+  } catch (_error) {
     console.error(`Error: Source file not found: ${sourceFile}`);
     process.exit(1);
   }

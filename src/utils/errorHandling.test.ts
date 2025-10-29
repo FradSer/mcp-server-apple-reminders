@@ -3,7 +3,6 @@
  * Tests for error handling utilities
  */
 
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { ValidationError } from '../validation/schemas.js';
 import {
   ErrorResponseFactory,
@@ -20,39 +19,51 @@ describe('ErrorHandling', () => {
 
   describe('ErrorResponseFactory', () => {
     describe('createErrorResponse', () => {
-    it('should create error response with string message', () => {
-      const result = ErrorResponseFactory.createErrorResponse(
-        'test operation',
-        'Test error message'
-      );
+      it('should create error response with string message', () => {
+        const result = ErrorResponseFactory.createErrorResponse(
+          'test operation',
+          'Test error message',
+        );
 
-      // In test environment, it shows generic error message
-      expect(result).toEqual({
-        content: [{ type: 'text', text: 'Failed to test operation: System error occurred' }],
-        isError: true,
-      });
-    });
-
-      it('should create error response with Error object', () => {
-        const error = new Error('Test error');
-        const result = ErrorResponseFactory.createErrorResponse('test operation', error);
-
+        // In test environment, it shows generic error message
         expect(result).toEqual({
-          content: [{ type: 'text', text: 'Failed to test operation: Test error' }],
+          content: [
+            {
+              type: 'text',
+              text: 'Failed to test operation: System error occurred',
+            },
+          ],
           isError: true,
         });
       });
 
-    it('should create generic error message in test mode', () => {
-      // In test mode, it shows generic error message for security
+      it('should create error response with Error object', () => {
+        const error = new Error('Test error');
+        const result = ErrorResponseFactory.createErrorResponse(
+          'test operation',
+          error,
+        );
 
-      const result = ErrorResponseFactory.createErrorResponse(
-        'test operation',
-        'Sensitive error details'
-      );
+        expect(result).toEqual({
+          content: [
+            { type: 'text', text: 'Failed to test operation: Test error' },
+          ],
+          isError: true,
+        });
+      });
 
-      expect(result.content[0].text).toBe('Failed to test operation: System error occurred');
-    });
+      it('should create generic error message in test mode', () => {
+        // In test mode, it shows generic error message for security
+
+        const result = ErrorResponseFactory.createErrorResponse(
+          'test operation',
+          'Sensitive error details',
+        );
+
+        expect(result.content[0].text).toBe(
+          'Failed to test operation: System error occurred',
+        );
+      });
 
       it('should show detailed error in development mode', () => {
         const originalEnv = process.env.NODE_ENV;
@@ -60,10 +71,12 @@ describe('ErrorHandling', () => {
 
         const result = ErrorResponseFactory.createErrorResponse(
           'test operation',
-          new Error('Detailed error')
+          new Error('Detailed error'),
         );
 
-        expect(result.content[0].text).toBe('Failed to test operation: Detailed error');
+        expect(result.content[0].text).toBe(
+          'Failed to test operation: Detailed error',
+        );
 
         process.env.NODE_ENV = originalEnv;
       });
@@ -74,16 +87,24 @@ describe('ErrorHandling', () => {
           field2: ['Invalid format'],
         });
 
-        const result = ErrorResponseFactory.createErrorResponse('validate', validationError);
+        const result = ErrorResponseFactory.createErrorResponse(
+          'validate',
+          validationError,
+        );
 
         expect(result.content[0].text).toBe('Validation failed');
         expect(result.isError).toBe(true);
       });
 
       it('should handle unknown error types', () => {
-        const result = ErrorResponseFactory.createErrorResponse('test operation', null);
+        const result = ErrorResponseFactory.createErrorResponse(
+          'test operation',
+          null,
+        );
 
-        expect(result.content[0].text).toBe('Failed to test operation: System error occurred');
+        expect(result.content[0].text).toBe(
+          'Failed to test operation: System error occurred',
+        );
       });
     });
 
@@ -91,23 +112,32 @@ describe('ErrorHandling', () => {
       it('should create JSON error response', () => {
         const result = ErrorResponseFactory.createJsonErrorResponse(
           'test operation',
-          'Error occurred'
+          'Error occurred',
         );
 
         expect(result).toEqual({
-          content: [{
-            type: 'text',
-            text: JSON.stringify({
-              error: 'Failed to test operation: System error occurred',
-              isError: true
-            }, null, 2)
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  error: 'Failed to test operation: System error occurred',
+                  isError: true,
+                },
+                null,
+                2,
+              ),
+            },
+          ],
           isError: true,
         });
       });
 
       it('should format JSON with proper indentation', () => {
-        const result = ErrorResponseFactory.createJsonErrorResponse('test', 'error');
+        const result = ErrorResponseFactory.createJsonErrorResponse(
+          'test',
+          'error',
+        );
 
         const parsed = JSON.parse(result.content[0].text);
         expect(parsed).toEqual({
@@ -119,7 +149,9 @@ describe('ErrorHandling', () => {
 
     describe('createSuccessResponse', () => {
       it('should create success response', () => {
-        const result = ErrorResponseFactory.createSuccessResponse('Operation completed');
+        const result = ErrorResponseFactory.createSuccessResponse(
+          'Operation completed',
+        );
 
         expect(result).toEqual({
           content: [{ type: 'text', text: 'Operation completed' }],
@@ -134,10 +166,12 @@ describe('ErrorHandling', () => {
         const result = ErrorResponseFactory.createJsonSuccessResponse(data);
 
         expect(result).toEqual({
-          content: [{
-            type: 'text',
-            text: JSON.stringify(data, null, 2)
-          }],
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(data, null, 2),
+            },
+          ],
           isError: false,
         });
       });
@@ -162,7 +196,10 @@ describe('ErrorHandling', () => {
     it('should return success response on successful operation', async () => {
       const mockOperation = jest.fn().mockResolvedValue('Success message');
 
-      const result = await handleAsyncOperation(mockOperation, 'test operation');
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
 
       expect(mockOperation).toHaveBeenCalled();
       expect(result).toEqual({
@@ -172,9 +209,14 @@ describe('ErrorHandling', () => {
     });
 
     it('should return error response on failed operation', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('Operation failed'));
+      const mockOperation = jest
+        .fn()
+        .mockRejectedValue(new Error('Operation failed'));
 
-      const result = await handleAsyncOperation(mockOperation, 'test operation');
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
 
       expect(mockOperation).toHaveBeenCalled();
       expect(result.isError).toBe(true);
@@ -184,7 +226,10 @@ describe('ErrorHandling', () => {
     it('should handle different operation names', async () => {
       const mockOperation = jest.fn().mockRejectedValue(new Error('Failed'));
 
-      const result = await handleAsyncOperation(mockOperation, 'create reminder');
+      const result = await handleAsyncOperation(
+        mockOperation,
+        'create reminder',
+      );
 
       expect(result.content[0].text).toContain('Failed to create reminder');
     });
@@ -195,7 +240,10 @@ describe('ErrorHandling', () => {
       const mockData = { id: '123', title: 'Test Reminder' };
       const mockOperation = jest.fn().mockResolvedValue(mockData);
 
-      const result = await handleJsonAsyncOperation(mockOperation, 'test operation');
+      const result = await handleJsonAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
 
       expect(mockOperation).toHaveBeenCalled();
       expect(result.isError).toBe(false);
@@ -205,9 +253,14 @@ describe('ErrorHandling', () => {
     });
 
     it('should return JSON error response on failed operation', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('JSON operation failed'));
+      const mockOperation = jest
+        .fn()
+        .mockRejectedValue(new Error('JSON operation failed'));
 
-      const result = await handleJsonAsyncOperation(mockOperation, 'test operation');
+      const result = await handleJsonAsyncOperation(
+        mockOperation,
+        'test operation',
+      );
 
       expect(mockOperation).toHaveBeenCalled();
       expect(result.isError).toBe(true);
@@ -227,7 +280,10 @@ describe('ErrorHandling', () => {
       };
       const mockOperation = jest.fn().mockResolvedValue(mockData);
 
-      const result = await handleJsonAsyncOperation(mockOperation, 'fetch reminders');
+      const result = await handleJsonAsyncOperation(
+        mockOperation,
+        'fetch reminders',
+      );
 
       const parsed = JSON.parse(result.content[0].text);
       expect(parsed).toEqual(mockData);

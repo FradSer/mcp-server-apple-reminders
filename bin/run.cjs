@@ -22,8 +22,6 @@ async function run() {
   const { register } = require('tsx/cjs/api');
   register();
   require('../src/index.ts');
-
-  console.log('[DEBUG] SCRIPT EXECUTION FINISHED');
 }
 
 run().catch((error) => {

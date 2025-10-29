@@ -51,6 +51,7 @@ export interface PromptMessage {
 export interface PromptResponse {
   description: string;
   messages: PromptMessage[];
+  [key: string]: unknown;
 }
 
 /**
@@ -83,8 +84,7 @@ export interface ReminderReviewAssistantArgs {
  * Arguments accepted by the `weekly-planning-workflow` prompt.
  */
 export interface WeeklyPlanningWorkflowArgs {
-  focus_areas?: string;
-  week_start_date?: string;
+  user_ideas?: string;
 }
 
 /**
@@ -119,6 +119,8 @@ export interface PromptArgsByName {
  */
 export interface PromptTemplate<Name extends PromptName> {
   metadata: PromptMetadata<Name>;
-  parseArgs(rawArgs: unknown): PromptArgsByName[Name];
+  parseArgs(
+    rawArgs: Record<string, unknown> | null | undefined,
+  ): PromptArgsByName[Name];
   buildPrompt(args: PromptArgsByName[Name]): PromptResponse;
 }

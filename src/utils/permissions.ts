@@ -16,12 +16,10 @@ import {
   BINARY_PATHS,
   ENVIRONMENT_VARS,
   ENVIRONMENTS,
-  FILE_SYSTEM,
   MESSAGES,
   PERMISSIONS,
   TIMEOUTS,
 } from './constants.js';
-import { logger } from './logger.js';
 import { findProjectRoot } from './projectUtils.js';
 
 // Consolidated interfaces
@@ -58,13 +56,11 @@ function getBinaryPath(): string | null {
     );
 
     if (securePath) {
-      logger.debug(`✅ Swift binary found at: ${securePath}`);
       cachedBinaryPath = securePath;
       return securePath;
     }
     return null;
-  } catch (error) {
-    logger.error(`Failed to initialize binary path: ${error}`);
+  } catch {
     return null;
   }
 }
@@ -101,8 +97,12 @@ async function executePermissionCheck(
     let stdout = '';
     let stderr = '';
 
-    process.stdout.on('data', (data) => (stdout += data.toString()));
-    process.stderr.on('data', (data) => (stderr += data.toString()));
+    process.stdout.on('data', (data) => {
+      stdout += data.toString();
+    });
+    process.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
     process.on('close', (code) =>
       resolve(handleProcessClose(code, stdout, stderr, permissionType)),
     );
@@ -157,11 +157,6 @@ function createPermissionFailure(
 export async function checkAllPermissions(): Promise<SystemPermissions> {
   const eventKit = await checkEventKitPermissions();
   const allGranted = eventKit.granted;
-
-  logger.debug('Permission check results:', {
-    eventKit: eventKit.granted,
-    allGranted,
-  });
 
   return { eventKit, allGranted };
 }
@@ -223,14 +218,9 @@ export async function ensurePermissions(): Promise<void> {
     const guidance = generatePermissionGuidance(permissions);
     const errorDetails = createPermissionErrorDetails(permissions);
 
-    logger.error(MESSAGES.ERROR.INSUFFICIENT_PERMISSIONS);
-    logger.error(guidance);
-
     throw new BinaryValidationError(
       `Permission verification failed:\n${errorDetails.join('\n')}\n\n${guidance}`,
       'PERMISSION_DENIED',
     );
   }
-
-  logger.debug(MESSAGES.SUCCESS.PERMISSIONS_VERIFIED);
 }

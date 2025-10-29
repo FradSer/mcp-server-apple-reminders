@@ -5,11 +5,10 @@
 
 import type { Reminder } from '../types/index.js';
 import {
+  applyReminderFilters,
+  categorizeReminderByDueDate,
   createDateBoundaries,
   filterRemindersByDate,
-  categorizeReminderByDueDate,
-  applyReminderFilters,
-  type DateFilter,
   type ReminderFilters,
 } from './dateFiltering.js';
 
@@ -48,8 +47,12 @@ describe('DateFiltering', () => {
       expect(boundaries.weekEnd).toBeInstanceOf(Date);
 
       // Check relative relationships
-      expect(boundaries.tomorrow.getTime()).toBeGreaterThan(boundaries.today.getTime());
-      expect(boundaries.weekEnd.getTime()).toBeGreaterThan(boundaries.tomorrow.getTime());
+      expect(boundaries.tomorrow.getTime()).toBeGreaterThan(
+        boundaries.today.getTime(),
+      );
+      expect(boundaries.weekEnd.getTime()).toBeGreaterThan(
+        boundaries.tomorrow.getTime(),
+      );
     });
 
     it('should handle different times of day correctly', () => {
@@ -133,7 +136,7 @@ describe('DateFiltering', () => {
       const result = filterRemindersByDate(reminders, 'this-week');
 
       expect(result).toHaveLength(3); // today, tomorrow, and this week
-      expect(result.map(r => r.id)).toEqual(['2', '3', '4']);
+      expect(result.map((r) => r.id)).toEqual(['2', '3', '4']);
     });
 
     it('should filter overdue reminders', () => {
@@ -146,7 +149,7 @@ describe('DateFiltering', () => {
     it('should handle reminders without due dates appropriately', () => {
       const result = filterRemindersByDate(reminders, 'today');
 
-      expect(result.every(r => r.dueDate)).toBe(true);
+      expect(result.every((r) => r.dueDate)).toBe(true);
     });
   });
 
@@ -179,7 +182,14 @@ describe('DateFiltering', () => {
     it('should categorize reminder due today', () => {
       // Create a reminder due in the current day
       const now = new Date();
-      const todayDue = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+      const todayDue = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        12,
+        0,
+        0,
+      );
       const reminder: Reminder = {
         id: '1',
         title: 'Test',
@@ -260,7 +270,7 @@ describe('DateFiltering', () => {
       const result = applyReminderFilters(reminders, filters);
 
       expect(result).toHaveLength(4);
-      expect(result.every(r => !r.isCompleted)).toBe(true);
+      expect(result.every((r) => !r.isCompleted)).toBe(true);
     });
 
     it('should include completed reminders when showCompleted is true', () => {
@@ -275,7 +285,7 @@ describe('DateFiltering', () => {
       const result = applyReminderFilters(reminders, filters);
 
       expect(result).toHaveLength(2);
-      expect(result.every(r => r.list === 'Work')).toBe(true);
+      expect(result.every((r) => r.list === 'Work')).toBe(true);
     });
 
     it('should filter by search term in title', () => {

@@ -4,7 +4,6 @@
  */
 
 import { z } from 'zod';
-import { debugLog } from '../utils/logger.js';
 
 // Security patterns – allow printable Unicode text while blocking dangerous control and delimiter chars.
 // Allows standard printable ASCII, extended Latin, CJK, plus newlines/tabs for notes.
@@ -211,16 +210,6 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
     return schema.parse(input);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Log validation failures for security monitoring (development mode only)
-      debugLog('Input validation failed', {
-        errors: error.errors.map((err) => ({
-          path: err.path.join('.'),
-          message: err.message,
-        })),
-        inputType: typeof input,
-        timestamp: new Date().toISOString(),
-      });
-
       const errorMessages = error.errors
         .map((err) => `${err.path.join('.')}: ${err.message}`)
         .join('; ');
@@ -241,7 +230,6 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
       );
     }
 
-    debugLog('Unknown validation error', { error: (error as Error).message });
     throw new ValidationError('Input validation failed: Unknown error');
   }
 };
@@ -252,7 +240,6 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
 export type CreateReminderInput = z.infer<typeof CreateReminderSchema>;
 export type ReadRemindersInput = z.infer<typeof ReadRemindersSchema>;
 export type UpdateReminderInput = z.infer<typeof UpdateReminderSchema>;
-export type MoveReminderInput = z.infer<typeof MoveReminderSchema>;
 export type DeleteReminderInput = z.infer<typeof DeleteReminderSchema>;
 export type BulkCreateRemindersInput = z.infer<
   typeof BulkCreateRemindersSchema

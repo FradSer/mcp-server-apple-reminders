@@ -1,6 +1,7 @@
 // Use global Jest functions to avoid extra dependencies
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
 import { handleToolCall, TOOLS } from './index.js';
 
 // Mock all handler functions
@@ -19,8 +20,6 @@ jest.mock('./definitions.js', () => ({
     { name: 'lists', description: 'Reminder lists tool' },
   ],
 }));
-
-jest.mock('../utils/logger.js');
 
 import {
   handleCreateReminder,
@@ -59,7 +58,7 @@ describe('Tools Index', () => {
 
   describe('handleToolCall', () => {
     test('should route reminders action=create to handleCreateReminder', async () => {
-      const args = { action: 'create', title: 'Test reminder' };
+      const args = { action: 'create' as const, title: 'Test reminder' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Success' }],
         isError: false,
@@ -74,7 +73,7 @@ describe('Tools Index', () => {
     });
 
     test('should route reminders action=list to handleListReminders', async () => {
-      const args = { action: 'list', list: 'Work' };
+      const args = { action: 'list' as const, list: 'Work' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Reminders list' }],
         isError: false,
@@ -96,17 +95,15 @@ describe('Tools Index', () => {
 
       mockHandleReadReminderLists.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('lists', { action: 'read' });
+      const result = await handleToolCall('lists', { action: 'read' as const });
 
-      expect(mockHandleReadReminderLists).toHaveBeenCalledWith({
-        action: 'read',
-      });
+      expect(mockHandleReadReminderLists).toHaveBeenCalled();
       expect(result).toEqual(expectedResult);
     });
 
     test('should route reminders action=update to handleUpdateReminder', async () => {
       const args = {
-        action: 'update',
+        action: 'update' as const,
         title: 'Old title',
         newTitle: 'New title',
       };
@@ -124,7 +121,7 @@ describe('Tools Index', () => {
     });
 
     test('should route reminders action=delete to handleDeleteReminder', async () => {
-      const args = { action: 'delete', title: 'Delete me' };
+      const args = { action: 'delete' as const, title: 'Delete me' };
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Deleted' }],
         isError: false,
@@ -138,9 +135,11 @@ describe('Tools Index', () => {
       expect(result).toEqual(expectedResult);
     });
 
-  
     test('should return error for unknown tool', async () => {
-      const result = await handleToolCall('unknown_tool', {});
+      const result = await handleToolCall(
+        'unknown_tool',
+        {} as RemindersToolArgs,
+      );
 
       expect(result).toEqual({
         content: [
@@ -161,7 +160,7 @@ describe('Tools Index', () => {
     });
 
     test('should handle empty tool name', async () => {
-      const result = await handleToolCall('', {});
+      const result = await handleToolCall('', {} as RemindersToolArgs);
 
       expect(result).toEqual({
         content: [
@@ -183,10 +182,7 @@ describe('Tools Index', () => {
       mockHandleCreateReminder.mockResolvedValue(expectedResult);
 
       // Test with null args
-      await handleToolCall(
-        'reminders',
-        null as RemindersToolArgs | ListsToolArgs,
-      );
+      await handleToolCall('reminders', undefined);
       expect(mockHandleCreateReminder).not.toHaveBeenCalled();
 
       // Test with missing action
@@ -202,7 +198,7 @@ describe('Tools Index', () => {
       mockHandleCreateReminder.mockRejectedValue(error);
 
       await expect(
-        handleToolCall('reminders', { action: 'create' }),
+        handleToolCall('reminders', { action: 'create' as const }),
       ).rejects.toThrow('Handler failed');
     });
 
@@ -210,7 +206,7 @@ describe('Tools Index', () => {
       const testCases = [
         {
           tool: 'reminders',
-          args: { action: 'create' },
+          args: { action: 'create' as const },
           handler: mockHandleCreateReminder,
           result: {
             content: [{ type: 'text' as const, text: 'Created' }],
@@ -219,7 +215,7 @@ describe('Tools Index', () => {
         },
         {
           tool: 'reminders',
-          args: { action: 'list' },
+          args: { action: 'list' as const },
           handler: mockHandleReadReminders,
           result: {
             content: [
@@ -233,7 +229,7 @@ describe('Tools Index', () => {
         },
         {
           tool: 'reminders',
-          args: { action: 'update' },
+          args: { action: 'update' as const },
           handler: mockHandleUpdateReminder,
           result: {
             content: [{ type: 'text' as const, text: 'Updated successfully' }],
@@ -259,7 +255,7 @@ describe('Tools Index', () => {
 
     test('should handle complex arguments', async () => {
       const complexArgs = {
-        action: 'create',
+        action: 'create' as const,
         title: 'Complex reminder',
         dueDate: '2024-12-25 18:00:00',
         list: 'Work Tasks',

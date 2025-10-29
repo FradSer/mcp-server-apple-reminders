@@ -88,7 +88,14 @@ describe('OrganizationStrategies', () => {
       it('should delegate to categorizeReminderByDueDate', () => {
         // Create a reminder due in the current day
         const now = new Date();
-        const todayDue = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+        const todayDue = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          12,
+          0,
+          0,
+        );
         const reminder: Reminder = {
           id: '1',
           title: 'Test',
@@ -269,7 +276,10 @@ describe('OrganizationStrategies', () => {
       ];
 
       it('should organize by priority', () => {
-        const result = ReminderOrganizer.organizeReminders(reminders, 'priority');
+        const result = ReminderOrganizer.organizeReminders(
+          reminders,
+          'priority',
+        );
 
         expect(Object.keys(result)).toContain('High Priority');
         expect(Object.keys(result)).toContain('Medium Priority');
@@ -278,25 +288,31 @@ describe('OrganizationStrategies', () => {
       });
 
       it('should organize by due date', () => {
-        const result = ReminderOrganizer.organizeReminders(reminders, 'due_date');
+        const result = ReminderOrganizer.organizeReminders(
+          reminders,
+          'due_date',
+        );
 
         // All reminders have no due date, so should be categorized as "No Due Date"
         expect(result['No Due Date']).toHaveLength(4);
       });
 
       it('should organize by completion status', () => {
-        const result = ReminderOrganizer.organizeReminders(reminders, 'completion_status');
+        const result = ReminderOrganizer.organizeReminders(
+          reminders,
+          'completion_status',
+        );
 
-        expect(result['Active']).toHaveLength(3);
-        expect(result['Completed']).toHaveLength(1);
+        expect(result.Active).toHaveLength(3);
+        expect(result.Completed).toHaveLength(1);
       });
 
       it('should organize by category as default', () => {
         const result = ReminderOrganizer.organizeReminders(reminders);
 
-        expect(result['Work']).toHaveLength(1); // urgent work meeting
-        expect(result['Shopping']).toHaveLength(1); // buy groceries
-        expect(result['Uncategorized']).toHaveLength(2); // completed task, call mom
+        expect(result.Work).toHaveLength(1); // urgent work meeting
+        expect(result.Shopping).toHaveLength(1); // buy groceries
+        expect(result.Uncategorized).toHaveLength(2); // completed task, call mom
       });
 
       it('should handle empty reminder list', () => {
@@ -306,20 +322,26 @@ describe('OrganizationStrategies', () => {
       });
 
       it('should create new groups for new categories', () => {
-        const result = ReminderOrganizer.organizeReminders(reminders, 'category');
+        const result = ReminderOrganizer.organizeReminders(
+          reminders,
+          'category',
+        );
 
         // Should have separate groups for each category
         expect(Object.keys(result).length).toBeGreaterThan(0);
-        Object.values(result).forEach(group => {
+        Object.values(result).forEach((group) => {
           expect(Array.isArray(group)).toBe(true);
           expect(group.length).toBeGreaterThan(0);
         });
       });
 
       it('should preserve reminder objects in groups', () => {
-        const result = ReminderOrganizer.organizeReminders(reminders, 'category');
+        const result = ReminderOrganizer.organizeReminders(
+          reminders,
+          'category',
+        );
 
-        const workReminders = result['Work'] || [];
+        const workReminders = result.Work || [];
         expect(workReminders[0]).toHaveProperty('id');
         expect(workReminders[0]).toHaveProperty('title');
         expect(workReminders[0]).toHaveProperty('list');

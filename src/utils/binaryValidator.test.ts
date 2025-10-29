@@ -3,17 +3,10 @@
  * Tests for binary validation utilities
  */
 
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
-import crypto from 'node:crypto';
 import {
-  validateBinaryPath,
-  calculateBinaryHash,
-  validateBinaryIntegrity,
-  validateBinarySecurity,
-  findSecureBinaryPath,
-  getEnvironmentBinaryConfig,
   BinaryValidationError,
+  getEnvironmentBinaryConfig,
+  validateBinaryPath,
 } from './binaryValidator.js';
 
 // Mock modules for testing
@@ -41,7 +34,6 @@ describe('BinaryValidator', () => {
       }).toThrow(BinaryValidationError);
     });
   });
-
 
   describe('getEnvironmentBinaryConfig', () => {
     it('should return test configuration when NODE_ENV is test', () => {

@@ -3,14 +3,14 @@
  * Tests for reminder repository
  */
 
-import type { Reminder, ReminderList } from '../types/index.js';
+import type { Reminder } from '../types/index.js';
 import { executeCli } from './cliExecutor.js';
-import { applyReminderFilters } from './dateFiltering.js';
 import type { ReminderFilters } from './dateFiltering.js';
+import { applyReminderFilters } from './dateFiltering.js';
 import {
+  type CreateReminderData,
   ReminderRepository,
   reminderRepository,
-  type CreateReminderData,
   type UpdateReminderData,
 } from './reminderRepository.js';
 
@@ -19,7 +19,9 @@ jest.mock('./cliExecutor.js');
 jest.mock('./dateFiltering.js');
 
 const mockExecuteCli = executeCli as jest.MockedFunction<typeof executeCli>;
-const mockApplyReminderFilters = applyReminderFilters as jest.MockedFunction<typeof applyReminderFilters>;
+const mockApplyReminderFilters = applyReminderFilters as jest.MockedFunction<
+  typeof applyReminderFilters
+>;
 
 describe('ReminderRepository', () => {
   let repository: ReminderRepository;
@@ -73,7 +75,7 @@ describe('ReminderRepository', () => {
       });
 
       await expect(repository.findReminderById('999')).rejects.toThrow(
-        'Reminder with ID \'999\' not found.'
+        "Reminder with ID '999' not found.",
       );
     });
 
@@ -156,7 +158,7 @@ describe('ReminderRepository', () => {
       ]);
       expect(mockApplyReminderFilters).toHaveBeenCalledWith(
         expect.any(Array),
-        filters
+        filters,
       );
       expect(result).toBe(filteredReminders);
     });
@@ -436,7 +438,10 @@ describe('ReminderRepository', () => {
 
       mockExecuteCli.mockResolvedValue(mockResult);
 
-      const result = await repository.updateReminderList('Old Name', 'New Name');
+      const result = await repository.updateReminderList(
+        'Old Name',
+        'New Name',
+      );
 
       expect(mockExecuteCli).toHaveBeenCalledWith([
         '--action',
@@ -483,9 +488,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should return false when list does not exist', async () => {
-      const mockLists: any[] = [
-        { id: '1', title: 'Work' },
-      ];
+      const mockLists: any[] = [{ id: '1', title: 'Work' }];
 
       mockExecuteCli.mockResolvedValue({
         reminders: [],
@@ -498,9 +501,7 @@ describe('ReminderRepository', () => {
     });
 
     it('should be case sensitive', async () => {
-      const mockLists: any[] = [
-        { id: '1', title: 'Work' },
-      ];
+      const mockLists: any[] = [{ id: '1', title: 'Work' }];
 
       mockExecuteCli.mockResolvedValue({
         reminders: [],

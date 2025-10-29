@@ -8,7 +8,6 @@ import {
   handleCreateReminderList,
   handleDeleteReminder,
   handleDeleteReminderList,
-  handleMoveReminder,
   handleReadReminderLists,
   handleReadReminders,
   handleUpdateReminder,
@@ -54,7 +53,12 @@ describe('Tool Handlers', () => {
   describe('handleReadReminders', () => {
     it('should return reminders formatted as Markdown', async () => {
       const mockReminders = [
-        { id: '1', title: 'Test', isCompleted: false, list: 'Inbox' },
+        {
+          id: '1',
+          title: 'Test',
+          isCompleted: false,
+          list: 'Inbox',
+        },
       ];
       mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
       const result = await handleReadReminders({ action: 'read' });
@@ -71,6 +75,9 @@ describe('Tool Handlers', () => {
         title: 'New Task',
         isCompleted: false,
         list: 'Inbox',
+        notes: null,
+        url: null,
+        dueDate: null,
       };
       mockReminderRepository.createReminder.mockResolvedValue(newReminder);
       const result = await handleCreateReminder({
@@ -90,6 +97,9 @@ describe('Tool Handlers', () => {
         title: 'Updated Task',
         isCompleted: true,
         list: 'Inbox',
+        notes: null,
+        url: null,
+        dueDate: null,
       };
       mockReminderRepository.updateReminder.mockResolvedValue(updatedReminder);
       const result = await handleUpdateReminder({

@@ -45,12 +45,7 @@ export interface ReminderResult {
 /**
  * Shared type constants for better type safety and consistency
  */
-export type ReminderAction =
-  | 'read'
-  | 'list'
-  | 'create'
-  | 'update'
-  | 'delete';
+export type ReminderAction = 'read' | 'list' | 'create' | 'update' | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
 export type DueWithinOption =
   | 'today'

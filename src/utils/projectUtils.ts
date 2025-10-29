@@ -6,7 +6,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { logger } from './logger.js';
 
 /**
  * Finds the project root directory by looking for package.json
@@ -41,7 +40,6 @@ export function locateProjectRoot(
 
   while (depth < maxDepth) {
     if (isCorrectProjectRoot(currentDir)) {
-      logger.debug(`Project root found at: ${currentDir}`);
       return currentDir;
     }
 
@@ -70,8 +68,7 @@ export function isCorrectProjectRoot(dir: string): boolean {
     const packageContent = fs.readFileSync(packageJsonPath, 'utf8');
     const packageData = JSON.parse(packageContent);
     return packageData.name === 'mcp-server-apple-reminders';
-  } catch (error) {
-    logger.debug(`Failed to parse package.json at ${packageJsonPath}:`, error);
+  } catch {
     return false;
   }
 }
