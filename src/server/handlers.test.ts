@@ -44,7 +44,10 @@ interface MockPromptArgument {
 // Mock the tools and prompts modules
 jest.mock('../tools/index.js', () => ({
   TOOLS: [],
-  handleToolCall: jest.fn(),
+  handleToolCall: jest.fn().mockResolvedValue({
+    content: [{ type: 'text', text: 'Mock result' }],
+    isError: false,
+  }),
 }));
 
 describe('Server Handlers', () => {
@@ -75,6 +78,48 @@ describe('Server Handlers', () => {
 
       expect(schemas).toContain(ListPromptsRequestSchema);
       expect(schemas).toContain(GetPromptRequestSchema);
+    });
+  });
+
+  describe('ListToolsRequestSchema handler', () => {
+    let listToolsHandler: jest.MockedFunction<() => Promise<unknown>>;
+
+    beforeEach(() => {
+      const testServer = new Server(
+        { name: 'test', version: '1.0.0' },
+        { capabilities: { prompts: {}, resources: {}, tools: {} } },
+      );
+
+      const originalSetRequestHandler = testServer.setRequestHandler;
+      testServer.setRequestHandler = jest.fn(
+        (schema: unknown, handler: unknown) => {
+          const ListToolsRequestSchema = jest.requireActual(
+            '@modelcontextprotocol/sdk/types.js',
+          ).ListToolsRequestSchema;
+          if (schema === (ListToolsRequestSchema as unknown)) {
+            listToolsHandler = handler as jest.MockedFunction<
+              () => Promise<unknown>
+            >;
+          }
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
+        },
+      );
+
+      registerHandlers(testServer);
+    });
+
+    it('should return list of tools', async () => {
+      const result = await listToolsHandler();
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('tools');
     });
   });
 
@@ -271,6 +316,95 @@ describe('Server Handlers', () => {
           'Unknown prompt: unknown-prompt',
         );
       });
+
+      test('should throw error when name is not a string', async () => {
+        const request = {
+          params: {
+            name: 123 as unknown,
+            arguments: {},
+          },
+        };
+
+        await expect(getPromptHandler(request)).rejects.toThrow(
+          'Prompt name must be a string.',
+        );
+      });
+
+      test('should handle null arguments', async () => {
+        const request = {
+          params: {
+            name: 'reminder-cleanup-guide',
+            arguments: null,
+          },
+        };
+
+        const result = await getPromptHandler(request);
+        expect(result).toBeDefined();
+        expect(result.messages).toHaveLength(1);
+      });
+
+      test('should handle undefined arguments', async () => {
+        const request = {
+          params: {
+            name: 'reminder-cleanup-guide',
+            arguments: undefined,
+          },
+        };
+
+        const result = await getPromptHandler(request);
+        expect(result).toBeDefined();
+        expect(result.messages).toHaveLength(1);
+      });
+    });
+  });
+
+  describe('CallToolRequestSchema handler', () => {
+    let callToolHandler: jest.MockedFunction<
+      (args: unknown) => Promise<unknown>
+    >;
+
+    beforeEach(() => {
+      const testServer = new Server(
+        { name: 'test', version: '1.0.0' },
+        { capabilities: { prompts: {}, resources: {}, tools: {} } },
+      );
+
+      const originalSetRequestHandler = testServer.setRequestHandler;
+      testServer.setRequestHandler = jest.fn(
+        (schema: unknown, handler: unknown) => {
+          const CallToolRequestSchema = jest.requireActual(
+            '@modelcontextprotocol/sdk/types.js',
+          ).CallToolRequestSchema;
+          if (schema === (CallToolRequestSchema as unknown)) {
+            callToolHandler = handler as jest.MockedFunction<
+              (args: unknown) => Promise<unknown>
+            >;
+          }
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
+        },
+      );
+
+      registerHandlers(testServer);
+    });
+
+    it('should handle null arguments', async () => {
+      const request = {
+        params: {
+          name: 'reminders',
+          arguments: null,
+        },
+      };
+
+      const result = await callToolHandler(request);
+      expect(result).toBeDefined();
     });
   });
 });

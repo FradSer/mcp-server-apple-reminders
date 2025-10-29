@@ -150,6 +150,18 @@ describe('DateFiltering', () => {
 
       expect(result.every((r) => r.dueDate)).toBe(true);
     });
+
+    it('should handle unknown filter by returning all reminders with due dates', () => {
+      // Create a filter that doesn't match any case
+      const remindersWithDates = reminders.filter((r) => r.dueDate);
+      const result = filterRemindersByDate(
+        remindersWithDates,
+        'unknown' as unknown as DateFilter,
+      );
+
+      // Should return all reminders since default case returns true
+      expect(result.length).toBe(remindersWithDates.length);
+    });
   });
 
   describe('applyReminderFilters', () => {

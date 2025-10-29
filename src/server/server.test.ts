@@ -252,5 +252,57 @@ describe('Server Module', () => {
       expect(mockExit).toHaveBeenCalledWith(1);
       mockExit.mockRestore();
     });
+
+    test('should register SIGINT signal handler', async () => {
+      const config: ServerConfig = {
+        name: 'test-server',
+        version: '1.0.0',
+      };
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
+      const mockOn = jest.spyOn(process, 'on');
+
+      mockServerInstance.connect.mockImplementation(() => {
+        // Simulate SIGINT signal
+        process.emit('SIGINT' as NodeJS.Signals, {});
+        return Promise.resolve(undefined);
+      });
+
+      await expect(startServer(config)).rejects.toThrow('process.exit called');
+
+      expect(mockOn).toHaveBeenCalledWith('SIGINT', expect.any(Function));
+      expect(mockExit).toHaveBeenCalledWith(0);
+
+      mockExit.mockRestore();
+      mockOn.mockRestore();
+    });
+
+    test('should register SIGTERM signal handler', async () => {
+      const config: ServerConfig = {
+        name: 'test-server',
+        version: '1.0.0',
+      };
+
+      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
+        throw new Error('process.exit called');
+      });
+      const mockOn = jest.spyOn(process, 'on');
+
+      mockServerInstance.connect.mockImplementation(() => {
+        // Simulate SIGTERM signal
+        process.emit('SIGTERM' as NodeJS.Signals, {});
+        return Promise.resolve(undefined);
+      });
+
+      await expect(startServer(config)).rejects.toThrow('process.exit called');
+
+      expect(mockOn).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
+      expect(mockExit).toHaveBeenCalledWith(0);
+
+      mockExit.mockRestore();
+      mockOn.mockRestore();
+    });
   });
 });
