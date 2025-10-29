@@ -85,6 +85,14 @@ export const ENVIRONMENTS = {
 } as const;
 
 /**
+ * Binary path constants
+ */
+export const BINARY_PATHS = {
+  /** Mock binary path for testing */
+  MOCK_PATH: '/mock/path/RemindersCLI',
+} as const;
+
+/**
  * Permission-related constants
  */
 export const PERMISSIONS = {
