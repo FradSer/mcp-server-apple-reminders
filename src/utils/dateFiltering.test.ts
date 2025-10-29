@@ -20,7 +20,7 @@ describe('DateFiltering', () => {
   beforeEach(() => {
     global.Date = class extends RealDate {
       constructor(...args: ConstructorParameters<typeof RealDate>) {
-        if (args.length === 0 as number) {
+        if (args.length === (0 as number)) {
           super(mockNow);
         } else {
           super(...args);

@@ -32,7 +32,7 @@ describe('Server Module', () => {
     // Mock server instance
     mockServerInstance = {
       connect: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<Server>;
 
     // Mock transport instance
     mockTransportInstance = {} as jest.Mocked<StdioServerTransport>;
