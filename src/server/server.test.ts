@@ -10,7 +10,6 @@ jest.mock('@modelcontextprotocol/sdk/server/stdio.js');
 jest.mock('./handlers.js', () => ({
   registerHandlers: jest.fn(),
 }));
-jest.mock('../utils/logger.js');
 
 const mockServer = Server as jest.MockedClass<typeof Server>;
 const mockStdioServerTransport = StdioServerTransport as jest.MockedClass<

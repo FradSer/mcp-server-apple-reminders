@@ -9,7 +9,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startServer } from './server/server.js';
-import { debugLog } from './utils/logger.js';
 
 // Find project root by locating package.json
 const __filename = fileURLToPath(import.meta.url);
@@ -29,7 +28,6 @@ const SERVER_CONFIG = {
 };
 
 // Start the application
-startServer(SERVER_CONFIG).catch((error) => {
-  debugLog('Server startup failed:', error);
+startServer(SERVER_CONFIG).catch(() => {
   process.exit(1);
 });

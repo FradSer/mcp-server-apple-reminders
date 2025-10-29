@@ -3,10 +3,10 @@
  * Server configuration and startup logic
  */
 
+import 'exit-on-epipe';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { ServerConfig } from '../types/index.js';
-import { debugLog, logError } from '../utils/logger.js';
 import { registerHandlers } from './handlers.js';
 
 /**
@@ -42,16 +42,20 @@ export function createServer(config: ServerConfig): Server {
  */
 export async function startServer(config: ServerConfig): Promise<void> {
   try {
-    debugLog(`Starting ${config.name} v${config.version}...`);
-
     const server = createServer(config);
     const transport = new StdioServerTransport();
 
-    await server.connect(transport);
+    // Handle process signals for graceful shutdown
+    process.on('SIGINT', () => {
+      process.exit(0);
+    });
 
-    debugLog('Server started successfully');
-  } catch (error) {
-    logError('Failed to start server', error);
+    process.on('SIGTERM', () => {
+      process.exit(0);
+    });
+
+    await server.connect(transport);
+  } catch {
     process.exit(1);
   }
 }
