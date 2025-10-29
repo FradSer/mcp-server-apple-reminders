@@ -27,7 +27,7 @@ interface DateBoundaries {
 /**
  * Creates standardized date boundaries for filtering operations
  */
-export function createDateBoundaries(): DateBoundaries {
+function createDateBoundaries(): DateBoundaries {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -43,7 +43,7 @@ export function createDateBoundaries(): DateBoundaries {
 /**
  * Filters reminders based on due date criteria
  */
-export function filterRemindersByDate(
+function filterRemindersByDate(
   reminders: Reminder[],
   filter: DateFilter,
 ): Reminder[] {
