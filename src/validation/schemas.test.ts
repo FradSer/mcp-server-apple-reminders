@@ -3,7 +3,7 @@
  * Tests for validation schemas
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import {
   CreateReminderListSchema,
   CreateReminderSchema,

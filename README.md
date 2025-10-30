@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 0.11.0](https://img.shields.io/badge/version-0.11.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
@@ -11,24 +11,26 @@ A Model Context Protocol (MCP) server that provides native integration with Appl
 ## Features
 
 ### Core Functionality
-- **List Management**: View all reminders and reminder lists with advanced filtering
-- **Reminder Operations**: Create, update, and delete reminders across lists
-- **Rich Content**: Support for titles, notes, due dates, URLs, and completion status
-- **Native Integration**: Seamless integration with macOS Apple Reminders app
+- **List Management**: View all reminders and reminder lists with advanced filtering options
+- **Reminder Operations**: Full CRUD operations (Create, Read, Update, Delete) for reminders across lists
+- **Rich Content Support**: Complete support for titles, notes, due dates, URLs, and completion status
+- **Native macOS Integration**: Direct integration with Apple Reminders using EventKit framework
 
 ### Advanced Features
-- **Smart Organization**: Automatic categorization by priority, due date, category, or completion status
-- **Powerful Search**: Filter reminders by completion status, due dates, and search terms
-- **Batch Operations**: Organize multiple reminders with intelligent strategies
-- **Permission Management**: Proactive validation of system permissions
-- **Flexible Date Handling**: Support for both date-only and date-time formats with locale awareness
-- **Unicode Support**: Full international character support with validation
+- **Smart Organization**: Automatic categorization and intelligent filtering by priority, due date, category, or completion status
+- **Powerful Search**: Multi-criteria filtering including completion status, due date ranges, and full-text search
+- **Batch Operations**: Efficient handling of multiple reminders with optimized data access patterns
+- **Permission Management**: Automatic validation and request for required macOS system permissions
+- **Flexible Date Handling**: Support for multiple date formats (YYYY-MM-DD, ISO 8601) with timezone awareness
+- **Unicode Support**: Full international character support with comprehensive input validation
 
 ### Technical Excellence
-- **Unified API**: Streamlined tool architecture with action-based operations
-- **Type Safety**: Comprehensive TypeScript coverage with Zod validation
-- **Performance**: Swift binaries for performance-critical operations
-- **Error Handling**: Consistent error responses with detailed feedback
+- **Clean Architecture**: 4-layer architecture following Clean Architecture principles with dependency injection
+- **Type Safety**: Complete TypeScript coverage with Zod schema validation for runtime type checking
+- **High Performance**: Swift-compiled binaries for performance-critical Apple Reminders operations
+- **Robust Error Handling**: Consistent error responses with detailed diagnostic information
+- **Repository Pattern**: Data access abstraction with standardized CRUD operations
+- **Functional Programming**: Pure functions with immutable data structures where appropriate
 
 ## Prerequisites
 
@@ -167,12 +169,12 @@ The server will:
 
 The server ships with a consolidated prompt registry exposed via the MCP `ListPrompts` and `GetPrompt` endpoints. Each template shares a mission, context inputs, numbered process, constraints, output format, and quality bar so downstream assistants receive predictable scaffolding instead of brittle free-form examples.
 
-- **daily-task-organizer** — optional `task_category`, `priority_level`, and `time_frame` inputs produce a same-day execution blueprint that keeps priority work balanced with recovery time.
-- **smart-reminder-creator** — requires `task_description`, optionally `context` and `urgency`, yielding a reminder draft that mitigates follow-through gaps by mapping metadata explicitly.
-- **reminder-review-assistant** — optional `review_type` and `list_name` drive inbox triage scripts that surface stale reminders while avoiding destructive edits.
-- **weekly-planning-workflow** — optional `focus_areas` and `week_start_date` guide a Monday-through-Sunday reset with time blocks tied to existing lists.
-- **reminder-cleanup-guide** — optional `cleanup_strategy` lists guardrails and sequencing for stress-free list pruning.
-- **goal-tracking-setup** — required `goal_type` plus optional `time_horizon` assemble recurring reminders and reflection cadences.
+- **daily-task-organizer** — optional `task_category` (work, personal, health, shopping, etc.), `priority_level` (low, medium, high, urgent), and `time_frame` (today, this week, later this month) inputs produce a same-day execution blueprint that keeps priority work balanced with recovery time. Supports intelligent task clustering, focus block scheduling, and automatic reminder list organization.
+- **smart-reminder-creator** — requires `task_description`, optionally `context` and `urgency` (low, medium, high, critical), yielding a reminder draft that mitigates follow-through gaps by mapping metadata explicitly.
+- **reminder-review-assistant** — optional `review_type` (overdue, completed, upcoming, all) and `list_name` drive inbox triage scripts that surface stale reminders while avoiding destructive edits.
+- **weekly-planning-workflow** — optional `user_ideas` (your thoughts and ideas for what you want to accomplish this week) guides a Monday-through-Sunday reset with time blocks tied to existing lists.
+- **reminder-cleanup-guide** — optional `cleanup_strategy` (archive_completed, delete_old, reorganize_lists, merge_duplicates) lists guardrails and sequencing for stress-free list pruning.
+- **goal-tracking-setup** — required `goal_type` (habit, project, learning, health, financial) plus optional `time_horizon` (daily, weekly, monthly, quarterly, yearly) assemble recurring reminders and reflection cadences.
 
 ### Design constraints and validation
 
@@ -190,7 +192,13 @@ This server provides two unified MCP tools for comprehensive Apple Reminders man
 
 A comprehensive tool for managing Apple Reminders with action-based operations. Supports all reminder operations through a single unified interface.
 
-**Actions**: `read`, `list`, `create`, `update`, `delete`
+**Actions**: `read`, `create`, `update`, `delete`
+
+**Main Handler Functions**:
+- `handleReadReminders()` - Read/list reminders with filtering options
+- `handleCreateReminder()` - Create new reminders
+- `handleUpdateReminder()` - Update existing reminders
+- `handleDeleteReminder()` - Delete reminders
 
 #### Parameters by Action
 
@@ -256,6 +264,12 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 Manage reminder lists - view existing lists or create new ones for organizing reminders.
 
 **Actions**: `read`, `create`, `update`, `delete`
+
+**Main Handler Functions**:
+- `handleReadReminderLists()` - Read all reminder lists
+- `handleCreateReminderList()` - Create new reminder lists
+- `handleUpdateReminderList()` - Update existing reminder lists
+- `handleDeleteReminderList()` - Delete reminder lists
 
 #### Parameters by Action
 
@@ -479,73 +493,33 @@ pnpm exec biome check
 
 The CLI entry point includes a project-root fallback, so you can start the server from nested paths (for example `dist/` or editor task runners) without losing access to the bundled Swift binary. The bootstrapper walks up to ten directories to find `package.json`; if you customise the folder layout, keep the manifest reachable within that depth to retain the guarantee.
 
-### Project Structure
-
-```
-.
-├── src/                          # Source code directory
-│   ├── index.ts                  # Main entry point
-│   ├── server/                   # MCP server implementation
-│   │   ├── server.ts             # Server configuration and lifecycle
-│   │   ├── handlers.ts           # Request handlers and routing
-│   │   └── *.test.ts             # Server tests
-│   ├── swift/                    # Native Swift integration code
-│   │   ├── bin/                  # Compiled Swift binaries
-│   │   ├── GetReminders.swift    # Swift source file
-│   │   └── build.sh              # Swift build script
-│   ├── tools/                    # MCP tool definitions and handlers
-│   │   ├── definitions.ts        # Tool schemas and validation
-│   │   ├── handlers.ts           # Tool implementation logic
-│   │   ├── index.ts              # Tool registration
-│   │   └── *.test.ts             # Tool tests
-│   ├── types/                    # TypeScript type definitions
-│   │   └── index.ts              # Core type definitions
-│   ├── utils/                    # Helper functions and utilities
-│   │   ├── __mocks__/            # Test mocks
-│   │   ├── *.ts                  # Utility modules
-│   │   └── *.test.ts             # Utility tests
-│   ├── validation/               # Schema validation utilities
-│   │   └── schemas.ts            # Zod validation schemas
-│   └── test-setup.ts             # Test environment setup
-├── dist/                         # Compiled JavaScript output
-│   ├── index.js                  # Main compiled entry point
-│   ├── swift/bin/                # Compiled Swift binaries
-│   ├── server/                   # Server compiled files
-│   ├── tools/                    # Tools compiled files
-│   ├── types/                    # Types compiled files
-│   ├── utils/                    # Utils compiled files
-│   └── validation/               # Validation compiled files
-├── node_modules/                 # Node.js dependencies
-├── package.json                  # Package configuration
-├── tsconfig.json                 # TypeScript configuration
-├── jest.config.mjs               # Jest test configuration
-├── pnpm-lock.yaml               # pnpm lock file
-└── *.md                         # Documentation files
-```
-
 ### Available Scripts
 
-- `pnpm build` - Build both TypeScript and Swift components (required before starting the server)
-- `pnpm build:ts` - Build TypeScript code only
+- `pnpm build` - Build the Swift helper binary (required before starting the server)
 - `pnpm build:swift` - Build the Swift helper binary only
-- `pnpm dev` - TypeScript development mode with file watching
-- `pnpm start` - Start the MCP server over stdio
-- `pnpm test` - Run the comprehensive Jest suite
-- `pnpm exec biome check` - Enforce formatting and lint rules
+- `pnpm dev` - TypeScript development mode with file watching via tsx (runtime TS execution)
+- `pnpm start` - Start the MCP server over stdio (auto-fallback to runtime TS if no build)
+- `pnpm test` - Run the comprehensive Jest test suite
+- `pnpm check` - Run Biome formatting and TypeScript type checking
 
 ### Dependencies
 
 **Runtime Dependencies:**
-- `@modelcontextprotocol/sdk ^1.5.0` - MCP protocol implementation
+- `@modelcontextprotocol/sdk ^1.20.2` - MCP protocol implementation
 - `moment ^2.30.1` - Date/time handling utilities
-- `zod ^3.24.2` - Runtime type validation
+- `exit-on-epipe ^1.0.1` - Graceful process termination handling
+- `tsx ^4.20.6` - TypeScript execution and REPL
+- `zod ^4.1.12` - Runtime type validation
 
 **Development Dependencies:**
-- `typescript ^5.8.2` - TypeScript compiler
-- `@types/node ^20.0.0` - Node.js type definitions
-- `@types/jest ^29.5.12` - Jest type definitions
-- `jest ^29.7.0` - Testing framework
-- `ts-jest ^29.1.2` - Jest TypeScript support
+- `typescript ^5.9.3` - TypeScript compiler
+- `@types/node ^24.9.2` - Node.js type definitions
+- `@types/jest ^30.0.0` - Jest type definitions
+- `jest ^30.2.0` - Testing framework
+- `babel-jest ^30.2.0` - Babel Jest transformer
+- `babel-plugin-transform-import-meta ^2.3.3` - Babel import meta transform
+- `ts-jest ^29.4.5` - Jest TypeScript support
+- `@biomejs/biome ^2.3.2` - Code formatting and linting
 
 **Build Tools:**
 - Swift binaries for native macOS integration

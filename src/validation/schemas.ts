@@ -3,7 +3,7 @@
  * Comprehensive input validation schemas using Zod for security
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Security patterns – allow printable Unicode text while blocking dangerous control and delimiter chars.
 // Allows standard printable ASCII, extended Latin, CJK, plus newlines/tabs for notes.
