@@ -16,5 +16,5 @@
     "noUnusedParameters": false
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/__mocks__/**"]
+  "exclude": ["node_modules", "dist", "src/**/__mocks__/**"]
 }

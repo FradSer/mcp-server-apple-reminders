@@ -9,10 +9,12 @@ Apple Reminders MCP server - Native macOS integration using Swift CLI for EventK
 ```bash
 pnpm install              # Install dependencies (pnpm is preferred over npm)
 pnpm build                # REQUIRED before starting server (compiles Swift binary)
+pnpm build:swift          # Build Swift binary only
 pnpm start                # Start MCP server over stdio
+pnpm dev                  # Development mode with tsx runtime (no build needed)
 pnpm test                 # Run full Jest test suite
 pnpm test -- --watch      # Watch mode testing
-pnpm exec biome check     # Lint and format code
+pnpm check                # Run Biome formatting + TypeScript type checking
 
 # Single test file
 pnpm test src/utils/cliExecutor.test.ts

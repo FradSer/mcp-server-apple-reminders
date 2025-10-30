@@ -4,7 +4,7 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod/v3';
 import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
@@ -73,13 +73,12 @@ export const handleDeleteReminder = async (
   }, 'delete reminder');
 };
 
-
 export const handleReadReminders = async (
   args: RemindersToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
     const validatedArgs = extractAndValidateArgs(args, ReadRemindersSchema);
-    
+
     // Check if id is provided in args (before validation)
     // because id might be filtered out by schema validation if it's optional
     if (args.id) {
@@ -91,7 +90,10 @@ export const handleReadReminders = async (
       markdownLines.push(`- ${checkbox} ${reminder.title}`);
       if (reminder.list) markdownLines.push(`  - List: ${reminder.list}`);
       if (reminder.id) markdownLines.push(`  - ID: ${reminder.id}`);
-      if (reminder.notes) markdownLines.push(`  - Notes: ${reminder.notes.replace(/\n/g, '\n    ')}`);
+      if (reminder.notes)
+        markdownLines.push(
+          `  - Notes: ${reminder.notes.replace(/\n/g, '\n    ')}`,
+        );
       if (reminder.dueDate) markdownLines.push(`  - Due: ${reminder.dueDate}`);
       if (reminder.url) markdownLines.push(`  - URL: ${reminder.url}`);
       return markdownLines.join('\n');

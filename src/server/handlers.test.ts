@@ -6,11 +6,26 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { registerHandlers } from './handlers.js';
 
-// Mock server type for testing
+// Mock server type for testing - simplified for test compatibility
 interface MockServer {
   setRequestHandler: jest.MockedFunction<
     (schema: unknown, handler: unknown) => void
   >;
+}
+
+// Response types for handlers
+interface ListPromptsResponse {
+  prompts: MockPrompt[];
+}
+
+interface GetPromptResponse {
+  description: string;
+  messages: Array<{ role: string; content: MessageContent }>;
+}
+
+interface MessageContent {
+  type: string;
+  text?: string;
 }
 
 // Mock prompt type for testing
@@ -23,12 +38,16 @@ interface MockPrompt {
 interface MockPromptArgument {
   name: string;
   description: string;
+  required?: boolean;
 }
 
 // Mock the tools and prompts modules
 jest.mock('../tools/index.js', () => ({
   TOOLS: [],
-  handleToolCall: jest.fn(),
+  handleToolCall: jest.fn().mockResolvedValue({
+    content: [{ type: 'text', text: 'Mock result' }],
+    isError: false,
+  }),
 }));
 
 describe('Server Handlers', () => {
@@ -46,7 +65,9 @@ describe('Server Handlers', () => {
 
   describe('registerHandlers', () => {
     test('should register all required handlers', () => {
-      registerHandlers(mockServer);
+      registerHandlers(
+        mockServer as unknown as Parameters<typeof registerHandlers>[0],
+      );
 
       // Verify that all handlers are registered
       expect(mockServer.setRequestHandler).toHaveBeenCalledTimes(4);
@@ -60,14 +81,60 @@ describe('Server Handlers', () => {
     });
   });
 
+  describe('ListToolsRequestSchema handler', () => {
+    let listToolsHandler: jest.MockedFunction<() => Promise<unknown>>;
+
+    beforeEach(() => {
+      const testServer = new Server(
+        { name: 'test', version: '1.0.0' },
+        { capabilities: { prompts: {}, resources: {}, tools: {} } },
+      );
+
+      const originalSetRequestHandler = testServer.setRequestHandler;
+      testServer.setRequestHandler = jest.fn(
+        (schema: unknown, handler: unknown) => {
+          const ListToolsRequestSchema = jest.requireActual(
+            '@modelcontextprotocol/sdk/types.js',
+          ).ListToolsRequestSchema;
+          if (schema === (ListToolsRequestSchema as unknown)) {
+            listToolsHandler = handler as jest.MockedFunction<
+              () => Promise<unknown>
+            >;
+          }
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
+        },
+      );
+
+      registerHandlers(testServer);
+    });
+
+    it('should return list of tools', async () => {
+      const result = await listToolsHandler();
+      expect(result).toBeDefined();
+      expect(result).toHaveProperty('tools');
+    });
+  });
+
   describe('Prompts Handlers', () => {
-    let listPromptsHandler: jest.MockedFunction<() => Promise<unknown>>;
+    let listPromptsHandler: jest.MockedFunction<
+      () => Promise<ListPromptsResponse>
+    >;
     let getPromptHandler: jest.MockedFunction<
-      (args: unknown) => Promise<unknown>
+      (args: unknown) => Promise<GetPromptResponse>
     >;
 
     beforeEach(() => {
-      registerHandlers(mockServer);
+      registerHandlers(
+        mockServer as unknown as Parameters<typeof registerHandlers>[0],
+      );
 
       // Extract handlers from mock calls
       const calls = mockServer.setRequestHandler.mock.calls;
@@ -79,8 +146,12 @@ describe('Server Handlers', () => {
         (call) => call[0] === GetPromptRequestSchema,
       );
 
-      listPromptsHandler = listPromptsCall?.[1];
-      getPromptHandler = getPromptCall?.[1];
+      listPromptsHandler = listPromptsCall?.[1] as jest.MockedFunction<
+        () => Promise<ListPromptsResponse>
+      >;
+      getPromptHandler = getPromptCall?.[1] as jest.MockedFunction<
+        (args: unknown) => Promise<GetPromptResponse>
+      >;
     });
 
     describe('List Prompts Handler', () => {
@@ -123,9 +194,15 @@ describe('Server Handlers', () => {
         expect(result.messages).toHaveLength(1);
         expect(result.messages[0].role).toBe('user');
         expect(result.messages[0].content.type).toBe('text');
-        expect(result.messages[0].content.text).toContain('work');
-        expect(result.messages[0].content.text).toContain('high');
-        expect(result.messages[0].content.text).toContain('today');
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'work',
+        );
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'high',
+        );
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'today',
+        );
       });
 
       test('should return smart-reminder-creator prompt', async () => {
@@ -144,11 +221,15 @@ describe('Server Handlers', () => {
 
         expect(result.description).toContain('Intelligent reminder creation');
         expect(result.messages).toHaveLength(1);
-        expect(result.messages[0].content.text).toContain(
+        expect((result.messages[0].content as MessageContent).text).toContain(
           'Complete project proposal',
         );
-        expect(result.messages[0].content.text).toContain('For client meeting');
-        expect(result.messages[0].content.text).toContain('high');
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'For client meeting',
+        );
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'high',
+        );
       });
 
       test('should return goal-tracking-setup prompt', async () => {
@@ -166,8 +247,12 @@ describe('Server Handlers', () => {
 
         expect(result.description).toContain('goal tracking system');
         expect(result.messages).toHaveLength(1);
-        expect(result.messages[0].content.text).toContain('health');
-        expect(result.messages[0].content.text).toContain('weekly');
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'health',
+        );
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'weekly',
+        );
       });
 
       test('should handle default values for optional arguments', async () => {
@@ -180,9 +265,15 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.messages[0].content.text).toContain('all categories');
-        expect(result.messages[0].content.text).toContain('today');
-        expect(result.messages[0].content.text).toContain('mixed priorities');
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'all categories',
+        );
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'today',
+        );
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'mixed priorities',
+        );
       });
 
       test('should handle missing arguments', async () => {
@@ -195,7 +286,9 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.messages[0].content.text).toContain('comprehensive');
+        expect((result.messages[0].content as MessageContent).text).toContain(
+          'comprehensive',
+        );
       });
 
       test('should throw when required arguments are missing', async () => {
@@ -223,6 +316,95 @@ describe('Server Handlers', () => {
           'Unknown prompt: unknown-prompt',
         );
       });
+
+      test('should throw error when name is not a string', async () => {
+        const request = {
+          params: {
+            name: 123 as unknown,
+            arguments: {},
+          },
+        };
+
+        await expect(getPromptHandler(request)).rejects.toThrow(
+          'Prompt name must be a string.',
+        );
+      });
+
+      test('should handle null arguments', async () => {
+        const request = {
+          params: {
+            name: 'reminder-cleanup-guide',
+            arguments: null,
+          },
+        };
+
+        const result = await getPromptHandler(request);
+        expect(result).toBeDefined();
+        expect(result.messages).toHaveLength(1);
+      });
+
+      test('should handle undefined arguments', async () => {
+        const request = {
+          params: {
+            name: 'reminder-cleanup-guide',
+            arguments: undefined,
+          },
+        };
+
+        const result = await getPromptHandler(request);
+        expect(result).toBeDefined();
+        expect(result.messages).toHaveLength(1);
+      });
+    });
+  });
+
+  describe('CallToolRequestSchema handler', () => {
+    let callToolHandler: jest.MockedFunction<
+      (args: unknown) => Promise<unknown>
+    >;
+
+    beforeEach(() => {
+      const testServer = new Server(
+        { name: 'test', version: '1.0.0' },
+        { capabilities: { prompts: {}, resources: {}, tools: {} } },
+      );
+
+      const originalSetRequestHandler = testServer.setRequestHandler;
+      testServer.setRequestHandler = jest.fn(
+        (schema: unknown, handler: unknown) => {
+          const CallToolRequestSchema = jest.requireActual(
+            '@modelcontextprotocol/sdk/types.js',
+          ).CallToolRequestSchema;
+          if (schema === (CallToolRequestSchema as unknown)) {
+            callToolHandler = handler as jest.MockedFunction<
+              (args: unknown) => Promise<unknown>
+            >;
+          }
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
+        },
+      );
+
+      registerHandlers(testServer);
+    });
+
+    it('should handle null arguments', async () => {
+      const request = {
+        params: {
+          name: 'reminders',
+          arguments: null,
+        },
+      };
+
+      const result = await callToolHandler(request);
+      expect(result).toBeDefined();
     });
   });
 });
@@ -235,30 +417,43 @@ describe('Server Handlers - Prompts', () => {
         { capabilities: { prompts: {}, resources: {}, tools: {} } },
       );
 
-      let listPromptsHandler: jest.MockedFunction<() => Promise<unknown>>;
+      let listPromptsHandler:
+        | jest.MockedFunction<() => Promise<ListPromptsResponse>>
+        | undefined;
 
       // Mock setRequestHandler to capture the handler
       const originalSetRequestHandler = testServer.setRequestHandler;
       testServer.setRequestHandler = jest.fn(
         (schema: unknown, handler: unknown) => {
-          if (schema === ListPromptsRequestSchema) {
-            listPromptsHandler = handler;
+          if (schema === (ListPromptsRequestSchema as unknown)) {
+            listPromptsHandler = handler as jest.MockedFunction<
+              () => Promise<ListPromptsResponse>
+            >;
           }
-          return originalSetRequestHandler.call(testServer, schema, handler);
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
         },
       );
 
       registerHandlers(testServer);
 
       expect(listPromptsHandler).toBeDefined();
-      const response = await listPromptsHandler();
+      const response = await listPromptsHandler?.();
 
-      expect(response).toHaveProperty('prompts');
-      expect(Array.isArray(response.prompts)).toBe(true);
-      expect(response.prompts.length).toBe(6);
+      expect(response).toBeDefined();
+      expect(response as ListPromptsResponse).toHaveProperty('prompts');
+      expect(Array.isArray(response?.prompts)).toBe(true);
+      expect(response?.prompts.length).toBe(6);
 
       // Check if all expected prompts are present
-      const promptNames = response.prompts.map((p: MockPrompt) => p.name);
+      const promptNames = response?.prompts.map((p: MockPrompt) => p.name);
       expect(promptNames).toContain('daily-task-organizer');
       expect(promptNames).toContain('smart-reminder-creator');
       expect(promptNames).toContain('reminder-review-assistant');
@@ -273,22 +468,36 @@ describe('Server Handlers - Prompts', () => {
         { capabilities: { prompts: {}, resources: {}, tools: {} } },
       );
 
-      let listPromptsHandler: jest.MockedFunction<() => Promise<unknown>>;
+      let listPromptsHandler:
+        | jest.MockedFunction<() => Promise<ListPromptsResponse>>
+        | undefined;
 
       const originalSetRequestHandler = testServer.setRequestHandler;
       testServer.setRequestHandler = jest.fn(
         (schema: unknown, handler: unknown) => {
-          if (schema === ListPromptsRequestSchema) {
-            listPromptsHandler = handler;
+          if (schema === (ListPromptsRequestSchema as unknown)) {
+            listPromptsHandler = handler as jest.MockedFunction<
+              () => Promise<ListPromptsResponse>
+            >;
           }
-          return originalSetRequestHandler.call(testServer, schema, handler);
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
         },
       );
 
       registerHandlers(testServer);
-      const response = await listPromptsHandler();
+      expect(listPromptsHandler).toBeDefined();
+      const response = await listPromptsHandler?.();
 
-      response.prompts.forEach((prompt: MockPrompt) => {
+      expect(response).toBeDefined();
+      response?.prompts.forEach((prompt: MockPrompt) => {
         expect(prompt).toHaveProperty('name');
         expect(prompt).toHaveProperty('description');
         expect(prompt).toHaveProperty('arguments');
@@ -307,7 +516,7 @@ describe('Server Handlers - Prompts', () => {
 
   describe('GetPromptRequestSchema', () => {
     let getPromptHandler: jest.MockedFunction<
-      (args: unknown) => Promise<unknown>
+      (args: unknown) => Promise<GetPromptResponse>
     >;
 
     beforeEach(() => {
@@ -319,10 +528,20 @@ describe('Server Handlers - Prompts', () => {
       const originalSetRequestHandler = testServer.setRequestHandler;
       testServer.setRequestHandler = jest.fn(
         (schema: unknown, handler: unknown) => {
-          if (schema === GetPromptRequestSchema) {
-            getPromptHandler = handler;
+          if (schema === (GetPromptRequestSchema as unknown)) {
+            getPromptHandler = handler as jest.MockedFunction<
+              (args: unknown) => Promise<GetPromptResponse>
+            >;
           }
-          return originalSetRequestHandler.call(testServer, schema, handler);
+          return originalSetRequestHandler.call(
+            testServer,
+            schema as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[0],
+            handler as unknown as Parameters<
+              typeof originalSetRequestHandler
+            >[1],
+          );
         },
       );
 

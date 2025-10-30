@@ -27,7 +27,7 @@ interface DateBoundaries {
 /**
  * Creates standardized date boundaries for filtering operations
  */
-export function createDateBoundaries(): DateBoundaries {
+function createDateBoundaries(): DateBoundaries {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -43,7 +43,7 @@ export function createDateBoundaries(): DateBoundaries {
 /**
  * Filters reminders based on due date criteria
  */
-export function filterRemindersByDate(
+function filterRemindersByDate(
   reminders: Reminder[],
   filter: DateFilter,
 ): Reminder[] {
@@ -65,8 +65,11 @@ export function filterRemindersByDate(
       case 'today':
         return dueDate >= today && dueDate < tomorrow;
 
-      case 'tomorrow':
-        return dueDate >= tomorrow && dueDate < getNextDay(tomorrow);
+      case 'tomorrow': {
+        const dayAfterTomorrow = new Date(tomorrow);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+        return dueDate >= tomorrow && dueDate < dayAfterTomorrow;
+      }
 
       case 'this-week':
         return dueDate >= today && dueDate <= weekEnd;
@@ -75,50 +78,6 @@ export function filterRemindersByDate(
         return true;
     }
   });
-}
-
-/**
- * Utility to get the next day after a given date
- */
-function getNextDay(date: Date): Date {
-  const nextDay = new Date(date);
-  nextDay.setDate(nextDay.getDate() + 1);
-  return nextDay;
-}
-
-/**
- * Categorizes a reminder based on its due date
- */
-export function categorizeReminderByDueDate(reminder: Reminder): string {
-  if (!reminder.dueDate) {
-    return 'No Due Date';
-  }
-
-  const { today } = createDateBoundaries();
-  const dueDate = new Date(reminder.dueDate);
-  const diffDays = calculateDaysDifference(dueDate, today);
-
-  if (diffDays < 0) {
-    return 'Overdue';
-  }
-
-  if (diffDays === 0) {
-    return 'Due Today';
-  }
-
-  if (diffDays <= 7) {
-    return 'Due This Week';
-  }
-
-  return 'Due Later';
-}
-
-/**
- * Calculates the difference in days between two dates
- */
-function calculateDaysDifference(date1: Date, date2: Date): number {
-  const timeDifference = date1.getTime() - date2.getTime();
-  return Math.ceil(timeDifference / (1000 * 3600 * 24));
 }
 
 /**

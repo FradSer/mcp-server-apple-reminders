@@ -6,7 +6,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { logger } from './logger.js';
 
 /**
  * Finds the project root directory by looking for package.json
@@ -16,9 +15,8 @@ import { logger } from './logger.js';
  */
 export function findProjectRoot(maxDepth = 10): string {
   // Derive the starting directory from the current module's location for robustness.
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-  const root = locateProjectRoot(__dirname, maxDepth);
+  const currentDir = getCurrentModuleDir();
+  const root = locateProjectRoot(currentDir, maxDepth);
 
   if (root) {
     return root;
@@ -33,7 +31,7 @@ export function findProjectRoot(maxDepth = 10): string {
  * @param maxDepth - Maximum directory levels to traverse upward
  * @returns The project root when found, otherwise `undefined`
  */
-export function locateProjectRoot(
+function locateProjectRoot(
   startDir: string,
   maxDepth = 10,
 ): string | undefined {
@@ -42,7 +40,6 @@ export function locateProjectRoot(
 
   while (depth < maxDepth) {
     if (isCorrectProjectRoot(currentDir)) {
-      logger.debug(`Project root found at: ${currentDir}`);
       return currentDir;
     }
 
@@ -61,7 +58,7 @@ export function locateProjectRoot(
 /**
  * Checks if a directory contains the correct package.json for this project
  */
-export function isCorrectProjectRoot(dir: string): boolean {
+function isCorrectProjectRoot(dir: string): boolean {
   const packageJsonPath = path.join(dir, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
     return false;
@@ -71,43 +68,22 @@ export function isCorrectProjectRoot(dir: string): boolean {
     const packageContent = fs.readFileSync(packageJsonPath, 'utf8');
     const packageData = JSON.parse(packageContent);
     return packageData.name === 'mcp-server-apple-reminders';
-  } catch (error) {
-    logger.debug(`Failed to parse package.json at ${packageJsonPath}:`, error);
+  } catch {
     return false;
   }
 }
 
 /**
- * Resolves a path relative to the project root
- * @param relativePath - Path relative to project root
- * @returns Absolute path
+ * Get the current module's directory
+ * Handles both production and test environments
  */
-export function resolveFromProjectRoot(relativePath: string): string {
-  const projectRoot = findProjectRoot();
-  return path.resolve(projectRoot, relativePath);
-}
-
-/**
- * Provides a fallback directory when the project root cannot be located.
- * @param startDir - Directory where the search began
- * @param maxDepth - Maximum directories to traverse upwards
- * @returns The last directory evaluated during the search
- */
-export function getFallbackSearchDirectory(
-  startDir: string,
-  maxDepth = 10,
-): string {
-  let currentDir = startDir;
-  let depth = 0;
-
-  while (depth < maxDepth) {
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      break;
-    }
-    currentDir = parentDir;
-    depth++;
+function getCurrentModuleDir(): string {
+  if (process.env.NODE_ENV === 'test') {
+    return path.join(process.cwd(), 'src', 'utils');
   }
 
-  return currentDir;
+  // In production, use import.meta.url
+  // This line is excluded from coverage due to Jest ESM limitations
+  /* istanbul ignore next */
+  return path.dirname(fileURLToPath(import.meta.url));
 }

@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 0.11.0](https://img.shields.io/badge/version-0.11.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
@@ -11,24 +11,26 @@ English | [简体中文](README.zh-CN.md)
 ## 功能特性
 
 ### 核心功能
-- **列表管理**：查看所有提醒事项和提醒事项列表的高级过滤功能
-- **提醒事项操作**：创建、更新和删除提醒事项
-- **丰富内容**：支持标题、备注、截止日期、URL 和完成状态
-- **原生集成**：与 macOS Apple Reminders 应用的无缝集成
+- **列表管理**：查看所有提醒事项和提醒事项列表的高级过滤选项
+- **提醒事项操作**：完整的CRUD操作（创建、读取、更新、删除）提醒事项
+- **丰富内容支持**：完全支持标题、备注、截止日期、URL和完成状态
+- **原生macOS集成**：使用EventKit框架直接与Apple Reminders集成
 
 ### 高级功能
-- **智能组织**：按优先级、截止日期、类别或完成状态自动分类
-- **强大搜索**：按完成状态、截止日期和搜索词过滤提醒事项
-- **批量操作**：使用智能策略组织多个提醒事项
-- **权限管理**：主动验证系统权限
-- **灵活日期处理**：支持仅日期和日期时间格式，具有区域设置感知能力
-- **Unicode 支持**：完整的国际字符支持和验证
+- **智能组织**：按优先级、截止日期、类别或完成状态的自动分类和智能过滤
+- **强大搜索**：包括完成状态、截止日期范围和全文搜索的多条件过滤
+- **批量操作**：使用优化的数据访问模式高效处理多个提醒事项
+- **权限管理**：自动验证和请求所需的macOS系统权限
+- **灵活日期处理**：支持多种日期格式（YYYY-MM-DD、ISO 8601）并具有时区感知能力
+- **Unicode支持**：完整的国际字符支持和全面的输入验证
 
 ### 技术优势
-- **统一 API**：基于操作的简化工具架构
-- **类型安全**：全面的 TypeScript 覆盖和 Zod 验证
-- **性能优化**：用于性能关键操作的 Swift 二进制文件
-- **错误处理**：一致的错误响应和详细反馈
+- **Clean Architecture**：遵循Clean Architecture原则的4层架构，包含依赖注入
+- **类型安全**：使用Zod模式验证进行运行时类型检查的完整TypeScript覆盖
+- **高性能**：用于Apple Reminders性能关键操作的Swift编译二进制文件
+- **健壮的错误处理**：具有详细诊断信息的一致错误响应
+- **Repository Pattern**：标准化的CRUD操作的数据访问抽象
+- **函数式编程**：在适当情况下使用纯函数和不可变数据结构
 
 ## 系统要求
 
@@ -167,12 +169,12 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 该服务器提供统一的提示注册表，可通过 MCP 的 `ListPrompts` 和 `GetPrompt` 端点访问。每个模板都共享使命、上下文输入、编号流程、约束、输出格式和质量标准，让下游助手获得可预测的框架，而无需解析松散的自由格式示例。
 
-- **daily-task-organizer** —— 可选的 `task_category`、`priority_level` 和 `time_frame` 输入会生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。
-- **smart-reminder-creator** —— 要求 `task_description`，可选 `context` 和 `urgency`，生成的提醒草案通过显式映射元数据来减少后续跟进的差距。
-- **reminder-review-assistant** —— 可选 `review_type` 和 `list_name` 驱动收件箱盘点脚本，突出陈旧提醒事项，同时避免破坏性编辑。
-- **weekly-planning-workflow** —— 可选 `focus_areas` 和 `week_start_date` 指导周一至周日的重置，时间区块与现有列表相关联。
-- **reminder-cleanup-guide** —— 可选 `cleanup_strategy` 列出无压力列表修剪的护栏和顺序。
-- **goal-tracking-setup** —— 要求 `goal_type`，可选 `time_horizon` 组装周期性提醒和反思节奏。
+- **daily-task-organizer** —— 可选的 `task_category`（工作、个人、健康、购物等）、`priority_level`（低、中、高、紧急）和 `time_frame`（今天、本周、本月晚些时候）输入会生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。支持智能任务聚类、专注时间段安排和自动提醒列表组织。
+- **smart-reminder-creator** —— 要求 `task_description`，可选 `context` 和 `urgency`（低、中、高、紧急），生成的提醒草案通过显式映射元数据来减少后续跟进的差距。
+- **reminder-review-assistant** —— 可选 `review_type`（过期、已完成、即将到期、全部）和 `list_name` 驱动收件箱盘点脚本，突出陈旧提醒事项，同时避免破坏性编辑。
+- **weekly-planning-workflow** —— 可选 `user_ideas`（您本周想要完成的想法和目标）指导周一至周日的重置，时间区块与现有列表相关联。
+- **reminder-cleanup-guide** —— 可选 `cleanup_strategy`（archive_completed、delete_old、reorganize_lists、merge_duplicates）列出无压力列表修剪的护栏和顺序。
+- **goal-tracking-setup** —— 要求 `goal_type`（习惯、项目、学习、健康、财务）加上可选 `time_horizon`（每日、每周、每月、每季度、每年）组装周期性提醒和反思节奏。
 
 ### 设计约束与验证
 
@@ -417,7 +419,7 @@ const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
 pnpm install
 ```
 
-2. 在启动前构建 TypeScript 与 Swift 二进制：
+2. 在启动前构建 Swift 二进制（TypeScript 使用运行时执行）：
 ```bash
 pnpm build
 ```
@@ -436,73 +438,33 @@ pnpm exec biome check
 
 CLI 入口内建项目根目录回退逻辑。即使从 `dist/` 等子目录或编辑器任务运行器启动，服务器也能在向上最多十层目录内定位 `package.json` 并加载随附的 Swift 二进制。若你自定义目录结构，请确保清单文件仍在该查找深度之内，以维持这一保证。
 
-### 项目结构
-
-```
-.
-├── src/                          # 源代码目录
-│   ├── index.ts                  # 主入口点
-│   ├── server/                   # MCP 服务器实现
-│   │   ├── server.ts             # 服务器配置和生命周期
-│   │   ├── handlers.ts           # 请求处理器和路由
-│   │   └── *.test.ts             # 服务器测试
-│   ├── swift/                    # 原生 Swift 集成代码
-│   │   ├── bin/                  # 编译后的 Swift 二进制文件
-│   │   ├── GetReminders.swift    # Swift 源文件
-│   │   └── build.sh              # Swift 构建脚本
-│   ├── tools/                    # MCP 工具定义和处理器
-│   │   ├── definitions.ts        # 工具模式和验证
-│   │   ├── handlers.ts           # 工具实现逻辑
-│   │   ├── index.ts              # 工具注册
-│   │   └── *.test.ts             # 工具测试
-│   ├── types/                    # TypeScript 类型定义
-│   │   └── index.ts              # 核心类型定义
-│   ├── utils/                    # 辅助函数和实用工具
-│   │   ├── __mocks__/            # 测试模拟
-│   │   ├── *.ts                  # 实用工具模块
-│   │   └── *.test.ts             # 实用工具测试
-│   ├── validation/               # 模式验证实用工具
-│   │   └── schemas.ts            # Zod 验证模式
-│   └── test-setup.ts             # 测试环境设置
-├── dist/                         # 编译后的 JavaScript 输出
-│   ├── index.js                  # 主编译入口点
-│   ├── swift/bin/                # 编译后的 Swift 二进制文件
-│   ├── server/                   # 服务器编译文件
-│   ├── tools/                    # 工具编译文件
-│   ├── types/                    # 类型编译文件
-│   ├── utils/                    # 实用工具编译文件
-│   └── validation/               # 验证编译文件
-├── node_modules/                 # Node.js 依赖
-├── package.json                  # 包配置
-├── tsconfig.json                 # TypeScript 配置
-├── jest.config.mjs               # Jest 测试配置
-├── pnpm-lock.yaml               # pnpm 锁定文件
-└── *.md                         # 文档文件
-```
-
 ### 可用脚本
 
-- `pnpm build` - 同时构建 TypeScript 与 Swift 组件（启动服务器前必需）
-- `pnpm build:ts` - 仅构建 TypeScript 代码
+- `pnpm build` - 构建 Swift 二进制文件（启动服务器前必需）
 - `pnpm build:swift` - 仅构建 Swift 二进制文件
-- `pnpm dev` - 以文件监视模式运行 TypeScript 开发服务器
-- `pnpm start` - 通过 stdio 启动 MCP 服务器
+- `pnpm dev` - 通过 tsx 以文件监视模式运行 TypeScript 开发服务器（运行时 TS 执行）
+- `pnpm start` - 通过 stdio 启动 MCP 服务器（如果没有构建则自动回退到运行时 TS）
 - `pnpm test` - 运行完整的 Jest 测试套件
-- `pnpm exec biome check` - 执行格式化与静态检查
+- `pnpm check` - 运行 Biome 格式化和 TypeScript 类型检查
 
 ### 依赖
 
 **运行时依赖：**
-- `@modelcontextprotocol/sdk ^1.5.0` - MCP 协议实现
+- `@modelcontextprotocol/sdk ^1.20.2` - MCP 协议实现
 - `moment ^2.30.1` - 日期/时间处理实用工具
-- `zod ^3.24.2` - 运行时类型验证
+- `exit-on-epipe ^1.0.1` - 优雅的进程终止处理
+- `tsx ^4.20.6` - TypeScript 执行和 REPL
+- `zod ^4.1.12` - 运行时类型验证
 
 **开发依赖：**
-- `typescript ^5.8.2` - TypeScript 编译器
-- `@types/node ^20.0.0` - Node.js 类型定义
-- `@types/jest ^29.5.12` - Jest 类型定义
-- `jest ^29.7.0` - 测试框架
-- `ts-jest ^29.1.2` - Jest TypeScript 支持
+- `typescript ^5.9.3` - TypeScript 编译器
+- `@types/node ^24.9.2` - Node.js 类型定义
+- `@types/jest ^30.0.0` - Jest 类型定义
+- `jest ^30.2.0` - 测试框架
+- `babel-jest ^30.2.0` - Babel Jest 转换器
+- `babel-plugin-transform-import-meta ^2.3.3` - Babel 导入元转换
+- `ts-jest ^29.4.5` - Jest TypeScript 支持
+- `@biomejs/biome ^2.3.2` - 代码格式化和静态检查
 
 **构建工具：**
 - Swift 二进制文件用于原生 macOS 集成

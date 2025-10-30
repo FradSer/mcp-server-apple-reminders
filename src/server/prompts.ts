@@ -16,9 +16,9 @@ import type {
   WeeklyPlanningWorkflowArgs,
 } from '../types/prompts.js';
 
-interface PromptRegistry {
-  [Name in PromptName]: PromptTemplate<Name>;
-}
+type PromptRegistry = {
+  [K in PromptName]: PromptTemplate<K>;
+};
 
 const createMessage = (text: string): PromptResponse['messages'][number] => ({
   role: 'user',
@@ -243,45 +243,59 @@ const buildReminderReviewAssistantPrompt = (
 const buildWeeklyPlanningWorkflowPrompt = (
   args: WeeklyPlanningWorkflowArgs,
 ): PromptResponse => {
-  const focusAreas = args.focus_areas ?? 'general productivity';
-  const weekStartDate = args.week_start_date ?? 'this week';
+  const userIdeas = args.user_ideas ?? '';
 
   return {
-    description: 'Structured weekly planning session using Apple Reminders',
+    description:
+      'Assign due dates to existing reminders based on weekly planning ideas',
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission: `Mission: Build a resilient weekly execution playbook starting ${weekStartDate} that advances ${focusAreas} while safeguarding energy and commitments.`,
+          mission:
+            'Mission: Build a resilient weekly execution playbook by assigning appropriate due dates to existing reminders this week, aligned with user planning ideas and current priorities.',
           contextInputs: [
-            `Focus areas: ${focusAreas}`,
-            `Week start: ${weekStartDate}`,
-            'Known deadlines or anchors for the week (if provided).',
+            `User planning ideas for this week: ${userIdeas || 'none provided - analyze existing reminders and suggest reasonable distribution'}`,
+            'Existing reminders without due dates that need scheduling.',
+            'Existing reminders with due dates this week (anchor events).',
+            'Overdue reminders that may need rescheduling.',
+            'Calendar events or fixed commitments that create time constraints.',
           ],
           process: [
-            'Audit carry-over reminders and anchor events that define immovable blocks.',
-            'Translate focus areas into measurable weekly outcomes and daily anchors.',
-            'Allocate fuzzy time blocks across the week, balancing deep work, admin, and recovery.',
-            'Schedule recurring reminders and habit triggers that align with the weekly goals.',
-            'Design review checkpoints and contingency plans for likely disruptions.',
+            'Analyze user ideas to identify key priorities, themes, and desired outcomes for the week.',
+            'Audit all existing reminders: categorize by list, priority signals, dependencies, and current due date status.',
+            'Map fixed anchor events (existing due dates, calendar commitments) to create immovable time blocks.',
+            'Match reminders to user priorities: assign fuzzy due dates to reminders that align with user ideas.',
+            'Distribute remaining reminders across the week using intelligent scheduling: balance workload, avoid overloaded days, group similar tasks.',
+            'Identify scheduling conflicts, overloaded days, or reminders that need clarification before assigning dates.',
+            'Recommend review checkpoints and adjustments for maintaining the plan throughout the week.',
           ],
           constraints: [
-            'Use fuzzy time expressions (for example, "early week", "Thursday afternoon") when proposing schedules.',
-            'Surface clarifying questions if goal metrics, capacity, or constraints are unclear.',
-            'Ensure outputs are achievable inside Apple Reminders without external tooling.',
+            'DO NOT create any new reminders—only assign or update due dates for existing reminders.',
+            'If user ideas suggest new work that cannot map to existing reminders, acknowledge it but do not create reminders.',
+            'Use fuzzy time expressions (for example, "Monday morning", "mid-week", "Friday afternoon") when suggesting due dates.',
+            'Respect existing due dates unless there is a clear conflict or the user ideas suggest reprioritization.',
+            'Ensure suggested due dates are realistic and account for workload balance across days.',
+            'Prioritize reminders that clearly align with user planning ideas when making scheduling decisions.',
+            'Keep all recommendations achievable within Apple Reminders native functionality.',
           ],
           outputFormat: [
-            '### Weekly objectives — bullet list linking focus areas to measurable outcomes.',
-            '### Anchor timeline — Markdown table with columns: day, fuzzy time window, primary focus, supporting reminders.',
-            '### Habit stack — bullet list of recurring reminders or automations to configure.',
-            '### Contingency plan — short paragraph outlining backup moves and review cadence.',
+            '### Weekly planning summary — brief paragraph interpreting user ideas and translating them into actionable planning priorities.',
+            '### Due date assignments — Markdown table with columns: reminder title, current list, suggested due date (fuzzy time), priority rationale, notes.',
+            '### Week timeline overview — Markdown table with columns: day, fuzzy time windows, primary themes, reminders assigned to each window.',
+            '### Scheduling insights — bullet list highlighting workload distribution, potential conflicts, overloaded days, or reminders needing user input.',
+            '### Review cadence — suggested checkpoints (for example, mid-week review) and contingency adjustments if priorities shift.',
           ],
           qualityBar: [
-            'Schedule maintains a blend of focus, admin, and recharge time across the week.',
-            'Every objective links to concrete reminders or routines the user can configure immediately.',
-            'Risks (over-booked days, conflicting lists) are flagged with mitigation steps.',
+            'Due dates intelligently distribute workload, avoiding overloaded days while respecting user priorities.',
+            'Every suggested due date includes clear rationale tied to user ideas or reminder dependencies.',
+            'Scheduling respects existing deadlines and flags any recommended changes with justification.',
+            'The plan maintains balance between focus work, administrative tasks, and recovery time.',
+            'Conflicts and risks are surfaced with concrete mitigation suggestions.',
           ],
           calibration: [
-            'If workload outweighs available focus blocks, propose trade-offs or deferrals and capture them as reminders.',
+            'If user ideas cannot be mapped to existing reminders, summarize these as "future planning notes" without creating reminders.',
+            'When workload appears excessive, propose explicit prioritization: which reminders are essential this week vs. can be deferred.',
+            'If user provides no ideas, infer priorities from reminder patterns (urgency signals, list organization, dependencies) and ask for confirmation.',
           ],
         }),
       ),
@@ -386,7 +400,7 @@ const buildGoalTrackingSetupPrompt = (
   };
 };
 
-export const PROMPTS: PromptRegistry = {
+const PROMPTS: PromptRegistry = {
   'daily-task-organizer': {
     metadata: {
       name: 'daily-task-organizer',
@@ -413,7 +427,7 @@ export const PROMPTS: PromptRegistry = {
         },
       ],
     },
-    parseArgs(rawArgs) {
+    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<DailyTaskOrganizerArgs>;
       return {
         task_category: parseOptionalString(args.task_category),
@@ -447,7 +461,7 @@ export const PROMPTS: PromptRegistry = {
         },
       ],
     },
-    parseArgs(rawArgs) {
+    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<SmartReminderCreatorArgs>;
       return {
         task_description: parseRequiredString(
@@ -481,7 +495,7 @@ export const PROMPTS: PromptRegistry = {
         },
       ],
     },
-    parseArgs(rawArgs) {
+    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<ReminderReviewAssistantArgs>;
       return {
         review_type: parseOptionalString(args.review_type),
@@ -494,27 +508,20 @@ export const PROMPTS: PromptRegistry = {
     metadata: {
       name: 'weekly-planning-workflow',
       description:
-        'Create a structured weekly planning session with Apple Reminders',
+        'Assign due dates to existing reminders based on your weekly planning ideas',
       arguments: [
         {
-          name: 'focus_areas',
+          name: 'user_ideas',
           description:
-            'Main areas to focus on this week (work projects, personal goals, health, etc.)',
-          required: false,
-        },
-        {
-          name: 'week_start_date',
-          description:
-            'Preferred starting point for the week (e.g., today, next Monday, upcoming sprint)',
+            'Your thoughts and ideas for what you want to accomplish this week',
           required: false,
         },
       ],
     },
-    parseArgs(rawArgs) {
+    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<WeeklyPlanningWorkflowArgs>;
       return {
-        focus_areas: parseOptionalString(args.focus_areas),
-        week_start_date: parseOptionalString(args.week_start_date),
+        user_ideas: parseOptionalString(args.user_ideas),
       };
     },
     buildPrompt: buildWeeklyPlanningWorkflowPrompt,
@@ -532,7 +539,7 @@ export const PROMPTS: PromptRegistry = {
         },
       ],
     },
-    parseArgs(rawArgs) {
+    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<ReminderCleanupGuideArgs>;
       return {
         cleanup_strategy: parseOptionalString(args.cleanup_strategy),
@@ -559,7 +566,7 @@ export const PROMPTS: PromptRegistry = {
         },
       ],
     },
-    parseArgs(rawArgs) {
+    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<GoalTrackingSetupArgs>;
       return {
         goal_type: parseRequiredString(
@@ -585,7 +592,7 @@ export const getPromptDefinition = (
 
 export const buildPromptResponse = <Name extends PromptName>(
   template: PromptTemplate<Name>,
-  rawArgs: unknown,
+  rawArgs: Record<string, unknown> | null | undefined,
 ): PromptResponse => {
   const parsedArgs = template.parseArgs(rawArgs);
   return template.buildPrompt(parsedArgs);

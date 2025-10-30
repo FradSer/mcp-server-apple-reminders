@@ -6,7 +6,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
 import { MESSAGES } from '../utils/constants.js';
-import { debugLog } from '../utils/logger.js';
 import { TOOLS } from './definitions.js';
 import {
   handleCreateReminder,
@@ -27,13 +26,22 @@ import {
  */
 export async function handleToolCall(
   name: string,
-  args: RemindersToolArgs | ListsToolArgs,
+  args?: RemindersToolArgs | ListsToolArgs,
 ): Promise<CallToolResult> {
-  debugLog(`Handling tool call: ${name} with args:`, args);
-
   switch (name) {
     case 'reminders': {
       const action = args?.action;
+      if (!args) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: 'No arguments provided',
+            },
+          ],
+          isError: true,
+        };
+      }
       switch (action) {
         case 'read':
         case 'list':
@@ -63,7 +71,7 @@ export async function handleToolCall(
       const action = args?.action;
       switch (action) {
         case 'read':
-          return handleReadReminderLists({ action: 'read' });
+          return handleReadReminderLists();
         case 'create': {
           const listArgs = args as ListsToolArgs;
           if (!listArgs.name) {

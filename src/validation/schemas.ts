@@ -3,8 +3,7 @@
  * Comprehensive input validation schemas using Zod for security
  */
 
-import { z } from 'zod';
-import { debugLog } from '../utils/logger.js';
+import { z } from 'zod/v3';
 
 // Security patterns – allow printable Unicode text while blocking dangerous control and delimiter chars.
 // Allows standard printable ASCII, extended Latin, CJK, plus newlines/tabs for notes.
@@ -89,9 +88,6 @@ export const SafeUrlSchema = z
 const DueWithinEnum = z
   .enum(['today', 'tomorrow', 'this-week', 'overdue', 'no-date'])
   .optional();
-const OrganizeByEnum = z
-  .enum(['priority', 'due_date', 'category', 'completion_status'])
-  .optional();
 
 /**
  * Common field combinations for reusability
@@ -102,13 +98,6 @@ const BaseReminderFields = {
   note: SafeNoteSchema,
   url: SafeUrlSchema,
   targetList: SafeListNameSchema,
-};
-
-const FilterCriteria = {
-  search: SafeSearchSchema,
-  dueWithin: DueWithinEnum,
-  completed: z.boolean().optional(),
-  sourceList: SafeListNameSchema,
 };
 
 export const SafeIdSchema = z.string().min(1, 'ID cannot be empty');
@@ -140,10 +129,6 @@ export const DeleteReminderSchema = z.object({
   id: SafeIdSchema,
 });
 
-export const ReadReminderListsSchema = z.object({
-  createNew: z.object({ name: RequiredListNameSchema }).optional(),
-});
-
 export const CreateReminderListSchema = z.object({
   name: RequiredListNameSchema,
 });
@@ -155,34 +140,6 @@ export const UpdateReminderListSchema = z.object({
 
 export const DeleteReminderListSchema = z.object({
   name: RequiredListNameSchema,
-});
-
-/**
- * Bulk operation schemas using reusable components
- */
-export const BulkCreateRemindersSchema = z.object({
-  items: z
-    .array(z.object(BaseReminderFields))
-    .min(1, 'At least one item is required for bulk creation')
-    .max(50, 'Cannot create more than 50 reminders at once'),
-});
-
-export const BulkUpdateRemindersSchema = z.object({
-  criteria: z.object(FilterCriteria),
-  updates: z.object({
-    newTitle: SafeTextSchema.optional(),
-    dueDate: SafeDateSchema,
-    note: SafeNoteSchema,
-    url: SafeUrlSchema,
-    completed: z.boolean().optional(),
-    targetList: SafeListNameSchema,
-  }),
-  organizeBy: OrganizeByEnum,
-  createLists: z.boolean().optional().default(true),
-});
-
-export const BulkDeleteRemindersSchema = z.object({
-  criteria: z.object(FilterCriteria),
 });
 
 /**
@@ -206,16 +163,6 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
     return schema.parse(input);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      // Log validation failures for security monitoring (development mode only)
-      debugLog('Input validation failed', {
-        errors: error.errors.map((err) => ({
-          path: err.path.join('.'),
-          message: err.message,
-        })),
-        inputType: typeof input,
-        timestamp: new Date().toISOString(),
-      });
-
       const errorMessages = error.errors
         .map((err) => `${err.path.join('.')}: ${err.message}`)
         .join('; ');
@@ -236,29 +183,6 @@ export const validateInput = <T>(schema: z.ZodSchema<T>, input: unknown): T => {
       );
     }
 
-    debugLog('Unknown validation error', { error: (error as Error).message });
     throw new ValidationError('Input validation failed: Unknown error');
   }
 };
-
-/**
- * Type exports for TypeScript integration
- */
-export type CreateReminderInput = z.infer<typeof CreateReminderSchema>;
-export type ReadRemindersInput = z.infer<typeof ReadRemindersSchema>;
-export type UpdateReminderInput = z.infer<typeof UpdateReminderSchema>;
-export type MoveReminderInput = z.infer<typeof MoveReminderSchema>;
-export type DeleteReminderInput = z.infer<typeof DeleteReminderSchema>;
-export type BulkCreateRemindersInput = z.infer<
-  typeof BulkCreateRemindersSchema
->;
-export type BulkUpdateRemindersInput = z.infer<
-  typeof BulkUpdateRemindersSchema
->;
-export type BulkDeleteRemindersInput = z.infer<
-  typeof BulkDeleteRemindersSchema
->;
-export type ReadReminderListsInput = z.infer<typeof ReadReminderListsSchema>;
-export type CreateReminderListInput = z.infer<typeof CreateReminderListSchema>;
-export type UpdateReminderListInput = z.infer<typeof UpdateReminderListSchema>;
-export type DeleteReminderListInput = z.infer<typeof DeleteReminderListSchema>;
