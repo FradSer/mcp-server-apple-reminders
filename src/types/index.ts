@@ -86,7 +86,6 @@ export interface ListsToolArgs extends BaseToolArgs {
  */
 export type {
   DailyTaskOrganizerArgs,
-  GoalTrackingSetupArgs,
   PromptArgsByName,
   PromptArgumentDefinition,
   PromptMessage,
@@ -95,7 +94,6 @@ export type {
   PromptName,
   PromptResponse,
   PromptTemplate,
-  ReminderCleanupGuideArgs,
   ReminderReviewAssistantArgs,
   SmartReminderCreatorArgs,
   WeeklyPlanningWorkflowArgs,

@@ -7,9 +7,7 @@ export type PromptName =
   | 'daily-task-organizer'
   | 'smart-reminder-creator'
   | 'reminder-review-assistant'
-  | 'weekly-planning-workflow'
-  | 'reminder-cleanup-guide'
-  | 'goal-tracking-setup';
+  | 'weekly-planning-workflow';
 
 /**
  * Describes an individual prompt argument exposed to MCP clients.
@@ -58,26 +56,21 @@ export interface PromptResponse {
  * Arguments accepted by the `daily-task-organizer` prompt.
  */
 export interface DailyTaskOrganizerArgs {
-  task_category?: string;
-  priority_level?: string;
-  time_frame?: string;
+  today_focus?: string;
 }
 
 /**
  * Arguments accepted by the `smart-reminder-creator` prompt.
  */
 export interface SmartReminderCreatorArgs {
-  task_description: string;
-  context?: string;
-  urgency?: string;
+  task_idea?: string;
 }
 
 /**
  * Arguments accepted by the `reminder-review-assistant` prompt.
  */
 export interface ReminderReviewAssistantArgs {
-  review_type?: string;
-  list_name?: string;
+  review_focus?: string;
 }
 
 /**
@@ -90,17 +83,10 @@ export interface WeeklyPlanningWorkflowArgs {
 /**
  * Arguments accepted by the `reminder-cleanup-guide` prompt.
  */
-export interface ReminderCleanupGuideArgs {
-  cleanup_strategy?: string;
-}
 
 /**
  * Arguments accepted by the `goal-tracking-setup` prompt.
  */
-export interface GoalTrackingSetupArgs {
-  goal_type: string;
-  time_horizon?: string;
-}
 
 /**
  * Mapped helper type that links prompt names with their argument signatures.
@@ -110,8 +96,6 @@ export interface PromptArgsByName {
   'smart-reminder-creator': SmartReminderCreatorArgs;
   'reminder-review-assistant': ReminderReviewAssistantArgs;
   'weekly-planning-workflow': WeeklyPlanningWorkflowArgs;
-  'reminder-cleanup-guide': ReminderCleanupGuideArgs;
-  'goal-tracking-setup': GoalTrackingSetupArgs;
 }
 
 /**

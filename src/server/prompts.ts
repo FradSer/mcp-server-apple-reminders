@@ -5,12 +5,10 @@
 
 import type {
   DailyTaskOrganizerArgs,
-  GoalTrackingSetupArgs,
   PromptMetadata,
   PromptName,
   PromptResponse,
   PromptTemplate,
-  ReminderCleanupGuideArgs,
   ReminderReviewAssistantArgs,
   SmartReminderCreatorArgs,
   WeeklyPlanningWorkflowArgs,
@@ -92,9 +90,7 @@ const parseRequiredString = (
 const buildDailyTaskOrganizerPrompt = (
   args: DailyTaskOrganizerArgs,
 ): PromptResponse => {
-  const taskCategory = args.task_category ?? 'all categories';
-  const priorityLevel = args.priority_level ?? 'mixed priorities';
-  const timeFrame = args.time_frame ?? 'today';
+  const todayFocus = args.today_focus ?? '';
 
   return {
     description:
@@ -102,11 +98,11 @@ const buildDailyTaskOrganizerPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission: `Mission: Design a realistic ${timeFrame} execution plan in Apple Reminders that keeps ${taskCategory} work flowing while balancing ${priorityLevel} priorities.`,
+          mission:
+            'Mission: Design a realistic today execution plan in Apple Reminders that keeps priority work flowing while balancing recovery time.',
           contextInputs: [
-            `Task category focus: ${taskCategory}`,
-            `Priority emphasis: ${priorityLevel}`,
-            `Planning horizon: ${timeFrame}`,
+            `Today's focus ideas: ${todayFocus || 'none provided — analyze existing reminders and propose a balanced plan'}`,
+            'Planning horizon: today',
           ],
           process: [
             'Map existing reminders, lists, and calendar obligations to surface constraints.',
@@ -130,6 +126,9 @@ const buildDailyTaskOrganizerPrompt = (
             'Plan keeps highest-priority work front-loaded while safeguarding recovery space.',
             'Each recommendation references a concrete reminder list or note field to update.',
             'Dependencies and follow-ups include suggested fuzzy time reminders or check-ins.',
+            'Every suggestion is actionable and tied to a specific reminder or list.',
+            'Assumptions and risks are surfaced with mitigation ideas.',
+            'Recommendations remain lightweight and sustainable to execute.',
           ],
           calibration: [
             'If work exceeds available focus blocks, flag trade-offs and propose deferral logic.',
@@ -143,8 +142,7 @@ const buildDailyTaskOrganizerPrompt = (
 const buildSmartReminderCreatorPrompt = (
   args: SmartReminderCreatorArgs,
 ): PromptResponse => {
-  const context = args.context ?? '';
-  const urgency = args.urgency ?? 'medium';
+  const taskIdea = args.task_idea ?? '';
 
   return {
     description:
@@ -152,16 +150,14 @@ const buildSmartReminderCreatorPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission: `Mission: Produce an Apple Reminders entry for "${args.task_description}" that respects context and ${urgency} urgency while preventing follow-through failures.`,
+          mission: `Mission: Produce an Apple Reminders entry for "${taskIdea || 'today\'s key task'}" that prevents follow-through failures using realistic timing and clarity.`,
           contextInputs: [
-            `Task description: ${args.task_description}`,
-            `User-provided context: ${context || 'none supplied'}`,
-            `Urgency rating: ${urgency}`,
+            `Task idea: ${taskIdea || 'none provided — propose a sensible framing and ask for confirmation'}`,
           ],
           process: [
             'Scan existing reminders and commitments to avoid duplicates or collisions.',
             'Break the task into atomic outcomes and note any prerequisites or dependencies.',
-            'Select an appropriate reminder list and schedule fuzzy time checkpoints aligned to urgency.',
+            'Select an appropriate reminder list and schedule fuzzy time checkpoints aligned to importance.',
             'Recommend supportive notes, attachments, or subtasks that remove ambiguity.',
             'Propose follow-up or escalation reminders that keep momentum after the initial task fires.',
           ],
@@ -171,15 +167,17 @@ const buildSmartReminderCreatorPrompt = (
             'Only rely on capabilities shipped with Apple Reminders without assuming third-party integrations.',
           ],
           outputFormat: [
-            '### Core reminder — name, target reminder list, fuzzy timing window, and urgency note.',
+            '### Core reminder — name, target reminder list, fuzzy timing window.',
             '### Support details — bullet list covering notes, subtasks, and relevant metadata.',
             '### Follow-up sequence — ordered list of subsequent reminders or check-ins.',
             '### Risks — short bullet list of potential failure points and mitigation ideas.',
           ],
           qualityBar: [
-            'Reminder timing aligns with user urgency and respects existing commitments.',
+            'Reminder timing aligns with importance and respects existing commitments.',
             'All dependencies are either satisfied or have explicit follow-up reminders.',
             'Output highlights any assumptions the user must confirm before saving the reminder.',
+            'Each suggestion is actionable and tied to a specific reminder list.',
+            'Recommendations remain lightweight and sustainable to execute.',
           ],
           calibration: [
             'If context is insufficient to schedule confidently, respond with targeted clarification questions before delivering the final structure.',
@@ -193,8 +191,7 @@ const buildSmartReminderCreatorPrompt = (
 const buildReminderReviewAssistantPrompt = (
   args: ReminderReviewAssistantArgs,
 ): PromptResponse => {
-  const reviewType = args.review_type ?? 'all';
-  const listName = args.list_name ?? 'all lists';
+  const reviewFocus = args.review_focus ?? '';
 
   return {
     description:
@@ -202,11 +199,10 @@ const buildReminderReviewAssistantPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission: `Mission: Audit ${reviewType} reminders in ${listName} and deliver actionable clean-up, scheduling, and habit recommendations that boost completion rates.`,
+          mission:
+            'Mission: Audit current reminders and deliver actionable clean-up, scheduling, and habit recommendations that boost completion rates.',
           contextInputs: [
-            `Review scope: ${reviewType}`,
-            `Focus list: ${listName}`,
-            'Recent completion vs. overdue ratios (if available).',
+            `Review focus: ${reviewFocus || 'none provided — default to all lists and common hotspots'}`,
           ],
           process: [
             'Inventory reminders by status, list, and due window to surface hotspots.',
@@ -223,8 +219,6 @@ const buildReminderReviewAssistantPrompt = (
           outputFormat: [
             '### Findings — bullet list of key insights about the current reminder landscape.',
             '### Clean-up actions — table with columns: reminder/list, action, rationale.',
-            '### Scheduling tweaks — bullet list of fuzzy time adjustments and batching suggestions.',
-            '### Habit playbook — numbered steps for ongoing review cadence.',
           ],
           qualityBar: [
             'Every suggested action ties back to a specific reminder list or identifiable pattern.',
@@ -277,6 +271,7 @@ const buildWeeklyPlanningWorkflowPrompt = (
             'Ensure suggested due dates are realistic and account for workload balance across days.',
             'Prioritize reminders that clearly align with user planning ideas when making scheduling decisions.',
             'Keep all recommendations achievable within Apple Reminders native functionality.',
+            'If critical context (workload capacity, hard deadlines, shared lists) is missing, request it before final guidance.',
           ],
           outputFormat: [
             '### Weekly planning summary — brief paragraph interpreting user ideas and translating them into actionable planning priorities.',
@@ -291,6 +286,8 @@ const buildWeeklyPlanningWorkflowPrompt = (
             'Scheduling respects existing deadlines and flags any recommended changes with justification.',
             'The plan maintains balance between focus work, administrative tasks, and recovery time.',
             'Conflicts and risks are surfaced with concrete mitigation suggestions.',
+            'Each suggestion is actionable and tied to a specific reminder or list.',
+            'Recommendations remain lightweight and sustainable to execute.',
           ],
           calibration: [
             'If user ideas cannot be mapped to existing reminders, summarize these as "future planning notes" without creating reminders.',
@@ -303,102 +300,7 @@ const buildWeeklyPlanningWorkflowPrompt = (
   };
 };
 
-const buildReminderCleanupGuidePrompt = (
-  args: ReminderCleanupGuideArgs,
-): PromptResponse => {
-  const cleanupStrategy = args.cleanup_strategy ?? 'comprehensive';
 
-  return {
-    description: 'Guide for cleaning up and organizing reminder system',
-    messages: [
-      createMessage(
-        createStructuredPrompt({
-          mission: `Mission: Execute a ${cleanupStrategy} clean-up that restores clarity, reduces reminder noise, and establishes sustainable upkeep habits.`,
-          contextInputs: [
-            `Selected clean-up strategy: ${cleanupStrategy}`,
-            'Number of active lists and notable shared lists (if known).',
-            'Any compliance or archival requirements to respect.',
-          ],
-          process: [
-            'Audit reminders by list, status, and age to detect clutter patterns.',
-            'Batch archive, delete, or merge items while preserving essential history.',
-            'Refactor list architecture, naming, and tagging for quicker retrieval.',
-            'Optimise due dates and fuzzy time nudges so important items resurface naturally.',
-            'Author a maintenance routine that keeps the system lean month over month.',
-          ],
-          constraints: [
-            'When adjusting schedules, lean on fuzzy time phrasing and prompt the user before committing to exact timestamps.',
-            'Highlight any manual effort the user must complete in Apple Reminders to execute the plan.',
-            'Validate assumptions about shared lists or delegated reminders before removal recommendations.',
-          ],
-          outputFormat: [
-            '### Audit highlights — bullet list summarising clutter sources and impact.',
-            '### Clean-up actions — Markdown table with columns: item/list, action, reason, follow-up.',
-            '### Structure redesign — bullet list of new or renamed lists and their intent.',
-            '### Maintenance loop — numbered steps for recurring clean-up checkpoints.',
-          ],
-          qualityBar: [
-            'No essential reminders are deleted without an archival or replacement strategy.',
-            'List architecture supports quick capture, review, and execution flows.',
-            'Maintenance loop fits inside a realistic time budget and uses fuzzy time reminders.',
-          ],
-          calibration: [
-            'If clean-up actions risk information loss, provide a lightweight backup approach before proceeding.',
-          ],
-        }),
-      ),
-    ],
-  };
-};
-
-const buildGoalTrackingSetupPrompt = (
-  args: GoalTrackingSetupArgs,
-): PromptResponse => {
-  const timeHorizon = args.time_horizon ?? 'monthly';
-
-  return {
-    description:
-      'Set up a comprehensive goal tracking system with Apple Reminders',
-    messages: [
-      createMessage(
-        createStructuredPrompt({
-          mission: `Mission: Build an Apple Reminders based tracking system that keeps ${args.goal_type} goals progressing within a ${timeHorizon} horizon.`,
-          contextInputs: [
-            `Goal domain: ${args.goal_type}`,
-            `Primary time horizon: ${timeHorizon}`,
-            'Existing related reminders or rituals (if available).',
-          ],
-          process: [
-            'Surface the current state: milestones achieved, blockers, supporting reminders.',
-            'Break the goal into measurable milestones and leading indicators.',
-            'Design reminder lists, subtasks, and notes that reinforce progress tracking.',
-            'Schedule fuzzy time check-ins, accountability nudges, and celebration triggers.',
-            'Plan course-correction routines that react when progress slips.',
-          ],
-          constraints: [
-            'When recommending schedules, use fuzzy time expressions and escalate for clarification if precision is critical.',
-            'Ensure the system remains manageable inside Apple Reminders without external dashboards.',
-            'Request missing metrics or success criteria before finalising the structure.',
-          ],
-          outputFormat: [
-            '### Goal map — bullet list of milestones and success metrics.',
-            '### Reminder architecture — Markdown table with columns: list, reminder name, cadence, purpose.',
-            '### Check-in rhythm — bullet list describing fuzzy time review cadences and accountability loops.',
-            '### Course correction — numbered playbook for handling stalled progress.',
-          ],
-          qualityBar: [
-            'Every milestone includes an associated reminder or tracking mechanism.',
-            'Motivational and celebration prompts are balanced with accountability structures.',
-            'System highlights early warning signs and suggests immediate response actions.',
-          ],
-          calibration: [
-            'If the time horizon conflicts with milestone granularity, recommend an adjusted cadence and capture it in the plan.',
-          ],
-        }),
-      ),
-    ],
-  };
-};
 
 const PROMPTS: PromptRegistry = {
   'daily-task-organizer': {
@@ -408,21 +310,9 @@ const PROMPTS: PromptRegistry = {
         'Create a comprehensive daily task management workflow with Apple Reminders',
       arguments: [
         {
-          name: 'task_category',
+          name: 'today_focus',
           description:
-            'Category of tasks to organize (work, personal, health, shopping, etc.)',
-          required: false,
-        },
-        {
-          name: 'priority_level',
-          description:
-            'Priority level for task organization (low, medium, high, urgent)',
-          required: false,
-        },
-        {
-          name: 'time_frame',
-          description:
-            'Time frame for tasks (e.g., today, this week, later this month)',
+            'Your focus ideas for today (what you most want to accomplish today)',
           required: false,
         },
       ],
@@ -430,9 +320,7 @@ const PROMPTS: PromptRegistry = {
     parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<DailyTaskOrganizerArgs>;
       return {
-        task_category: parseOptionalString(args.task_category),
-        priority_level: parseOptionalString(args.priority_level),
-        time_frame: parseOptionalString(args.time_frame),
+        today_focus: parseOptionalString(args.today_focus),
       };
     },
     buildPrompt: buildDailyTaskOrganizerPrompt,
@@ -444,19 +332,8 @@ const PROMPTS: PromptRegistry = {
         'Intelligently create reminders with optimal scheduling and context',
       arguments: [
         {
-          name: 'task_description',
-          description: 'Description of the task or reminder to create',
-          required: true,
-        },
-        {
-          name: 'context',
-          description:
-            'Additional context or background information for the task',
-          required: false,
-        },
-        {
-          name: 'urgency',
-          description: 'How urgent this task is (low, medium, high, critical)',
+          name: 'task_idea',
+          description: 'A short description of what you want to do',
           required: false,
         },
       ],
@@ -464,13 +341,7 @@ const PROMPTS: PromptRegistry = {
     parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<SmartReminderCreatorArgs>;
       return {
-        task_description: parseRequiredString(
-          args.task_description,
-          'smart-reminder-creator',
-          'task_description',
-        ),
-        context: parseOptionalString(args.context),
-        urgency: parseOptionalString(args.urgency),
+        task_idea: parseOptionalString((args as any).task_idea),
       };
     },
     buildPrompt: buildSmartReminderCreatorPrompt,
@@ -482,15 +353,9 @@ const PROMPTS: PromptRegistry = {
         'Analyze and review existing reminders for productivity optimization',
       arguments: [
         {
-          name: 'review_type',
+          name: 'review_focus',
           description:
-            'Type of review to perform (overdue, completed, upcoming, all)',
-          required: false,
-        },
-        {
-          name: 'list_name',
-          description:
-            'Specific reminder list to review (leave empty for all lists)',
+            'A short note on what to review (e.g., overdue, a list name)',
           required: false,
         },
       ],
@@ -498,8 +363,7 @@ const PROMPTS: PromptRegistry = {
     parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<ReminderReviewAssistantArgs>;
       return {
-        review_type: parseOptionalString(args.review_type),
-        list_name: parseOptionalString(args.list_name),
+        review_focus: parseOptionalString((args as any).review_focus),
       };
     },
     buildPrompt: buildReminderReviewAssistantPrompt,
@@ -525,59 +389,6 @@ const PROMPTS: PromptRegistry = {
       };
     },
     buildPrompt: buildWeeklyPlanningWorkflowPrompt,
-  },
-  'reminder-cleanup-guide': {
-    metadata: {
-      name: 'reminder-cleanup-guide',
-      description: 'Guide for cleaning up and organizing existing reminders',
-      arguments: [
-        {
-          name: 'cleanup_strategy',
-          description:
-            'Strategy for cleanup (archive_completed, delete_old, reorganize_lists, merge_duplicates)',
-          required: false,
-        },
-      ],
-    },
-    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
-      const args = (rawArgs ?? {}) as Partial<ReminderCleanupGuideArgs>;
-      return {
-        cleanup_strategy: parseOptionalString(args.cleanup_strategy),
-      };
-    },
-    buildPrompt: buildReminderCleanupGuidePrompt,
-  },
-  'goal-tracking-setup': {
-    metadata: {
-      name: 'goal-tracking-setup',
-      description: 'Set up a goal tracking system using Apple Reminders',
-      arguments: [
-        {
-          name: 'goal_type',
-          description:
-            'Type of goal to track (habit, project, learning, health, financial)',
-          required: true,
-        },
-        {
-          name: 'time_horizon',
-          description:
-            'Time horizon for the goal (daily, weekly, monthly, quarterly, yearly)',
-          required: false,
-        },
-      ],
-    },
-    parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
-      const args = (rawArgs ?? {}) as Partial<GoalTrackingSetupArgs>;
-      return {
-        goal_type: parseRequiredString(
-          args.goal_type,
-          'goal-tracking-setup',
-          'goal_type',
-        ),
-        time_horizon: parseOptionalString(args.time_horizon),
-      };
-    },
-    buildPrompt: buildGoalTrackingSetupPrompt,
   },
 };
 
