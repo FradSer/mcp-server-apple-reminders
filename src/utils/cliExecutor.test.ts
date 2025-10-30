@@ -44,38 +44,34 @@ describe('cliExecutor', () => {
         result: { id: '123', title: 'Test reminder' },
       });
 
-      mockExecFile.mockImplementation(
-        (
-          _cliPath: string,
-          _args: readonly string[] | null | undefined,
-          optionsOrCallback?:
-            | ExecFileOptions
-            | null
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void),
-          callback?:
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void)
-            | null
-            | undefined,
-        ) => {
-          const cb = (
-            typeof optionsOrCallback === 'function'
-              ? optionsOrCallback
-              : callback
-          ) as ExecFileCallback | undefined;
-          if (cb) {
-            cb(null, { stdout: mockStdout } as unknown as Buffer, '');
-          }
-          return {} as ChildProcess;
-        },
-      );
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?:
+          | ExecFileOptions
+          | null
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void),
+        callback?:
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void)
+          | null
+          | undefined,
+      ) => {
+        const cb = (
+          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
+        ) as ExecFileCallback | undefined;
+        if (cb) {
+          cb(null, { stdout: mockStdout } as unknown as Buffer, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
 
       const result = await executeCli(['--action', 'read', '--id', '123']);
 
@@ -94,38 +90,34 @@ describe('cliExecutor', () => {
         message: 'Failed to read reminder',
       });
 
-      mockExecFile.mockImplementation(
-        (
-          _cliPath: string,
-          _args: readonly string[] | null | undefined,
-          optionsOrCallback?:
-            | ExecFileOptions
-            | null
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void),
-          callback?:
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void)
-            | null
-            | undefined,
-        ) => {
-          const cb = (
-            typeof optionsOrCallback === 'function'
-              ? optionsOrCallback
-              : callback
-          ) as ExecFileCallback | undefined;
-          if (cb) {
-            cb(null, { stdout: mockStdout } as unknown as Buffer, '');
-          }
-          return {} as ChildProcess;
-        },
-      );
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?:
+          | ExecFileOptions
+          | null
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void),
+        callback?:
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void)
+          | null
+          | undefined,
+      ) => {
+        const cb = (
+          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
+        ) as ExecFileCallback | undefined;
+        if (cb) {
+          cb(null, { stdout: mockStdout } as unknown as Buffer, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
@@ -135,38 +127,34 @@ describe('cliExecutor', () => {
     it('should throw error when CLI execution fails', async () => {
       const error = new Error('Command failed');
 
-      mockExecFile.mockImplementation(
-        (
-          _cliPath: string,
-          _args: readonly string[] | null | undefined,
-          optionsOrCallback?:
-            | ExecFileOptions
-            | null
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void),
-          callback?:
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void)
-            | null
-            | undefined,
-        ) => {
-          const cb = (
-            typeof optionsOrCallback === 'function'
-              ? optionsOrCallback
-              : callback
-          ) as ExecFileCallback | undefined;
-          if (cb) {
-            cb(error, null as unknown as Buffer, '');
-          }
-          return {} as ChildProcess;
-        },
-      );
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?:
+          | ExecFileOptions
+          | null
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void),
+        callback?:
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void)
+          | null
+          | undefined,
+      ) => {
+        const cb = (
+          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
+        ) as ExecFileCallback | undefined;
+        if (cb) {
+          cb(error, null as unknown as Buffer, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
@@ -174,38 +162,34 @@ describe('cliExecutor', () => {
     });
 
     it('should throw error when stdout is invalid JSON', async () => {
-      mockExecFile.mockImplementation(
-        (
-          _cliPath: string,
-          _args: readonly string[] | null | undefined,
-          optionsOrCallback?:
-            | ExecFileOptions
-            | null
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void),
-          callback?:
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void)
-            | null
-            | undefined,
-        ) => {
-          const cb = (
-            typeof optionsOrCallback === 'function'
-              ? optionsOrCallback
-              : callback
-          ) as ExecFileCallback | undefined;
-          if (cb) {
-            cb(null, { stdout: 'invalid json' } as unknown as Buffer, '');
-          }
-          return {} as ChildProcess;
-        },
-      );
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?:
+          | ExecFileOptions
+          | null
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void),
+        callback?:
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void)
+          | null
+          | undefined,
+      ) => {
+        const cb = (
+          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
+        ) as ExecFileCallback | undefined;
+        if (cb) {
+          cb(null, { stdout: 'invalid json' } as unknown as Buffer, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
@@ -213,42 +197,38 @@ describe('cliExecutor', () => {
     });
 
     it('should handle non-Error exceptions', async () => {
-      mockExecFile.mockImplementation(
-        (
-          _cliPath: string,
-          _args: readonly string[] | null | undefined,
-          optionsOrCallback?:
-            | ExecFileOptions
-            | null
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void),
-          callback?:
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void)
-            | null
-            | undefined,
-        ) => {
-          const cb = (
-            typeof optionsOrCallback === 'function'
-              ? optionsOrCallback
-              : callback
-          ) as ExecFileCallback | undefined;
-          if (cb) {
-            cb(
-              'string error' as unknown as ExecFileException,
-              null as unknown as Buffer,
-              '',
-            );
-          }
-          return {} as ChildProcess;
-        },
-      );
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?:
+          | ExecFileOptions
+          | null
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void),
+        callback?:
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void)
+          | null
+          | undefined,
+      ) => {
+        const cb = (
+          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
+        ) as ExecFileCallback | undefined;
+        if (cb) {
+          cb(
+            'string error' as unknown as ExecFileException,
+            null as unknown as Buffer,
+            '',
+          );
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
@@ -262,38 +242,34 @@ describe('cliExecutor', () => {
         result: { success: true },
       });
 
-      mockExecFile.mockImplementation(
-        (
-          _cliPath: string,
-          _args: readonly string[] | null | undefined,
-          optionsOrCallback?:
-            | ExecFileOptions
-            | null
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void),
-          callback?:
-            | ((
-                error: ExecFileException | null,
-                stdout: string | Buffer,
-                stderr: string | Buffer,
-              ) => void)
-            | null
-            | undefined,
-        ) => {
-          const cb = (
-            typeof optionsOrCallback === 'function'
-              ? optionsOrCallback
-              : callback
-          ) as ExecFileCallback | undefined;
-          if (cb) {
-            cb(null, { stdout: mockStdout } as unknown as Buffer, '');
-          }
-          return {} as ChildProcess;
-        },
-      );
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?:
+          | ExecFileOptions
+          | null
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void),
+        callback?:
+          | ((
+              error: ExecFileException | null,
+              stdout: string | Buffer,
+              stderr: string | Buffer,
+            ) => void)
+          | null
+          | undefined,
+      ) => {
+        const cb = (
+          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
+        ) as ExecFileCallback | undefined;
+        if (cb) {
+          cb(null, { stdout: mockStdout } as unknown as Buffer, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
 
       await executeCli(['--action', 'read']);
 
