@@ -266,7 +266,7 @@ describe('Server Module', () => {
 
       mockServerInstance.connect.mockImplementation(() => {
         // Simulate SIGINT signal
-        process.emit('SIGINT' as NodeJS.Signals, {});
+        process.emit('SIGINT' as NodeJS.Signals);
         return Promise.resolve(undefined);
       });
 
@@ -292,7 +292,7 @@ describe('Server Module', () => {
 
       mockServerInstance.connect.mockImplementation(() => {
         // Simulate SIGTERM signal
-        process.emit('SIGTERM' as NodeJS.Signals, {});
+        process.emit('SIGTERM' as NodeJS.Signals);
         return Promise.resolve(undefined);
       });
 
