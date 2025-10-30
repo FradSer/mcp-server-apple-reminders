@@ -11,24 +11,26 @@ English | [简体中文](README.zh-CN.md)
 ## 功能特性
 
 ### 核心功能
-- **列表管理**：查看所有提醒事项和提醒事项列表的高级过滤功能
-- **提醒事项操作**：创建、更新和删除提醒事项
-- **丰富内容**：支持标题、备注、截止日期、URL 和完成状态
-- **原生集成**：与 macOS Apple Reminders 应用的无缝集成
+- **列表管理**：查看所有提醒事项和提醒事项列表的高级过滤选项
+- **提醒事项操作**：完整的CRUD操作（创建、读取、更新、删除）提醒事项
+- **丰富内容支持**：完全支持标题、备注、截止日期、URL和完成状态
+- **原生macOS集成**：使用EventKit框架直接与Apple Reminders集成
 
 ### 高级功能
-- **智能组织**：按优先级、截止日期、类别或完成状态自动分类
-- **强大搜索**：按完成状态、截止日期和搜索词过滤提醒事项
-- **批量操作**：使用智能策略组织多个提醒事项
-- **权限管理**：主动验证系统权限
-- **灵活日期处理**：支持仅日期和日期时间格式，具有区域设置感知能力
-- **Unicode 支持**：完整的国际字符支持和验证
+- **智能组织**：按优先级、截止日期、类别或完成状态的自动分类和智能过滤
+- **强大搜索**：包括完成状态、截止日期范围和全文搜索的多条件过滤
+- **批量操作**：使用优化的数据访问模式高效处理多个提醒事项
+- **权限管理**：自动验证和请求所需的macOS系统权限
+- **灵活日期处理**：支持多种日期格式（YYYY-MM-DD、ISO 8601）并具有时区感知能力
+- **Unicode支持**：完整的国际字符支持和全面的输入验证
 
 ### 技术优势
-- **统一 API**：基于操作的简化工具架构
-- **类型安全**：全面的 TypeScript 覆盖和 Zod 验证
-- **性能优化**：用于性能关键操作的 Swift 二进制文件
-- **错误处理**：一致的错误响应和详细反馈
+- **Clean Architecture**：遵循Clean Architecture原则的4层架构，包含依赖注入
+- **类型安全**：使用Zod模式验证进行运行时类型检查的完整TypeScript覆盖
+- **高性能**：用于Apple Reminders性能关键操作的Swift编译二进制文件
+- **健壮的错误处理**：具有详细诊断信息的一致错误响应
+- **Repository Pattern**：标准化的CRUD操作的数据访问抽象
+- **函数式编程**：在适当情况下使用纯函数和不可变数据结构
 
 ## 系统要求
 
@@ -167,12 +169,12 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 该服务器提供统一的提示注册表，可通过 MCP 的 `ListPrompts` 和 `GetPrompt` 端点访问。每个模板都共享使命、上下文输入、编号流程、约束、输出格式和质量标准，让下游助手获得可预测的框架，而无需解析松散的自由格式示例。
 
-- **daily-task-organizer** —— 可选的 `task_category`、`priority_level` 和 `time_frame` 输入会生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。
-- **smart-reminder-creator** —— 要求 `task_description`，可选 `context` 和 `urgency`，生成的提醒草案通过显式映射元数据来减少后续跟进的差距。
-- **reminder-review-assistant** —— 可选 `review_type` 和 `list_name` 驱动收件箱盘点脚本，突出陈旧提醒事项，同时避免破坏性编辑。
-- **weekly-planning-workflow** —— 可选 `focus_areas` 和 `week_start_date` 指导周一至周日的重置，时间区块与现有列表相关联。
-- **reminder-cleanup-guide** —— 可选 `cleanup_strategy` 列出无压力列表修剪的护栏和顺序。
-- **goal-tracking-setup** —— 要求 `goal_type`，可选 `time_horizon` 组装周期性提醒和反思节奏。
+- **daily-task-organizer** —— 可选的 `task_category`（工作、个人、健康、购物等）、`priority_level`（低、中、高、紧急）和 `time_frame`（今天、本周、本月晚些时候）输入会生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。支持智能任务聚类、专注时间段安排和自动提醒列表组织。
+- **smart-reminder-creator** —— 要求 `task_description`，可选 `context` 和 `urgency`（低、中、高、紧急），生成的提醒草案通过显式映射元数据来减少后续跟进的差距。
+- **reminder-review-assistant** —— 可选 `review_type`（过期、已完成、即将到期、全部）和 `list_name` 驱动收件箱盘点脚本，突出陈旧提醒事项，同时避免破坏性编辑。
+- **weekly-planning-workflow** —— 可选 `user_ideas`（您本周想要完成的想法和目标）指导周一至周日的重置，时间区块与现有列表相关联。
+- **reminder-cleanup-guide** —— 可选 `cleanup_strategy`（archive_completed、delete_old、reorganize_lists、merge_duplicates）列出无压力列表修剪的护栏和顺序。
+- **goal-tracking-setup** —— 要求 `goal_type`（习惯、项目、学习、健康、财务）加上可选 `time_horizon`（每日、每周、每月、每季度、每年）组装周期性提醒和反思节奏。
 
 ### 设计约束与验证
 
@@ -435,98 +437,6 @@ pnpm exec biome check
 ### 嵌套目录启动
 
 CLI 入口内建项目根目录回退逻辑。即使从 `dist/` 等子目录或编辑器任务运行器启动，服务器也能在向上最多十层目录内定位 `package.json` 并加载随附的 Swift 二进制。若你自定义目录结构，请确保清单文件仍在该查找深度之内，以维持这一保证。
-
-### 项目结构
-
-```
-.
-├── src/                          # 源代码目录
-│   ├── index.ts                  # 主入口点和服务器引导程序
-│   ├── server/                   # MCP 服务器实现
-│   │   ├── server.ts             # 服务器配置和生命周期管理
-│   │   │   ├── createServer()    # 创建和配置 MCP 服务器实例
-│   │   │   └── startServer()     # 使用 stdio 传输启动服务器
-│   │   ├── handlers.ts           # 请求处理器和路由逻辑
-│   │   │   └── registerHandlers() # 注册 MCP 协议处理器
-│   │   ├── prompts.ts            # 结构化提示模板注册表
-│   │   └── *.test.ts             # 服务器单元测试
-│   ├── swift/                    # 原生 Swift 集成代码
-│   │   ├── bin/                  # 编译后的 Swift 二进制文件
-│   │   ├── RemindersCLI.swift    # Swift CLI 实现
-│   │   │   ├── RemindersManager  # 核心提醒事项管理类
-│   │   │   ├── parseDateComponents() # 日期解析工具
-│   │   │   └── EventKit 集成方法
-│   │   └── build.sh              # Swift 构建脚本
-│   ├── tools/                    # MCP 工具定义和处理器
-│   │   ├── definitions.ts        # 工具模式和 JSON Schema 定义
-│   │   │   └── TOOLS[]           # MCP 工具配置数组
-│   │   ├── handlers.ts           # 工具实现逻辑
-│   │   │   ├── handleCreateReminder() # 创建提醒事项处理器
-│   │   │   ├── handleUpdateReminder() # 更新提醒事项处理器
-│   │   │   ├── handleDeleteReminder() # 删除提醒事项处理器
-│   │   │   ├── handleReadReminders()  # 读取/列出提醒事项处理器
-│   │   │   ├── handleCreateReminderList() # 创建列表处理器
-│   │   │   ├── handleUpdateReminderList() # 更新列表处理器
-│   │   │   ├── handleDeleteReminderList() # 删除列表处理器
-│   │   │   └── handleReadReminderLists()  # 读取列表处理器
-│   │   ├── index.ts              # 工具注册和路由
-│   │   │   └── handleToolCall()  # 主要工具分发器函数
-│   │   └── *.test.ts             # 工具单元测试
-│   ├── types/                    # TypeScript 类型定义
-│   │   ├── index.ts              # 核心类型定义
-│   │   │   ├── Reminder          # 提醒事项项目接口
-│   │   │   ├── ReminderList      # 提醒事项列表接口
-│   │   │   ├── ServerConfig      # 服务器配置接口
-│   │   │   └── 工具参数类型
-│   │   └── prompts.ts            # 提示相关类型定义
-│   ├── utils/                    # 辅助函数和实用工具
-│   │   ├── __mocks__/            # 测试模拟实现
-│   │   ├── cliExecutor.ts        # CLI 执行工具
-│   │   │   └── executeCli()      # 执行 RemindersCLI 二进制文件
-│   │   ├── constants.ts          # 应用程序常量
-│   │   │   └── MESSAGES          # 错误和成功消息
-│   │   ├── dateFiltering.ts      # 日期过滤和组织
-│   │   │   ├── applyReminderFilters() # 对提醒事项应用多个过滤器
-│   │   │   └── DateFilter 类型   # 日期范围过滤器类型
-│   │   ├── errorHandling.ts      # 错误处理工具
-│   │   │   └── handleAsyncOperation() # 异步错误包装器
-│   │   ├── reminderRepository.ts # 仓库模式实现
-│   │   │   ├── ReminderRepository 类 # 数据访问层
-│   │   │   ├── findReminders()   # 使用过滤器查询提醒事项
-│   │   │   ├── createReminder()  # 创建新提醒事项
-│   │   │   ├── updateReminder()  # 更新现有提醒事项
-│   │   │   ├── deleteReminder()  # 删除提醒事项
-│   │   │   └── 列表管理方法
-│   │   ├── projectUtils.ts       # 项目路径工具
-│   │   └── *.test.ts             # 工具单元测试
-│   ├── validation/               # 模式验证工具
-│   │   ├── schemas.ts            # Zod 验证模式
-│   │   │   ├── SafeTextSchema    # 文本验证模式
-│   │   │   ├── SafeDateSchema    # 日期验证模式
-│   │   │   ├── SafeUrlSchema     # URL 验证模式
-│   │   │   ├── 创建/更新/删除模式 # 工具特定模式
-│   │   │   └── validateInput()   # 输入验证函数
-│   │   └── *.test.ts             # 验证单元测试
-│   └── test-setup.ts             # 测试环境设置
-├── dist/                         # 编译后的 JavaScript 输出
-│   ├── index.js                  # 主编译入口点
-│   ├── index.d.ts                # TypeScript 声明文件
-│   ├── *.js.map                  # 调试用源映射
-│   ├── server/                   # 服务器编译文件
-│   ├── tools/                    # 工具编译文件
-│   ├── types/                    # 类型编译文件
-│   ├── utils/                    # 工具编译文件
-│   └── validation/               # 验证编译文件
-├── bin/                          # 编译后的 Swift 二进制文件
-│   └── RemindersCLI              # 原生 Swift CLI 可执行文件
-├── node_modules/                 # Node.js 依赖
-├── package.json                  # 包配置
-├── tsconfig.json                 # TypeScript 配置
-├── jest.config.mjs               # Jest 测试配置
-├── biome.json                    # Biome 格式化配置
-├── pnpm-lock.yaml               # pnpm 锁定文件
-└── *.md                         # 文档文件
-```
 
 ### 可用脚本
 
