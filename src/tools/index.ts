@@ -44,7 +44,6 @@ export async function handleToolCall(
       }
       switch (action) {
         case 'read':
-        case 'list':
           return handleReadReminders(args);
         case 'create':
           return handleCreateReminder(args);

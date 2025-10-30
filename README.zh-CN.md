@@ -192,11 +192,17 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 一个支持基于操作的 Apple Reminders 管理的综合工具。通过单个统一接口支持所有提醒事项操作。
 
-**操作**：`read`, `list`, `create`, `update`, `delete`
+**操作**：`read`, `create`, `update`, `delete`
+
+**主要处理函数**：
+- `handleReadReminders()` - 使用过滤选项读取提醒事项
+- `handleCreateReminder()` - 创建新提醒事项
+- `handleUpdateReminder()` - 更新现有提醒事项
+- `handleDeleteReminder()` - 删除提醒事项
 
 #### 按操作的参数
 
-**读取/列表操作**（`action: "read"` 或 `action: "list"`）：
+**读取操作**（`action: "read"`）：
 - `id` *(可选)*：要读取的特定提醒事项的唯一标识符
 - `filterList` *(可选)*：要显示的提醒事项列表名称
 - `showCompleted` *(可选)*：包含已完成的提醒事项（默认：false）
@@ -258,6 +264,12 @@ code %APPDATA%\Claude\claude_desktop_config.json
 管理提醒事项列表 - 查看现有列表或创建新列表用于组织提醒事项。
 
 **操作**：`read`, `create`, `update`, `delete`
+
+**主要处理函数**：
+- `handleReadReminderLists()` - 读取所有提醒事项列表
+- `handleCreateReminderList()` - 创建新提醒事项列表
+- `handleUpdateReminderList()` - 更新现有提醒事项列表
+- `handleDeleteReminderList()` - 删除提醒事项列表
 
 #### 按操作的参数
 
@@ -357,6 +369,41 @@ const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
     "showCompleted": false
   }
 }
+```
+
+## URL 实用工具
+
+服务器包含用于处理结构化 URL 格式的内置 URL 实用工具。这些工具从 `src/utils/urlHelpers.js` 导出：
+
+### 主要函数
+
+- `extractUrlsFromNotes(notes)` - 从结构化或非结构化备注中提取 URL
+- `parseReminderNote(notes)` - 将备注解析为单独的内容和 URL 数组
+- `formatNoteWithUrls(note, urls)` - 使用结构化 URL 格式化备注内容
+- `removeUrlSections(notes)` - 删除 URL 部分以获取干净的备注内容
+- `combineNoteWithUrl(note, url)` - 以结构化格式组合备注与单个 URL
+
+### 使用示例
+
+```typescript
+import {
+  extractUrlsFromNotes,
+  parseReminderNote,
+  formatNoteWithUrls
+} from 'mcp-server-apple-reminders/src/utils/urlHelpers.js';
+
+// 从任何提醒事项备注中提取 URL
+const urls = extractUrlsFromNotes(reminder.notes);
+console.log(urls); // ['https://example.com', 'https://test.com']
+
+// 将备注解析为内容和 URL
+const { note, urls } = parseReminderNote(reminder.notes);
+console.log(note); // "任务描述"
+console.log(urls); // ['https://example.com']
+
+// 创建结构化备注内容
+const structured = formatNoteWithUrls("新任务", ['https://link1.com', 'https://link2.com']);
+// 结果: "新任务\n\nURLs:\n- https://link1.com\n- https://link2.com"
 ```
 
 ## 组织策略

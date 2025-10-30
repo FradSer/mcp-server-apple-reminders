@@ -99,21 +99,6 @@ describe('Tools Index', () => {
       expect(result).toEqual(expectedResult);
     });
 
-    test('should route reminders action=list to handleListReminders', async () => {
-      const args = { action: 'list' as const, list: 'Work' };
-      const expectedResult: CallToolResult = {
-        content: [{ type: 'text', text: 'Reminders list' }],
-        isError: false,
-      };
-
-      mockHandleReadReminders.mockResolvedValue(expectedResult);
-
-      const result = await handleToolCall('reminders', args);
-
-      expect(mockHandleReadReminders).toHaveBeenCalledWith(args);
-      expect(result).toEqual(expectedResult);
-    });
-
     test('should route lists action=list to handleListReminderLists', async () => {
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Lists' }],
@@ -237,20 +222,6 @@ describe('Tools Index', () => {
           handler: mockHandleCreateReminder,
           result: {
             content: [{ type: 'text' as const, text: 'Created' }],
-            isError: false,
-          },
-        },
-        {
-          tool: 'reminders',
-          args: { action: 'list' as const },
-          handler: mockHandleReadReminders,
-          result: {
-            content: [
-              {
-                type: 'text' as const,
-                text: JSON.stringify({ reminders: [] }),
-              },
-            ],
             isError: false,
           },
         },
