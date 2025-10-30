@@ -4,7 +4,7 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ZodSchema } from 'zod';
+import type { ZodSchema } from 'zod/v3';
 import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
