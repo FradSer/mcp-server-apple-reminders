@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
@@ -195,14 +195,14 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 **Actions**: `read`, `create`, `update`, `delete`
 
 **Main Handler Functions**:
-- `handleReadReminders()` - Read/list reminders with filtering options
+- `handleReadReminders()` - Read reminders with filtering options
 - `handleCreateReminder()` - Create new reminders
 - `handleUpdateReminder()` - Update existing reminders
 - `handleDeleteReminder()` - Delete reminders
 
 #### Parameters by Action
 
-**Read/List Action** (`action: "read"` or `action: "list"`):
+**Read Action** (`action: "read"`):
 - `id` *(optional)*: Unique identifier of a specific reminder to read
 - `filterList` *(optional)*: Name of the reminder list to show
 - `showCompleted` *(optional)*: Include completed reminders (default: false)
