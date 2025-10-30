@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 

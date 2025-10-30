@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2025-10-30
+
+### Changed
+
+- Refactored to remove duplicate list action from reminders tool for improved API clarity
+
 ## [1.0.0] - 2025-10-30
 
 ### Added
@@ -321,7 +327,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic Apple Reminders integration
 - Foundation for macOS native reminder management
 
-[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/FradSer/mcp-server-apple-reminders/releases/tag/v1.0.0
 [0.10.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.8.1...v0.9.0
