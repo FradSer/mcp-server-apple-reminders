@@ -25,12 +25,15 @@
     "mcp-server-apple-reminders": "./bin/run.cjs"
   },
   "scripts": {
-    "build": "npm run build:swift",
+    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build:ts": "tsc -p tsconfig.json",
+    "build": "pnpm run clean && pnpm run build:ts && pnpm run build:swift",
     "build:swift": "node scripts/build-swift.mjs",
     "dev": "node ./bin/run-dev.cjs",
     "start": "node ./bin/run.cjs",
     "test": "jest",
-    "check": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json"
+    "check": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json",
+    "prepublishOnly": "pnpm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2",
