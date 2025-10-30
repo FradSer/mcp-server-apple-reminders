@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-10-30
+
+### Added
+
+- Complete Swift CLI integration with native EventKit operations
+- Dual URL storage strategy (EventKit field + structured notes format)
+- Comprehensive input validation and security patterns
+- Structured prompt templates for task management workflows
+- Enhanced error handling with consistent response formatting
+- MCP protocol compliance with standardized tool definitions
+
+### Fixed
+
+- Swift binary compilation and permission handling improvements
+- Unicode character support for international reminders
+- Binary path resolution with enhanced fallback mechanisms
+- Date parsing consistency across different formats
+
 ## [0.10.0] - 2025-10-28
 
 ### Added
@@ -303,7 +321,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic Apple Reminders integration
 - Foundation for macOS native reminder management
 
-[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.10.0...HEAD
+[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/FradSer/mcp-server-apple-reminders/releases/tag/v1.0.0
 [0.10.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.8.1...v0.9.0
 [0.8.1]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.8.0...v0.8.1
