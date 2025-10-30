@@ -1,4 +1,4 @@
-# Apple Reminders MCP Server ![Version 0.11.0](https://img.shields.io/badge/version-0.11.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Reminders MCP Server ![Version 1.0.0](https://img.shields.io/badge/version-1.0.0-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
@@ -190,7 +190,13 @@ This server provides two unified MCP tools for comprehensive Apple Reminders man
 
 A comprehensive tool for managing Apple Reminders with action-based operations. Supports all reminder operations through a single unified interface.
 
-**Actions**: `read`, `list`, `create`, `update`, `delete`
+**Actions**: `read`, `create`, `update`, `delete`
+
+**Main Handler Functions**:
+- `handleReadReminders()` - Read/list reminders with filtering options
+- `handleCreateReminder()` - Create new reminders
+- `handleUpdateReminder()` - Update existing reminders
+- `handleDeleteReminder()` - Delete reminders
 
 #### Parameters by Action
 
@@ -256,6 +262,12 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 Manage reminder lists - view existing lists or create new ones for organizing reminders.
 
 **Actions**: `read`, `create`, `update`, `delete`
+
+**Main Handler Functions**:
+- `handleReadReminderLists()` - Read all reminder lists
+- `handleCreateReminderList()` - Create new reminder lists
+- `handleUpdateReminderList()` - Update existing reminder lists
+- `handleDeleteReminderList()` - Delete reminder lists
 
 #### Parameters by Action
 
@@ -484,68 +496,120 @@ The CLI entry point includes a project-root fallback, so you can start the serve
 ```
 .
 ├── src/                          # Source code directory
-│   ├── index.ts                  # Main entry point
+│   ├── index.ts                  # Main entry point and server bootstrap
 │   ├── server/                   # MCP server implementation
-│   │   ├── server.ts             # Server configuration and lifecycle
-│   │   ├── handlers.ts           # Request handlers and routing
-│   │   └── *.test.ts             # Server tests
+│   │   ├── server.ts             # Server configuration and lifecycle management
+│   │   │   ├── createServer()    # Creates and configures MCP server instance
+│   │   │   └── startServer()     # Starts server with stdio transport
+│   │   ├── handlers.ts           # Request handlers and routing logic
+│   │   │   └── registerHandlers() # Registers MCP protocol handlers
+│   │   ├── prompts.ts            # Structured prompt templates registry
+│   │   └── *.test.ts             # Server unit tests
 │   ├── swift/                    # Native Swift integration code
 │   │   ├── bin/                  # Compiled Swift binaries
-│   │   ├── GetReminders.swift    # Swift source file
+│   │   ├── RemindersCLI.swift    # Swift CLI implementation
+│   │   │   ├── RemindersManager  # Core reminders management class
+│   │   │   ├── parseDateComponents() # Date parsing utilities
+│   │   │   └── EventKit integration methods
 │   │   └── build.sh              # Swift build script
 │   ├── tools/                    # MCP tool definitions and handlers
-│   │   ├── definitions.ts        # Tool schemas and validation
+│   │   ├── definitions.ts        # Tool schemas and JSON Schema definitions
+│   │   │   └── TOOLS[]           # MCP tool configuration array
 │   │   ├── handlers.ts           # Tool implementation logic
-│   │   ├── index.ts              # Tool registration
-│   │   └── *.test.ts             # Tool tests
+│   │   │   ├── handleCreateReminder() # Create reminder handler
+│   │   │   ├── handleUpdateReminder() # Update reminder handler
+│   │   │   ├── handleDeleteReminder() # Delete reminder handler
+│   │   │   ├── handleReadReminders()  # Read/list reminders handler
+│   │   │   ├── handleCreateReminderList() # Create list handler
+│   │   │   ├── handleUpdateReminderList() # Update list handler
+│   │   │   ├── handleDeleteReminderList() # Delete list handler
+│   │   │   └── handleReadReminderLists()  # Read lists handler
+│   │   ├── index.ts              # Tool registration and routing
+│   │   │   └── handleToolCall()  # Main tool dispatcher function
+│   │   └── *.test.ts             # Tool unit tests
 │   ├── types/                    # TypeScript type definitions
-│   │   └── index.ts              # Core type definitions
+│   │   ├── index.ts              # Core type definitions
+│   │   │   ├── Reminder          # Reminder item interface
+│   │   │   ├── ReminderList      # Reminder list interface
+│   │   │   ├── ServerConfig      # Server configuration interface
+│   │   │   └── Tool argument types
+│   │   └── prompts.ts            # Prompt-related type definitions
 │   ├── utils/                    # Helper functions and utilities
-│   │   ├── __mocks__/            # Test mocks
-│   │   ├── *.ts                  # Utility modules
-│   │   └── *.test.ts             # Utility tests
+│   │   ├── __mocks__/            # Test mock implementations
+│   │   ├── cliExecutor.ts        # CLI execution utilities
+│   │   │   └── executeCli()      # Execute RemindersCLI binary
+│   │   ├── constants.ts          # Application constants
+│   │   │   └── MESSAGES          # Error and success messages
+│   │   ├── dateFiltering.ts      # Date filtering and organization
+│   │   │   ├── applyReminderFilters() # Apply multiple filters to reminders
+│   │   │   └── DateFilter types   # Date range filter types
+│   │   ├── errorHandling.ts      # Error handling utilities
+│   │   │   └── handleAsyncOperation() # Async error wrapper
+│   │   ├── reminderRepository.ts # Repository pattern implementation
+│   │   │   ├── ReminderRepository class # Data access layer
+│   │   │   ├── findReminders()   # Query reminders with filters
+│   │   │   ├── createReminder()  # Create new reminders
+│   │   │   ├── updateReminder()  # Update existing reminders
+│   │   │   ├── deleteReminder()  # Delete reminders
+│   │   │   └── List management methods
+│   │   ├── projectUtils.ts       # Project path utilities
+│   │   └── *.test.ts             # Utility unit tests
 │   ├── validation/               # Schema validation utilities
-│   │   └── schemas.ts            # Zod validation schemas
+│   │   ├── schemas.ts            # Zod validation schemas
+│   │   │   ├── SafeTextSchema    # Text validation schemas
+│   │   │   ├── SafeDateSchema    # Date validation schemas
+│   │   │   ├── SafeUrlSchema     # URL validation schemas
+│   │   │   ├── Create/Update/Delete schemas # Tool-specific schemas
+│   │   │   └── validateInput()   # Input validation function
+│   │   └── *.test.ts             # Validation unit tests
 │   └── test-setup.ts             # Test environment setup
 ├── dist/                         # Compiled JavaScript output
 │   ├── index.js                  # Main compiled entry point
-│   ├── swift/bin/                # Compiled Swift binaries
+│   ├── index.d.ts                # TypeScript declaration files
+│   ├── *.js.map                  # Source maps for debugging
 │   ├── server/                   # Server compiled files
 │   ├── tools/                    # Tools compiled files
 │   ├── types/                    # Types compiled files
 │   ├── utils/                    # Utils compiled files
 │   └── validation/               # Validation compiled files
+├── bin/                          # Compiled Swift binaries
+│   └── RemindersCLI              # Native Swift CLI executable
 ├── node_modules/                 # Node.js dependencies
 ├── package.json                  # Package configuration
 ├── tsconfig.json                 # TypeScript configuration
 ├── jest.config.mjs               # Jest test configuration
+├── biome.json                    # Biome formatting configuration
 ├── pnpm-lock.yaml               # pnpm lock file
 └── *.md                         # Documentation files
 ```
 
 ### Available Scripts
 
-- `pnpm build` - Build both TypeScript and Swift components (required before starting the server)
-- `pnpm build:ts` - Build TypeScript code only
+- `pnpm build` - Build the Swift helper binary (required before starting the server)
 - `pnpm build:swift` - Build the Swift helper binary only
-- `pnpm dev` - TypeScript development mode with file watching
-- `pnpm start` - Start the MCP server over stdio
-- `pnpm test` - Run the comprehensive Jest suite
-- `pnpm exec biome check` - Enforce formatting and lint rules
+- `pnpm dev` - TypeScript development mode with file watching via tsx (runtime TS execution)
+- `pnpm start` - Start the MCP server over stdio (auto-fallback to runtime TS if no build)
+- `pnpm test` - Run the comprehensive Jest test suite
+- `pnpm check` - Run Biome formatting and TypeScript type checking
 
 ### Dependencies
 
 **Runtime Dependencies:**
-- `@modelcontextprotocol/sdk ^1.5.0` - MCP protocol implementation
+- `@modelcontextprotocol/sdk ^1.20.2` - MCP protocol implementation
 - `moment ^2.30.1` - Date/time handling utilities
-- `zod ^3.24.2` - Runtime type validation
+- `exit-on-epipe ^1.0.1` - Graceful process termination handling
+- `tsx ^4.20.6` - TypeScript execution and REPL
+- `zod ^4.1.12` - Runtime type validation
 
 **Development Dependencies:**
-- `typescript ^5.8.2` - TypeScript compiler
-- `@types/node ^20.0.0` - Node.js type definitions
-- `@types/jest ^29.5.12` - Jest type definitions
-- `jest ^29.7.0` - Testing framework
-- `ts-jest ^29.1.2` - Jest TypeScript support
+- `typescript ^5.9.3` - TypeScript compiler
+- `@types/node ^24.9.2` - Node.js type definitions
+- `@types/jest ^30.0.0` - Jest type definitions
+- `jest ^30.2.0` - Testing framework
+- `babel-jest ^30.2.0` - Babel Jest transformer
+- `babel-plugin-transform-import-meta ^2.3.3` - Babel import meta transform
+- `ts-jest ^29.4.5` - Jest TypeScript support
+- `@biomejs/biome ^2.3.2` - Code formatting and linting
 
 **Build Tools:**
 - Swift binaries for native macOS integration
