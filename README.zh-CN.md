@@ -169,12 +169,10 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 该服务器提供统一的提示注册表，可通过 MCP 的 `ListPrompts` 和 `GetPrompt` 端点访问。每个模板都共享使命、上下文输入、编号流程、约束、输出格式和质量标准，让下游助手获得可预测的框架，而无需解析松散的自由格式示例。
 
-- **daily-task-organizer** —— 可选的 `task_category`（工作、个人、健康、购物等）、`priority_level`（低、中、高、紧急）和 `time_frame`（今天、本周、本月晚些时候）输入会生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。支持智能任务聚类、专注时间段安排和自动提醒列表组织。
-- **smart-reminder-creator** —— 要求 `task_description`，可选 `context` 和 `urgency`（低、中、高、紧急），生成的提醒草案通过显式映射元数据来减少后续跟进的差距。
-- **reminder-review-assistant** —— 可选 `review_type`（过期、已完成、即将到期、全部）和 `list_name` 驱动收件箱盘点脚本，突出陈旧提醒事项，同时避免破坏性编辑。
+- **daily-task-organizer** —— 可选 `today_focus`（你今天最想完成的重点）生成当日执行蓝图，在优先级工作与恢复时间之间保持平衡。支持智能任务聚类、专注时间段安排和自动提醒列表组织。
+- **smart-reminder-creator** —— 可选 `task_idea`（你想做的一句话描述），生成优化调度的提醒结构。
+- **reminder-review-assistant** —— 可选 `review_focus`（如“逾期”或某个清单名）用于审计与优化现有提醒。
 - **weekly-planning-workflow** —— 可选 `user_ideas`（您本周想要完成的想法和目标）指导周一至周日的重置，时间区块与现有列表相关联。
-- **reminder-cleanup-guide** —— 可选 `cleanup_strategy`（archive_completed、delete_old、reorganize_lists、merge_duplicates）列出无压力列表修剪的护栏和顺序。
-- **goal-tracking-setup** —— 要求 `goal_type`（习惯、项目、学习、健康、财务）加上可选 `time_horizon`（每日、每周、每月、每季度、每年）组装周期性提醒和反思节奏。
 
 ### 设计约束与验证
 

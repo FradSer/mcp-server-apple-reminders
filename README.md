@@ -169,12 +169,10 @@ The server will:
 
 The server ships with a consolidated prompt registry exposed via the MCP `ListPrompts` and `GetPrompt` endpoints. Each template shares a mission, context inputs, numbered process, constraints, output format, and quality bar so downstream assistants receive predictable scaffolding instead of brittle free-form examples.
 
-- **daily-task-organizer** — optional `task_category` (work, personal, health, shopping, etc.), `priority_level` (low, medium, high, urgent), and `time_frame` (today, this week, later this month) inputs produce a same-day execution blueprint that keeps priority work balanced with recovery time. Supports intelligent task clustering, focus block scheduling, and automatic reminder list organization.
-- **smart-reminder-creator** — requires `task_description`, optionally `context` and `urgency` (low, medium, high, critical), yielding a reminder draft that mitigates follow-through gaps by mapping metadata explicitly.
-- **reminder-review-assistant** — optional `review_type` (overdue, completed, upcoming, all) and `list_name` drive inbox triage scripts that surface stale reminders while avoiding destructive edits.
+- **daily-task-organizer** — optional `today_focus` (what you most want to accomplish today) input produces a same-day execution blueprint that keeps priority work balanced with recovery time. Supports intelligent task clustering, focus block scheduling, and automatic reminder list organization.
+- **smart-reminder-creator** — optional `task_idea` (a short description of what you want to do) generates an optimally scheduled reminder structure.
+- **reminder-review-assistant** — optional `review_focus` (e.g., overdue or a list name) to audit and optimize existing reminders.
 - **weekly-planning-workflow** — optional `user_ideas` (your thoughts and ideas for what you want to accomplish this week) guides a Monday-through-Sunday reset with time blocks tied to existing lists.
-- **reminder-cleanup-guide** — optional `cleanup_strategy` (archive_completed, delete_old, reorganize_lists, merge_duplicates) lists guardrails and sequencing for stress-free list pruning.
-- **goal-tracking-setup** — required `goal_type` (habit, project, learning, health, financial) plus optional `time_horizon` (daily, weekly, monthly, quarterly, yearly) assemble recurring reminders and reflection cadences.
 
 ### Design constraints and validation
 
