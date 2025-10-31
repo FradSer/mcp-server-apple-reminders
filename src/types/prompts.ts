@@ -81,14 +81,6 @@ export interface WeeklyPlanningWorkflowArgs {
 }
 
 /**
- * Arguments accepted by the `reminder-cleanup-guide` prompt.
- */
-
-/**
- * Arguments accepted by the `goal-tracking-setup` prompt.
- */
-
-/**
  * Mapped helper type that links prompt names with their argument signatures.
  */
 export interface PromptArgsByName {

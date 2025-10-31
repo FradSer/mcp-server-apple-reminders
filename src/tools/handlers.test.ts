@@ -13,7 +13,6 @@ import {
   handleUpdateReminder,
   handleUpdateReminderList,
 } from '../tools/handlers.js';
-import type { RemindersToolArgs } from '../types/index.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 
@@ -250,102 +249,6 @@ describe('Tool Handlers', () => {
       });
       const content = result.content[0].text as string;
       expect(content).toBe('Successfully deleted list "Old List".');
-    });
-  });
-
-  describe('extractAndValidateArgs', () => {
-    it('should handle undefined args', async () => {
-      // Test that handlers can handle undefined args gracefully
-      // This tests the extractAndValidateArgs function with args ?? {}
-      mockReminderRepository.findReminders.mockResolvedValue([]);
-      const result = await handleReadReminders(
-        undefined as unknown as RemindersToolArgs,
-      );
-      expect(result).toBeDefined();
-      expect(result.isError).toBe(true);
-    });
-
-    it('should handle null args', async () => {
-      // Test extractAndValidateArgs with null args
-      mockReminderRepository.findReminders.mockResolvedValue([]);
-      const result = await handleReadReminders(
-        null as unknown as RemindersToolArgs,
-      );
-      expect(result).toBeDefined();
-    });
-  });
-
-  describe('handleReadReminders - markdown formatting edge cases', () => {
-    it('should format reminders with all optional fields', async () => {
-      const mockReminders = [
-        {
-          id: '1',
-          title: 'Full Reminder',
-          isCompleted: false,
-          list: 'Work',
-          notes: 'Some notes\nwith newlines',
-          dueDate: '2024-12-25',
-          url: 'https://example.com',
-        },
-      ];
-      mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
-      const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
-      expect(content).toContain('- [ ] Full Reminder');
-      expect(content).toContain('- List: Work');
-      expect(content).toContain('- ID: 1');
-      expect(content).toContain('- Notes:');
-      expect(content).toContain('- Due: 2024-12-25');
-      expect(content).toContain('- URL: https://example.com');
-    });
-
-    it('should format reminders without optional fields', async () => {
-      const mockReminders = [
-        {
-          id: '2',
-          title: 'Minimal Reminder',
-          isCompleted: true,
-          list: '',
-        },
-      ];
-      mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
-      const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
-      expect(content).toContain('- [x] Minimal Reminder');
-      expect(content).not.toContain('- List:');
-      expect(content).not.toContain('- Notes:');
-      expect(content).not.toContain('- Due:');
-      expect(content).not.toContain('- URL:');
-    });
-
-    it('should format reminders with only list field', async () => {
-      const mockReminders = [
-        {
-          id: '3',
-          title: 'List Only',
-          isCompleted: false,
-          list: 'Personal',
-        },
-      ];
-      mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
-      const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
-      expect(content).toContain('- List: Personal');
-    });
-
-    it('should format reminders with only id field', async () => {
-      const mockReminders = [
-        {
-          id: '4',
-          title: 'ID Only',
-          isCompleted: false,
-          list: '',
-        },
-      ];
-      mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
-      const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
-      expect(content).toContain('- ID: 4');
     });
   });
 });

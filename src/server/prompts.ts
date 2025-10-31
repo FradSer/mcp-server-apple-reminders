@@ -74,19 +74,6 @@ const isNonEmptyString = (value: unknown): value is string =>
 const parseOptionalString = (value: unknown): string | undefined =>
   isNonEmptyString(value) ? value : undefined;
 
-const _parseRequiredString = (
-  value: unknown,
-  promptName: PromptName,
-  field: string,
-): string => {
-  if (!isNonEmptyString(value)) {
-    throw new Error(
-      `Prompt "${promptName}" requires the "${String(field)}" argument to be provided as a non-empty string.`,
-    );
-  }
-  return value;
-};
-
 const buildDailyTaskOrganizerPrompt = (
   args: DailyTaskOrganizerArgs,
 ): PromptResponse => {
