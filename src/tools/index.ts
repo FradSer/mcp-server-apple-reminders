@@ -71,67 +71,12 @@ export async function handleToolCall(
       switch (action) {
         case 'read':
           return handleReadReminderLists();
-        case 'create': {
-          const listArgs = args as ListsToolArgs;
-          if (!listArgs.name) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED(
-                    'Name is required for list creation',
-                  ),
-                },
-              ],
-              isError: true,
-            };
-          }
-          return handleCreateReminderList({
-            action: 'create',
-            name: listArgs.name,
-          });
-        }
-        case 'update': {
-          const listArgs = args as ListsToolArgs;
-          if (!listArgs.name || !listArgs.newName) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED(
-                    'Name and newName are required for list update',
-                  ),
-                },
-              ],
-              isError: true,
-            };
-          }
-          return handleUpdateReminderList({
-            action: 'update',
-            name: listArgs.name,
-            newName: listArgs.newName,
-          });
-        }
-        case 'delete': {
-          const listArgs = args as ListsToolArgs;
-          if (!listArgs.name) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: MESSAGES.ERROR.INPUT_VALIDATION_FAILED(
-                    'Name is required for list deletion',
-                  ),
-                },
-              ],
-              isError: true,
-            };
-          }
-          return handleDeleteReminderList({
-            action: 'delete',
-            name: listArgs.name,
-          });
-        }
+        case 'create':
+          return handleCreateReminderList(args as ListsToolArgs);
+        case 'update':
+          return handleUpdateReminderList(args as ListsToolArgs);
+        case 'delete':
+          return handleDeleteReminderList(args as ListsToolArgs);
         default:
           return {
             content: [
