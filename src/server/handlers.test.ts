@@ -186,7 +186,9 @@ describe('Server Handlers', () => {
 
         const result = await getPromptHandler(request);
 
-        expect(result.description).toContain('Comprehensive daily task organization');
+        expect(result.description).toContain(
+          'Comprehensive daily task organization',
+        );
         expect(result.messages).toHaveLength(1);
         expect(result.messages[0].role).toBe('user');
         expect(result.messages[0].content.type).toBe('text');
@@ -492,7 +494,9 @@ describe('Server Handlers - Prompts', () => {
       expect(message.content.text).toContain(
         'Mission: Design a realistic today execution plan in Apple Reminders',
       );
-      expect(message.content.text).toContain("Today's focus ideas: none provided");
+      expect(message.content.text).toContain(
+        "Today's focus ideas: none provided",
+      );
       expect(message.content.text).toContain('Planning horizon: today');
       expect(message.content.text).toContain('### Snapshot');
     });
