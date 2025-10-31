@@ -74,7 +74,7 @@ const isNonEmptyString = (value: unknown): value is string =>
 const parseOptionalString = (value: unknown): string | undefined =>
   isNonEmptyString(value) ? value : undefined;
 
-const parseRequiredString = (
+const _parseRequiredString = (
   value: unknown,
   promptName: PromptName,
   field: string,
@@ -150,7 +150,7 @@ const buildSmartReminderCreatorPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission: `Mission: Produce an Apple Reminders entry for "${taskIdea || 'today\'s key task'}" that prevents follow-through failures using realistic timing and clarity.`,
+          mission: `Mission: Produce an Apple Reminders entry for "${taskIdea || "today's key task"}" that prevents follow-through failures using realistic timing and clarity.`,
           contextInputs: [
             `Task idea: ${taskIdea || 'none provided — propose a sensible framing and ask for confirmation'}`,
           ],
@@ -300,8 +300,6 @@ const buildWeeklyPlanningWorkflowPrompt = (
   };
 };
 
-
-
 const PROMPTS: PromptRegistry = {
   'daily-task-organizer': {
     metadata: {
@@ -341,7 +339,7 @@ const PROMPTS: PromptRegistry = {
     parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<SmartReminderCreatorArgs>;
       return {
-        task_idea: parseOptionalString((args as any).task_idea),
+        task_idea: parseOptionalString(args.task_idea),
       };
     },
     buildPrompt: buildSmartReminderCreatorPrompt,
@@ -363,7 +361,7 @@ const PROMPTS: PromptRegistry = {
     parseArgs(rawArgs: Record<string, unknown> | null | undefined) {
       const args = (rawArgs ?? {}) as Partial<ReminderReviewAssistantArgs>;
       return {
-        review_focus: parseOptionalString((args as any).review_focus),
+        review_focus: parseOptionalString(args.review_focus),
       };
     },
     buildPrompt: buildReminderReviewAssistantPrompt,
