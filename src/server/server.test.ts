@@ -20,7 +20,6 @@ const mockStdioServerTransport = StdioServerTransport as jest.MockedClass<
 const { registerHandlers } = jest.requireMock('./handlers.js') as {
   registerHandlers: jest.MockedFunction<(server: unknown) => void>;
 };
-const mockRegisterHandlers = registerHandlers;
 
 describe('Server Module', () => {
   let mockServerInstance: jest.Mocked<Server>;
@@ -42,42 +41,15 @@ describe('Server Module', () => {
   });
 
   describe('createServer', () => {
-    test('should create server with correct configuration', () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
-
-      const server = createServer(config);
-
-      expect(mockServer).toHaveBeenCalledWith(
-        {
-          name: 'test-server',
-          version: '1.0.0',
-        },
-        {
-          capabilities: {
-            resources: {},
-            tools: {},
-            prompts: {},
-          },
-        },
-      );
-
-      expect(mockRegisterHandlers).toHaveBeenCalledWith(mockServerInstance);
-      expect(server).toBe(mockServerInstance);
-    });
-
-    test('should handle different server configurations', () => {
-      const configs = [
-        { name: 'mcp-server', version: '2.1.0' },
-        { name: 'test', version: '0.0.1' },
-        { name: 'production-server', version: '10.5.3' },
-      ];
-
-      configs.forEach((config) => {
+    it.each([
+      [{ name: 'mcp-server', version: '2.1.0' }],
+      [{ name: 'test', version: '0.0.1' }],
+      [{ name: 'production-server', version: '10.5.3' }],
+    ])(
+      'should create server with correct configuration and capabilities',
+      (config: ServerConfig) => {
         mockServer.mockClear();
-        mockRegisterHandlers.mockClear();
+        registerHandlers.mockClear();
 
         const _server = createServer(config);
 
@@ -86,29 +58,19 @@ describe('Server Module', () => {
             name: config.name,
             version: config.version,
           },
-          expect.any(Object),
+          {
+            capabilities: {
+              resources: {},
+              tools: {},
+              prompts: {},
+            },
+          },
         );
 
-        expect(mockRegisterHandlers).toHaveBeenCalledWith(mockServerInstance);
-      });
-    });
-
-    test('should set up correct capabilities', () => {
-      const config: ServerConfig = {
-        name: 'test',
-        version: '1.0.0',
-      };
-
-      createServer(config);
-
-      expect(mockServer).toHaveBeenCalledWith(expect.any(Object), {
-        capabilities: {
-          resources: {},
-          tools: {},
-          prompts: {},
-        },
-      });
-    });
+        expect(registerHandlers).toHaveBeenCalledWith(mockServerInstance);
+        expect(_server).toBe(mockServerInstance);
+      },
+    );
   });
 
   describe('startServer', () => {
@@ -129,26 +91,55 @@ describe('Server Module', () => {
       );
     });
 
-    test('should handle server connection failure', async () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
+    describe('error handling', () => {
+      it.each([
+        [
+          'connection failure',
+          () => {
+            const connectionError = new Error('Connection failed');
+            mockServerInstance.connect.mockRejectedValue(connectionError);
+          },
+        ],
+        [
+          'server creation failure',
+          () => {
+            mockServer.mockImplementation(() => {
+              throw new Error('Server creation failed');
+            });
+          },
+        ],
+        [
+          'transport creation failure',
+          () => {
+            mockStdioServerTransport.mockImplementation(() => {
+              throw new Error('Transport creation failed');
+            });
+          },
+        ],
+      ])(
+        'should handle %s and exit with code 1',
+        async (_errorType, setupError) => {
+          const config: ServerConfig = {
+            name: 'test-server',
+            version: '1.0.0',
+          };
 
-      const connectionError = new Error('Connection failed');
-      mockServerInstance.connect.mockRejectedValue(connectionError);
+          setupError();
 
-      // Mock process.exit to prevent actual exit
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
+          const mockExit = jest
+            .spyOn(process, 'exit')
+            .mockImplementation(() => {
+              throw new Error('process.exit called');
+            });
 
-      await expect(startServer(config)).rejects.toThrow('process.exit called');
+          await expect(startServer(config)).rejects.toThrow(
+            'process.exit called',
+          );
+          expect(mockExit).toHaveBeenCalledWith(1);
 
-      expect(mockServerInstance.connect).toHaveBeenCalled();
-      expect(mockExit).toHaveBeenCalledWith(1);
-
-      mockExit.mockRestore();
+          mockExit.mockRestore();
+        },
+      );
     });
 
     test('should create server and transport instances', async () => {
@@ -163,146 +154,44 @@ describe('Server Module', () => {
 
       expect(mockServer).toHaveBeenCalledTimes(1);
       expect(mockStdioServerTransport).toHaveBeenCalledTimes(1);
-      expect(mockRegisterHandlers).toHaveBeenCalledWith(mockServerInstance);
+      expect(registerHandlers).toHaveBeenCalledWith(mockServerInstance);
     });
 
-    test('should handle different error types during startup', async () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
+    describe('signal handlers', () => {
+      it.each([
+        ['SIGINT', 0],
+        ['SIGTERM', 0],
+      ])(
+        'should register %s signal handler and exit with code %d',
+        async (signal, exitCode) => {
+          const config: ServerConfig = {
+            name: 'test-server',
+            version: '1.0.0',
+          };
 
-      const errors = [
-        new Error('Network error'),
-        new TypeError('Type error'),
-        'String error',
-        { message: 'Object error' },
-      ];
+          const mockExit = jest
+            .spyOn(process, 'exit')
+            .mockImplementation(() => {
+              throw new Error('process.exit called');
+            });
+          const mockOn = jest.spyOn(process, 'on');
 
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
+          mockServerInstance.connect.mockImplementation(() => {
+            process.emit(signal as NodeJS.Signals);
+            return Promise.resolve(undefined);
+          });
 
-      for (const error of errors) {
-        mockServerInstance.connect.mockRejectedValue(error);
+          await expect(startServer(config)).rejects.toThrow(
+            'process.exit called',
+          );
 
-        await expect(startServer(config)).rejects.toThrow(
-          'process.exit called',
-        );
-        expect(mockExit).toHaveBeenCalledWith(1);
+          expect(mockOn).toHaveBeenCalledWith(signal, expect.any(Function));
+          expect(mockExit).toHaveBeenCalledWith(exitCode);
 
-        mockExit.mockClear();
-      }
-
-      mockExit.mockRestore();
-    });
-
-    test('should log server startup progress', async () => {
-      const config: ServerConfig = {
-        name: 'mcp-server',
-        version: '2.0.0',
-      };
-
-      mockServerInstance.connect.mockResolvedValue(undefined);
-
-      await startServer(config);
-
-      // Verify the server startup sequence
-      expect(mockServer).toHaveBeenCalled();
-      expect(mockStdioServerTransport).toHaveBeenCalled();
-      expect(mockServerInstance.connect).toHaveBeenCalled();
-    });
-
-    test('should handle synchronous errors during server creation', async () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
-
-      mockServer.mockImplementation(() => {
-        throw new Error('Server creation failed');
-      });
-
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
-
-      await expect(startServer(config)).rejects.toThrow('process.exit called');
-
-      expect(mockExit).toHaveBeenCalledWith(1);
-      mockExit.mockRestore();
-    });
-
-    test('should handle transport creation failure', async () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
-
-      mockStdioServerTransport.mockImplementation(() => {
-        throw new Error('Transport creation failed');
-      });
-
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
-
-      await expect(startServer(config)).rejects.toThrow('process.exit called');
-
-      expect(mockExit).toHaveBeenCalledWith(1);
-      mockExit.mockRestore();
-    });
-
-    test('should register SIGINT signal handler', async () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
-
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
-      const mockOn = jest.spyOn(process, 'on');
-
-      mockServerInstance.connect.mockImplementation(() => {
-        // Simulate SIGINT signal
-        process.emit('SIGINT' as NodeJS.Signals);
-        return Promise.resolve(undefined);
-      });
-
-      await expect(startServer(config)).rejects.toThrow('process.exit called');
-
-      expect(mockOn).toHaveBeenCalledWith('SIGINT', expect.any(Function));
-      expect(mockExit).toHaveBeenCalledWith(0);
-
-      mockExit.mockRestore();
-      mockOn.mockRestore();
-    });
-
-    test('should register SIGTERM signal handler', async () => {
-      const config: ServerConfig = {
-        name: 'test-server',
-        version: '1.0.0',
-      };
-
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('process.exit called');
-      });
-      const mockOn = jest.spyOn(process, 'on');
-
-      mockServerInstance.connect.mockImplementation(() => {
-        // Simulate SIGTERM signal
-        process.emit('SIGTERM' as NodeJS.Signals);
-        return Promise.resolve(undefined);
-      });
-
-      await expect(startServer(config)).rejects.toThrow('process.exit called');
-
-      expect(mockOn).toHaveBeenCalledWith('SIGTERM', expect.any(Function));
-      expect(mockExit).toHaveBeenCalledWith(0);
-
-      mockExit.mockRestore();
-      mockOn.mockRestore();
+          mockExit.mockRestore();
+          mockOn.mockRestore();
+        },
+      );
     });
   });
 });
