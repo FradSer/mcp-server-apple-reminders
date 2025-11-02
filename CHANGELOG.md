@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-10-30
+
+### Added
+
+- Simplified prompts API with improved structure
+
+### Changed
+
+- Refactored prompts module for better type safety
+- Removed legacy code and duplicate tests
+- Improved validation and formatting for list actions
+
 ## [1.0.1] - 2025-10-30
 
 ### Changed
@@ -327,7 +339,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic Apple Reminders integration
 - Foundation for macOS native reminder management
 
-[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.1...HEAD
+[unreleased]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/FradSer/mcp-server-apple-reminders/releases/tag/v1.0.0
 [0.10.0]: https://github.com/FradSer/mcp-server-apple-reminders/compare/v0.9.0...v0.10.0
