@@ -27,6 +27,30 @@ const extractAndValidateArgs = <T>(
   return validateInput(schema, rest);
 };
 
+/**
+ * Formats a reminder as a markdown list item
+ */
+const formatReminderMarkdown = (reminder: {
+  title: string;
+  isCompleted: boolean;
+  list?: string;
+  id?: string;
+  notes?: string;
+  dueDate?: string;
+  url?: string;
+}): string[] => {
+  const lines: string[] = [];
+  const checkbox = reminder.isCompleted ? '[x]' : '[ ]';
+  lines.push(`- ${checkbox} ${reminder.title}`);
+  if (reminder.list) lines.push(`  - List: ${reminder.list}`);
+  if (reminder.id) lines.push(`  - ID: ${reminder.id}`);
+  if (reminder.notes)
+    lines.push(`  - Notes: ${reminder.notes.replace(/\n/g, '\n    ')}`);
+  if (reminder.dueDate) lines.push(`  - Due: ${reminder.dueDate}`);
+  if (reminder.url) lines.push(`  - URL: ${reminder.url}`);
+  return lines;
+};
+
 // --- Reminder Handlers ---
 
 export const handleCreateReminder = async (
@@ -83,19 +107,11 @@ export const handleReadReminders = async (
     // because id might be filtered out by schema validation if it's optional
     if (args.id) {
       const reminder = await reminderRepository.findReminderById(args.id);
-      const markdownLines: string[] = [];
-      const checkbox = reminder.isCompleted ? '[x]' : '[ ]';
-      markdownLines.push(`### Reminder`);
-      markdownLines.push('');
-      markdownLines.push(`- ${checkbox} ${reminder.title}`);
-      if (reminder.list) markdownLines.push(`  - List: ${reminder.list}`);
-      if (reminder.id) markdownLines.push(`  - ID: ${reminder.id}`);
-      if (reminder.notes)
-        markdownLines.push(
-          `  - Notes: ${reminder.notes.replace(/\n/g, '\n    ')}`,
-        );
-      if (reminder.dueDate) markdownLines.push(`  - Due: ${reminder.dueDate}`);
-      if (reminder.url) markdownLines.push(`  - URL: ${reminder.url}`);
+      const markdownLines: string[] = [
+        '### Reminder',
+        '',
+        ...formatReminderMarkdown(reminder),
+      ];
       return markdownLines.join('\n');
     }
 
@@ -107,22 +123,16 @@ export const handleReadReminders = async (
       dueWithin: validatedArgs.dueWithin,
     });
 
-    const markdownLines: string[] = [];
-    markdownLines.push(`### Reminders (Total: ${reminders.length})`);
-    markdownLines.push('');
+    const markdownLines: string[] = [
+      `### Reminders (Total: ${reminders.length})`,
+      '',
+    ];
 
     if (reminders.length === 0) {
       markdownLines.push('No reminders found matching the criteria.');
     } else {
       reminders.forEach((r) => {
-        const checkbox = r.isCompleted ? '[x]' : '[ ]';
-        markdownLines.push(`- ${checkbox} ${r.title}`);
-        if (r.list) markdownLines.push(`  - List: ${r.list}`);
-        if (r.id) markdownLines.push(`  - ID: ${r.id}`);
-        if (r.notes)
-          markdownLines.push(`  - Notes: ${r.notes.replace(/\n/g, '\n    ')}`);
-        if (r.dueDate) markdownLines.push(`  - Due: ${r.dueDate}`);
-        if (r.url) markdownLines.push(`  - URL: ${r.url}`);
+        markdownLines.push(...formatReminderMarkdown(r));
       });
     }
 

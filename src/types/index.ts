@@ -35,7 +35,7 @@ export interface ServerConfig {
 /**
  * Shared type constants for better type safety and consistency
  */
-export type ReminderAction = 'read' | 'list' | 'create' | 'update' | 'delete';
+export type ReminderAction = 'read' | 'create' | 'update' | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
 export type DueWithinOption =
   | 'today'
@@ -86,7 +86,6 @@ export interface ListsToolArgs extends BaseToolArgs {
  */
 export type {
   DailyTaskOrganizerArgs,
-  GoalTrackingSetupArgs,
   PromptArgsByName,
   PromptArgumentDefinition,
   PromptMessage,
@@ -95,7 +94,6 @@ export type {
   PromptName,
   PromptResponse,
   PromptTemplate,
-  ReminderCleanupGuideArgs,
   ReminderReviewAssistantArgs,
   SmartReminderCreatorArgs,
   WeeklyPlanningWorkflowArgs,

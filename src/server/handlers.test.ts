@@ -160,7 +160,7 @@ describe('Server Handlers', () => {
 
         expect(result).toHaveProperty('prompts');
         expect(Array.isArray(result.prompts)).toBe(true);
-        expect(result.prompts.length).toBe(6);
+        expect(result.prompts.length).toBe(4);
 
         // Check if all expected prompts are present
         const promptNames = result.prompts.map((p: MockPrompt) => p.name);
@@ -168,193 +168,84 @@ describe('Server Handlers', () => {
         expect(promptNames).toContain('smart-reminder-creator');
         expect(promptNames).toContain('reminder-review-assistant');
         expect(promptNames).toContain('weekly-planning-workflow');
-        expect(promptNames).toContain('reminder-cleanup-guide');
-        expect(promptNames).toContain('goal-tracking-setup');
       });
     });
 
     describe('Get Prompt Handler', () => {
-      test('should return daily-task-organizer prompt', async () => {
-        const request = {
-          params: {
-            name: 'daily-task-organizer',
-            arguments: {
-              task_category: 'work',
-              priority_level: 'high',
-              time_frame: 'today',
-            },
-          },
-        };
-
-        const result = await getPromptHandler(request);
-
-        expect(result.description).toContain(
+      it.each([
+        [
+          'daily-task-organizer',
+          { today_focus: 'finish quarterly report and prepare slides' },
           'Comprehensive daily task organization',
-        );
-        expect(result.messages).toHaveLength(1);
-        expect(result.messages[0].role).toBe('user');
-        expect(result.messages[0].content.type).toBe('text');
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'work',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'high',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'today',
-        );
-      });
-
-      test('should return smart-reminder-creator prompt', async () => {
-        const request = {
-          params: {
-            name: 'smart-reminder-creator',
-            arguments: {
-              task_description: 'Complete project proposal',
-              context: 'For client meeting',
-              urgency: 'high',
-            },
-          },
-        };
-
-        const result = await getPromptHandler(request);
-
-        expect(result.description).toContain('Intelligent reminder creation');
-        expect(result.messages).toHaveLength(1);
-        expect((result.messages[0].content as MessageContent).text).toContain(
+          'finish quarterly report and prepare slides',
+        ],
+        [
+          'smart-reminder-creator',
+          { task_idea: 'Complete project proposal' },
+          'Intelligent reminder creation',
           'Complete project proposal',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'For client meeting',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'high',
-        );
-      });
+        ],
+      ])(
+        'should return %s prompt with arguments',
+        async (name, args, expectedDescription, expectedContent) => {
+          const request = {
+            params: { name, arguments: args },
+          };
 
-      test('should return goal-tracking-setup prompt', async () => {
-        const request = {
-          params: {
-            name: 'goal-tracking-setup',
-            arguments: {
-              goal_type: 'health',
-              time_horizon: 'weekly',
-            },
-          },
-        };
+          const result = await getPromptHandler(request);
 
-        const result = await getPromptHandler(request);
+          expect(result.description).toContain(expectedDescription);
+          expect(result.messages).toHaveLength(1);
+          expect(result.messages[0].role).toBe('user');
+          expect(result.messages[0].content.type).toBe('text');
+          expect((result.messages[0].content as MessageContent).text).toContain(
+            expectedContent,
+          );
+        },
+      );
 
-        expect(result.description).toContain('goal tracking system');
-        expect(result.messages).toHaveLength(1);
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'health',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'weekly',
-        );
-      });
+      it.each([
+        [
+          'daily-task-organizer',
+          {},
+          "Today's focus ideas: none provided",
+          'Planning horizon: today',
+        ],
+        ['smart-reminder-creator', {}, 'Task idea:', undefined],
+      ])(
+        'should handle %s with empty arguments',
+        async (name, args, expectedText1, expectedText2) => {
+          const request = {
+            params: { name, arguments: args },
+          };
 
-      test('should handle default values for optional arguments', async () => {
-        const request = {
-          params: {
-            name: 'daily-task-organizer',
-            arguments: {},
-          },
-        };
+          const result = await getPromptHandler(request);
 
-        const result = await getPromptHandler(request);
+          expect(result).toBeDefined();
+          expect(result.messages[0].content.type).toBe('text');
+          const text = (result.messages[0].content as MessageContent).text;
+          expect(text).toContain(expectedText1);
+          if (expectedText2) {
+            expect(text).toContain(expectedText2);
+          }
+        },
+      );
 
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'all categories',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'today',
-        );
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'mixed priorities',
-        );
-      });
+      it.each([
+        ['unknown-prompt', 'Unknown prompt: unknown-prompt'],
+        [123 as unknown, 'Prompt name must be a string.'],
+      ])(
+        'should throw error for invalid prompt: %s',
+        async (name, expectedError) => {
+          const request = {
+            params: { name, arguments: {} },
+          };
 
-      test('should handle missing arguments', async () => {
-        const request = {
-          params: {
-            name: 'reminder-cleanup-guide',
-            arguments: {},
-          },
-        };
-
-        const result = await getPromptHandler(request);
-
-        expect((result.messages[0].content as MessageContent).text).toContain(
-          'comprehensive',
-        );
-      });
-
-      test('should throw when required arguments are missing', async () => {
-        const request = {
-          params: {
-            name: 'smart-reminder-creator',
-            arguments: {},
-          },
-        };
-
-        await expect(getPromptHandler(request)).rejects.toThrow(
-          'Prompt "smart-reminder-creator" requires the "task_description" argument to be provided as a non-empty string.',
-        );
-      });
-
-      test('should throw error for unknown prompt', async () => {
-        const request = {
-          params: {
-            name: 'unknown-prompt',
-            arguments: {},
-          },
-        };
-
-        await expect(getPromptHandler(request)).rejects.toThrow(
-          'Unknown prompt: unknown-prompt',
-        );
-      });
-
-      test('should throw error when name is not a string', async () => {
-        const request = {
-          params: {
-            name: 123 as unknown,
-            arguments: {},
-          },
-        };
-
-        await expect(getPromptHandler(request)).rejects.toThrow(
-          'Prompt name must be a string.',
-        );
-      });
-
-      test('should handle null arguments', async () => {
-        const request = {
-          params: {
-            name: 'reminder-cleanup-guide',
-            arguments: null,
-          },
-        };
-
-        const result = await getPromptHandler(request);
-        expect(result).toBeDefined();
-        expect(result.messages).toHaveLength(1);
-      });
-
-      test('should handle undefined arguments', async () => {
-        const request = {
-          params: {
-            name: 'reminder-cleanup-guide',
-            arguments: undefined,
-          },
-        };
-
-        const result = await getPromptHandler(request);
-        expect(result).toBeDefined();
-        expect(result.messages).toHaveLength(1);
-      });
+          await expect(getPromptHandler(request)).rejects.toThrow(
+            expectedError,
+          );
+        },
+      );
     });
   });
 
@@ -405,269 +296,6 @@ describe('Server Handlers', () => {
 
       const result = await callToolHandler(request);
       expect(result).toBeDefined();
-    });
-  });
-});
-
-describe('Server Handlers - Prompts', () => {
-  describe('ListPromptsRequestSchema', () => {
-    it('should return all available prompts', async () => {
-      const testServer = new Server(
-        { name: 'test', version: '1.0.0' },
-        { capabilities: { prompts: {}, resources: {}, tools: {} } },
-      );
-
-      let listPromptsHandler:
-        | jest.MockedFunction<() => Promise<ListPromptsResponse>>
-        | undefined;
-
-      // Mock setRequestHandler to capture the handler
-      const originalSetRequestHandler = testServer.setRequestHandler;
-      testServer.setRequestHandler = jest.fn(
-        (schema: unknown, handler: unknown) => {
-          if (schema === (ListPromptsRequestSchema as unknown)) {
-            listPromptsHandler = handler as jest.MockedFunction<
-              () => Promise<ListPromptsResponse>
-            >;
-          }
-          return originalSetRequestHandler.call(
-            testServer,
-            schema as unknown as Parameters<
-              typeof originalSetRequestHandler
-            >[0],
-            handler as unknown as Parameters<
-              typeof originalSetRequestHandler
-            >[1],
-          );
-        },
-      );
-
-      registerHandlers(testServer);
-
-      expect(listPromptsHandler).toBeDefined();
-      const response = await listPromptsHandler?.();
-
-      expect(response).toBeDefined();
-      expect(response as ListPromptsResponse).toHaveProperty('prompts');
-      expect(Array.isArray(response?.prompts)).toBe(true);
-      expect(response?.prompts.length).toBe(6);
-
-      // Check if all expected prompts are present
-      const promptNames = response?.prompts.map((p: MockPrompt) => p.name);
-      expect(promptNames).toContain('daily-task-organizer');
-      expect(promptNames).toContain('smart-reminder-creator');
-      expect(promptNames).toContain('reminder-review-assistant');
-      expect(promptNames).toContain('weekly-planning-workflow');
-      expect(promptNames).toContain('reminder-cleanup-guide');
-      expect(promptNames).toContain('goal-tracking-setup');
-    });
-
-    it('should have proper prompt structure', async () => {
-      const testServer = new Server(
-        { name: 'test', version: '1.0.0' },
-        { capabilities: { prompts: {}, resources: {}, tools: {} } },
-      );
-
-      let listPromptsHandler:
-        | jest.MockedFunction<() => Promise<ListPromptsResponse>>
-        | undefined;
-
-      const originalSetRequestHandler = testServer.setRequestHandler;
-      testServer.setRequestHandler = jest.fn(
-        (schema: unknown, handler: unknown) => {
-          if (schema === (ListPromptsRequestSchema as unknown)) {
-            listPromptsHandler = handler as jest.MockedFunction<
-              () => Promise<ListPromptsResponse>
-            >;
-          }
-          return originalSetRequestHandler.call(
-            testServer,
-            schema as unknown as Parameters<
-              typeof originalSetRequestHandler
-            >[0],
-            handler as unknown as Parameters<
-              typeof originalSetRequestHandler
-            >[1],
-          );
-        },
-      );
-
-      registerHandlers(testServer);
-      expect(listPromptsHandler).toBeDefined();
-      const response = await listPromptsHandler?.();
-
-      expect(response).toBeDefined();
-      response?.prompts.forEach((prompt: MockPrompt) => {
-        expect(prompt).toHaveProperty('name');
-        expect(prompt).toHaveProperty('description');
-        expect(prompt).toHaveProperty('arguments');
-        expect(Array.isArray(prompt.arguments)).toBe(true);
-
-        // Check argument structure
-        prompt.arguments.forEach((arg: MockPromptArgument) => {
-          expect(arg).toHaveProperty('name');
-          expect(arg).toHaveProperty('description');
-          expect(arg).toHaveProperty('required');
-          expect(typeof arg.required).toBe('boolean');
-        });
-      });
-    });
-  });
-
-  describe('GetPromptRequestSchema', () => {
-    let getPromptHandler: jest.MockedFunction<
-      (args: unknown) => Promise<GetPromptResponse>
-    >;
-
-    beforeEach(() => {
-      const testServer = new Server(
-        { name: 'test', version: '1.0.0' },
-        { capabilities: { prompts: {}, resources: {}, tools: {} } },
-      );
-
-      const originalSetRequestHandler = testServer.setRequestHandler;
-      testServer.setRequestHandler = jest.fn(
-        (schema: unknown, handler: unknown) => {
-          if (schema === (GetPromptRequestSchema as unknown)) {
-            getPromptHandler = handler as jest.MockedFunction<
-              (args: unknown) => Promise<GetPromptResponse>
-            >;
-          }
-          return originalSetRequestHandler.call(
-            testServer,
-            schema as unknown as Parameters<
-              typeof originalSetRequestHandler
-            >[0],
-            handler as unknown as Parameters<
-              typeof originalSetRequestHandler
-            >[1],
-          );
-        },
-      );
-
-      registerHandlers(testServer);
-    });
-
-    it('should return daily-task-organizer prompt with default arguments', async () => {
-      const request = {
-        params: {
-          name: 'daily-task-organizer',
-          arguments: {},
-        },
-      };
-
-      const response = await getPromptHandler(request);
-
-      expect(response).toHaveProperty('description');
-      expect(response).toHaveProperty('messages');
-      expect(Array.isArray(response.messages)).toBe(true);
-      expect(response.messages.length).toBe(1);
-
-      const message = response.messages[0];
-      expect(message.role).toBe('user');
-      expect(message.content.type).toBe('text');
-      expect(message.content.text).toContain(
-        'Mission: Design a realistic today execution plan in Apple Reminders',
-      );
-      expect(message.content.text).toContain(
-        'Task category focus: all categories',
-      );
-      expect(message.content.text).toContain(
-        'Priority emphasis: mixed priorities',
-      );
-      expect(message.content.text).toContain('Planning horizon: today');
-      expect(message.content.text).toContain('### Snapshot');
-    });
-
-    it('should return smart-reminder-creator prompt with custom arguments', async () => {
-      const request = {
-        params: {
-          name: 'smart-reminder-creator',
-          arguments: {
-            task_description: 'Complete project proposal',
-            context: 'Need to prepare for client meeting',
-            urgency: 'high',
-          },
-        },
-      };
-
-      const response = await getPromptHandler(request);
-
-      expect(response.description).toContain('Intelligent reminder creation');
-      const message = response.messages[0];
-      expect(message.content.text).toContain('Complete project proposal');
-      expect(message.content.text).toContain(
-        'Need to prepare for client meeting',
-      );
-      expect(message.content.text).toContain('high');
-    });
-
-    it('should return goal-tracking-setup prompt', async () => {
-      const request = {
-        params: {
-          name: 'goal-tracking-setup',
-          arguments: {
-            goal_type: 'health',
-            time_horizon: 'weekly',
-          },
-        },
-      };
-
-      const response = await getPromptHandler(request);
-
-      expect(response.description).toContain('goal tracking system');
-      const message = response.messages[0];
-      expect(message.content.text).toContain('health');
-      expect(message.content.text).toContain('weekly');
-      expect(message.content.text).toContain('milestones');
-    });
-
-    it('should throw error for unknown prompt', async () => {
-      const request = {
-        params: {
-          name: 'unknown-prompt',
-          arguments: {},
-        },
-      };
-
-      await expect(getPromptHandler(request)).rejects.toThrow(
-        'Unknown prompt: unknown-prompt',
-      );
-    });
-
-    it('should handle prompts with optional arguments', async () => {
-      const request = {
-        params: {
-          name: 'reminder-cleanup-guide',
-          arguments: {},
-        },
-      };
-
-      const response = await getPromptHandler(request);
-
-      expect(response.description).toContain('cleaning up and organizing');
-      const message = response.messages[0];
-      expect(message.content.text).toContain(
-        'Mission: Execute a comprehensive clean-up',
-      );
-      expect(message.content.text).toContain(
-        '### Audit highlights — bullet list summarising clutter sources and impact.',
-      );
-    });
-
-    it('should validate required arguments', async () => {
-      const request = {
-        params: {
-          name: 'goal-tracking-setup',
-          arguments: {
-            goal_type: '',
-          },
-        },
-      };
-
-      await expect(getPromptHandler(request)).rejects.toThrow(
-        'Prompt "goal-tracking-setup" requires the "goal_type" argument to be provided as a non-empty string.',
-      );
     });
   });
 });

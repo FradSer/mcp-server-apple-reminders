@@ -57,16 +57,20 @@ describe('ErrorHandling', () => {
       expect(result.content[0].text).toBe('Validation failed');
     });
 
-    it('should handle different operation names', async () => {
-      const mockOperation = jest.fn().mockRejectedValue(new Error('Failed'));
+    it.each([
+      ['create reminder', 'Failed to create reminder'],
+      ['update reminder', 'Failed to update reminder'],
+      ['delete reminder', 'Failed to delete reminder'],
+    ])(
+      'should format error message for "%s"',
+      async (operationName, expectedText) => {
+        const mockOperation = jest.fn().mockRejectedValue(new Error('Failed'));
 
-      const result = await handleAsyncOperation(
-        mockOperation,
-        'create reminder',
-      );
+        const result = await handleAsyncOperation(mockOperation, operationName);
 
-      expect(result.content[0].text).toContain('Failed to create reminder');
-    });
+        expect(result.content[0].text).toContain(expectedText);
+      },
+    );
 
     it('should show detailed error in development mode', async () => {
       process.env.NODE_ENV = 'development';
@@ -110,33 +114,25 @@ describe('ErrorHandling', () => {
       if (originalDebug) process.env.DEBUG = originalDebug;
     });
 
-    it('should handle non-Error exceptions', async () => {
-      const mockOperation = jest.fn().mockRejectedValue('String error');
+    it.each([
+      ['String error', 'string error'],
+      [{ code: 'ERROR' }, { code: 'ERROR' }],
+    ])(
+      'should handle non-Error exceptions: %s',
+      async (errorValue, _description) => {
+        const mockOperation = jest.fn().mockRejectedValue(errorValue);
 
-      const result = await handleAsyncOperation(
-        mockOperation,
-        'test operation',
-      );
+        const result = await handleAsyncOperation(
+          mockOperation,
+          'test operation',
+        );
 
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toBe(
-        'Failed to test operation: System error occurred',
-      );
-    });
-
-    it('should handle object errors', async () => {
-      const mockOperation = jest.fn().mockRejectedValue({ code: 'ERROR' });
-
-      const result = await handleAsyncOperation(
-        mockOperation,
-        'test operation',
-      );
-
-      expect(result.isError).toBe(true);
-      expect(result.content[0].text).toBe(
-        'Failed to test operation: System error occurred',
-      );
-    });
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toBe(
+          'Failed to test operation: System error occurred',
+        );
+      },
+    );
 
     it('should show detailed error when DEBUG is set', async () => {
       process.env.DEBUG = '1';
