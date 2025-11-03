@@ -95,18 +95,20 @@ const buildDailyTaskOrganizerPrompt = (
             'Map existing reminders, lists, and calendar obligations to surface constraints.',
             'Cluster tasks by priority and energy profile, highlighting blockers and dependencies.',
             'Sequence the day with focus blocks, recovery windows, and buffer time for surprises.',
-            'Recommend reminder list placements, notes, and tagging that reinforce the plan.',
+            'Recommend reminder list placements, notes, and tagging updates for existing reminders, only flagging new reminder ideas when the user has already opted in.',
             'Define a lightweight review ritual to resync the system at the end of the day.',
           ],
           constraints: [
             'Use fuzzy time expressions when proposing schedules; invite the user to refine if exact times are required.',
             'Ask for missing critical context (capacity, deadlines, location) before finalising recommendations.',
             'Stay within capabilities of native Apple Reminders features available on iOS and macOS.',
+            'Do not propose creating brand-new reminders or tasks unless the user explicitly requests them—focus on reorganising and sequencing existing work.',
+            'Explicitly state the primary work scope or focus area before offering detailed guidance.',
           ],
           outputFormat: [
-            '### Snapshot — bullet list summarising workload, active lists, and conflicts.',
+            '### Snapshot — bullet list summarising workload, active lists, primary work scope, and conflicts.',
             '### Daily timeline — Markdown table with columns: time window, focus, supporting reminder list.',
-            '### Reminder programming — bullet list of reminders to create or adjust with rationale.',
+            '### Reminder adjustments — bullet list of existing reminders to reschedule, retag, or reprioritise with rationale. If the user explicitly asked for new reminders, mark them as opt-in suggestions.',
             '### Review cadence — single sentence describing the end-of-day reset.',
           ],
           qualityBar: [
@@ -116,6 +118,7 @@ const buildDailyTaskOrganizerPrompt = (
             'Every suggestion is actionable and tied to a specific reminder or list.',
             'Assumptions and risks are surfaced with mitigation ideas.',
             'Recommendations remain lightweight and sustainable to execute.',
+            'Response honours the no-new-reminders rule unless the user has opted in and clearly identifies the main work scope.',
           ],
           calibration: [
             'If work exceeds available focus blocks, flag trade-offs and propose deferral logic.',
@@ -137,37 +140,46 @@ const buildSmartReminderCreatorPrompt = (
     messages: [
       createMessage(
         createStructuredPrompt({
-          mission: `Mission: Produce an Apple Reminders entry for "${taskIdea || "today's key task"}" that prevents follow-through failures using realistic timing and clarity.`,
+          mission: `Mission: Craft a single Apple Reminder for "${
+            taskIdea || "today's key task"
+          }" that names the primary execution scope, avoids duplicates, and sets the user up to follow through.`,
           contextInputs: [
             `Task idea: ${taskIdea || 'none provided — propose a sensible framing and ask for confirmation'}`,
+            'Existing reminder landscape to cross-check for duplicates or related work.',
           ],
           process: [
-            'Scan existing reminders and commitments to avoid duplicates or collisions.',
-            'Break the task into atomic outcomes and note any prerequisites or dependencies.',
-            'Select an appropriate reminder list and schedule fuzzy time checkpoints aligned to importance.',
-            'Recommend supportive notes, attachments, or subtasks that remove ambiguity.',
-            'Propose follow-up or escalation reminders that keep momentum after the initial task fires.',
+            'Identify the primary execution scope, reference any overlapping reminders, and confirm intent before building the structure.',
+            'Probe for missing critical context (location, collaborators, blockers, effort) so the reminder captures everything needed to start.',
+            'Shape the reminder title, list placement, and fuzzy timing so it fits the user’s schedule and priority signals.',
+            'Define supporting metadata—notes, subtasks, attachments—that clarify success criteria without inflating scope.',
+            'Outline optional follow-up nudges only if the user has opted in, keeping them tied to the same objective.',
           ],
           constraints: [
             'Use fuzzy time expressions for scheduling (for example, "later today" or "end of week") and clarify only when precision is mandatory.',
-            'Question missing critical details (location, collaborators, blockers) before locking the reminder.',
+            'Ask for missing critical details before locking the reminder; if answers are unavailable, surface assumptions for confirmation.',
             'Only rely on capabilities shipped with Apple Reminders without assuming third-party integrations.',
+            'Limit the workflow to the specific reminder the user has asked about—do not create additional tasks unless they explicitly request them.',
+            'Present follow-up or escalation reminders as opt-in suggestions and only when they serve the primary execution scope.',
+            'Explicitly surface the primary execution focus before detailing the reminder structure.',
           ],
           outputFormat: [
+            '### Primary focus — one sentence naming the reminder objective and scope.',
             '### Core reminder — name, target reminder list, fuzzy timing window.',
             '### Support details — bullet list covering notes, subtasks, and relevant metadata.',
-            '### Follow-up sequence — ordered list of subsequent reminders or check-ins.',
-            '### Risks — short bullet list of potential failure points and mitigation ideas.',
+            '### Follow-up sequence — ordered list of optional next nudges (omit if the user declined additional reminders).',
+            '### Risks — short bullet list of potential failure points, assumptions, and mitigation ideas.',
           ],
           qualityBar: [
             'Reminder timing aligns with importance and respects existing commitments.',
-            'All dependencies are either satisfied or have explicit follow-up reminders.',
+            'All dependencies are either satisfied or have explicit opt-in follow-up reminders.',
             'Output highlights any assumptions the user must confirm before saving the reminder.',
-            'Each suggestion is actionable and tied to a specific reminder list.',
+            'Each suggestion is actionable, tied to a specific reminder list, and anchored in the declared scope.',
             'Recommendations remain lightweight and sustainable to execute.',
+            'Response honours the no-extra-reminders rule, keeps optional items clearly labelled, and reiterates the main execution scope.',
           ],
           calibration: [
             'If context is insufficient to schedule confidently, respond with targeted clarification questions before delivering the final structure.',
+            'When the user has not opted into extra reminders, replace the follow-up section with a short note encouraging a future check-in instead of proposing new tasks.',
           ],
         }),
       ),
@@ -202,8 +214,11 @@ const buildReminderReviewAssistantPrompt = (
             'Reference fuzzy time adjustments when suggesting new schedules or follow-ups.',
             'If critical context (volume, recurring tasks, shared lists) is missing, request it before final guidance.',
             'Keep recommendations grounded in Apple Reminders native functionality and settings.',
+            'Do not invent brand-new reminders or tasks—limit guidance to curating and refining the existing set unless the user explicitly opts in.',
+            'Call out the primary review scope or list focus before diving into detailed recommendations.',
           ],
           outputFormat: [
+            '### Focus alignment — short paragraph identifying the primary review scope and headline issues.',
             '### Findings — bullet list of key insights about the current reminder landscape.',
             '### Clean-up actions — table with columns: reminder/list, action, rationale.',
           ],
@@ -211,6 +226,7 @@ const buildReminderReviewAssistantPrompt = (
             'Every suggested action ties back to a specific reminder list or identifiable pattern.',
             'Proposed routines are lightweight enough to sustain weekly without tool fatigue.',
             'Risks or dependencies (shared ownership, mandatory notifications) are surfaced with mitigation ideas.',
+            'Response adheres to the no-new-reminders rule and makes the main review scope unmistakable.',
           ],
           calibration: [
             'If the inventory reveals more work than can be actioned immediately, flag phased recommendations with prioritised batches.',
@@ -259,9 +275,10 @@ const buildWeeklyPlanningWorkflowPrompt = (
             'Prioritize reminders that clearly align with user planning ideas when making scheduling decisions.',
             'Keep all recommendations achievable within Apple Reminders native functionality.',
             'If critical context (workload capacity, hard deadlines, shared lists) is missing, request it before final guidance.',
+            'State the primary weekly focus or themes up front so the user sees where the plan is anchored.',
           ],
           outputFormat: [
-            '### Weekly planning summary — brief paragraph interpreting user ideas and translating them into actionable planning priorities.',
+            '### Weekly planning summary — brief paragraph interpreting user ideas, naming the primary focus/themes, and translating them into actionable planning priorities.',
             '### Due date assignments — Markdown table with columns: reminder title, current list, suggested due date (fuzzy time), priority rationale, notes.',
             '### Week timeline overview — Markdown table with columns: day, fuzzy time windows, primary themes, reminders assigned to each window.',
             '### Scheduling insights — bullet list highlighting workload distribution, potential conflicts, overloaded days, or reminders needing user input.',
@@ -275,6 +292,7 @@ const buildWeeklyPlanningWorkflowPrompt = (
             'Conflicts and risks are surfaced with concrete mitigation suggestions.',
             'Each suggestion is actionable and tied to a specific reminder or list.',
             'Recommendations remain lightweight and sustainable to execute.',
+            'Response reinforces the no-new-reminders rule and highlights the main weekly focus explicitly.',
           ],
           calibration: [
             'If user ideas cannot be mapped to existing reminders, summarize these as "future planning notes" without creating reminders.',
