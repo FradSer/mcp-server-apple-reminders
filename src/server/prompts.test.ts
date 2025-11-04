@@ -53,6 +53,18 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(/Avoid duplicate reminders/i);
     expect(text).toMatch(/Batch tool calls/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
+    expect(text).toMatch(
+      /Build due date strings explicitly with today's date/i,
+    );
+    expect(text).toMatch(/use the exact format "\d{4}-\d{2}-\d{2} HH:mm:ss"/i);
+    expect(text).toMatch(
+      /Name deep work blocks using the pattern "Deep Work — \[Reminder Title]/i,
+    );
+    expect(text).toMatch(/Deep work blocks should last 90 minutes by default/i);
+    expect(text).toMatch(/Ensure the block spans the reminder's due time/i);
+    expect(text).toMatch(
+      /Plan no more than (two|2) or (three|3) deep work blocks per day with 15-30 minute breaks/i,
+    );
   });
 
   it('daily organizer provides a questions section for missing info', () => {
@@ -65,5 +77,6 @@ describe('prompt time horizons', () => {
     const text = getPromptText(response);
 
     expect(text).toMatch(/### Questions/i);
+    expect(text).toMatch(/### Verification log/i);
   });
 });
