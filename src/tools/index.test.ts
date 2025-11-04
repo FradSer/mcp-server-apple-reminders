@@ -1,7 +1,11 @@
 // Use global Jest functions to avoid extra dependencies
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
+import type {
+  CalendarToolArgs,
+  ListsToolArgs,
+  RemindersToolArgs,
+} from '../types/index.js';
 import { handleToolCall, TOOLS } from './index.js';
 
 // Mock all handler functions
@@ -14,22 +18,39 @@ jest.mock('./handlers.js', () => ({
   handleCreateReminderList: jest.fn(),
   handleUpdateReminderList: jest.fn(),
   handleDeleteReminderList: jest.fn(),
+  handleCreateCalendarEvent: jest.fn(),
+  handleReadCalendarEvents: jest.fn(),
+  handleUpdateCalendarEvent: jest.fn(),
+  handleDeleteCalendarEvent: jest.fn(),
+  handlePermissionStatus: jest.fn(),
+  handlePermissionRequest: jest.fn(),
 }));
 
 jest.mock('./definitions.js', () => ({
   TOOLS: [
     { name: 'reminders', description: 'Unified reminders tool' },
     { name: 'lists', description: 'Reminder lists tool' },
+    { name: 'calendar', description: 'Calendar events tool' },
+    {
+      name: 'permissions',
+      description: 'Checks and requests calendar or reminders access',
+    },
   ],
 }));
 
 import {
+  handleCreateCalendarEvent,
   handleCreateReminder,
   handleCreateReminderList,
+  handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
+  handlePermissionRequest,
+  handlePermissionStatus,
+  handleReadCalendarEvents,
   handleReadReminderLists,
   handleReadReminders,
+  handleUpdateCalendarEvent,
   handleUpdateReminder,
   handleUpdateReminderList,
 } from './handlers.js';
@@ -61,6 +82,28 @@ const mockHandleUpdateReminderList =
 const mockHandleDeleteReminderList =
   handleDeleteReminderList as jest.MockedFunction<
     typeof handleDeleteReminderList
+  >;
+const mockHandleCreateCalendarEvent =
+  handleCreateCalendarEvent as jest.MockedFunction<
+    typeof handleCreateCalendarEvent
+  >;
+const mockHandleReadCalendarEvents =
+  handleReadCalendarEvents as jest.MockedFunction<
+    typeof handleReadCalendarEvents
+  >;
+const mockHandleUpdateCalendarEvent =
+  handleUpdateCalendarEvent as jest.MockedFunction<
+    typeof handleUpdateCalendarEvent
+  >;
+const mockHandleDeleteCalendarEvent =
+  handleDeleteCalendarEvent as jest.MockedFunction<
+    typeof handleDeleteCalendarEvent
+  >;
+const mockHandlePermissionStatus =
+  handlePermissionStatus as jest.MockedFunction<typeof handlePermissionStatus>;
+const mockHandlePermissionRequest =
+  handlePermissionRequest as jest.MockedFunction<
+    typeof handlePermissionRequest
   >;
 
 describe('Tools Index', () => {
@@ -330,6 +373,125 @@ describe('Tools Index', () => {
       const toolNames = TOOLS.map((tool) => tool.name);
       expect(toolNames).toContain('reminders');
       expect(toolNames).toContain('lists');
+      expect(toolNames).toContain('calendar');
+      expect(toolNames).toContain('permissions');
+    });
+  });
+
+  describe('permissions tool routing', () => {
+    it('should route status action to permission status handler', async () => {
+      const expected: CallToolResult = {
+        content: [{ type: 'text', text: 'Calendar status' }],
+        isError: false,
+      };
+      mockHandlePermissionStatus.mockResolvedValue(expected);
+
+      const args = { action: 'status' as const, target: 'calendar' };
+      const result = await handleToolCall('permissions', args);
+
+      expect(mockHandlePermissionStatus).toHaveBeenCalledWith(args);
+      expect(result).toEqual(expected);
+    });
+
+    it('should route request action to permission request handler', async () => {
+      const expected: CallToolResult = {
+        content: [{ type: 'text', text: 'Request done' }],
+        isError: false,
+      };
+      mockHandlePermissionRequest.mockResolvedValue(expected);
+
+      const args = { action: 'request' as const, target: 'reminders' };
+      const result = await handleToolCall('permissions', args);
+
+      expect(mockHandlePermissionRequest).toHaveBeenCalledWith(args);
+      expect(result).toEqual(expected);
+    });
+
+    it('should return error for unknown permission action', async () => {
+      const result = await handleToolCall('permissions', {
+        action: 'invalid',
+        target: 'calendar',
+      } as unknown as { action: 'status'; target: 'calendar' });
+
+      expect(result).toEqual({
+        content: [
+          { type: 'text', text: 'Unknown permissions action: invalid' },
+        ],
+        isError: true,
+      });
+    });
+  });
+
+  describe('calendar tool routing', () => {
+    it.each([
+      ['read', mockHandleReadCalendarEvents, { action: 'read' as const }],
+      [
+        'create',
+        mockHandleCreateCalendarEvent,
+        {
+          action: 'create' as const,
+          title: 'New Event',
+          startDate: '2025-11-04 14:00:00',
+          endDate: '2025-11-04 16:00:00',
+        },
+      ],
+      [
+        'update',
+        mockHandleUpdateCalendarEvent,
+        {
+          action: 'update' as const,
+          id: 'event-123',
+          title: 'Updated Event',
+        },
+      ],
+      [
+        'delete',
+        mockHandleDeleteCalendarEvent,
+        { action: 'delete' as const, id: 'event-123' },
+      ],
+    ])(
+      'should route calendar action=%s correctly',
+      async (_action, mockHandler, args) => {
+        const expectedResult: CallToolResult = {
+          content: [{ type: 'text', text: 'Success' }],
+          isError: false,
+        };
+
+        mockHandler.mockResolvedValue(expectedResult);
+
+        const result = await handleToolCall(
+          'calendar',
+          args as CalendarToolArgs,
+        );
+
+        expect(mockHandler).toHaveBeenCalledWith(args);
+        expect(result).toEqual(expectedResult);
+      },
+    );
+
+    it('should return error for unknown calendar action', async () => {
+      const result = await handleToolCall('calendar', {
+        action: 'unknown',
+      } as unknown as CalendarToolArgs);
+
+      expect(result).toEqual({
+        content: [
+          {
+            type: 'text',
+            text: 'Unknown calendar action: unknown',
+          },
+        ],
+        isError: true,
+      });
+    });
+
+    it('should return error when calendar args are missing', async () => {
+      const result = await handleToolCall('calendar', undefined);
+
+      expect(result).toEqual({
+        content: [{ type: 'text', text: 'No arguments provided' }],
+        isError: true,
+      });
     });
   });
 });

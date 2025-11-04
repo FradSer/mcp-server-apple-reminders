@@ -4,16 +4,27 @@
  */
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
+import type {
+  CalendarToolArgs,
+  ListsToolArgs,
+  PermissionsToolArgs,
+  RemindersToolArgs,
+} from '../types/index.js';
 import { MESSAGES } from '../utils/constants.js';
 import { TOOLS } from './definitions.js';
 import {
+  handleCreateCalendarEvent,
   handleCreateReminder,
   handleCreateReminderList,
+  handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
+  handlePermissionRequest,
+  handlePermissionStatus,
+  handleReadCalendarEvents,
   handleReadReminderLists,
   handleReadReminders,
+  handleUpdateCalendarEvent,
   handleUpdateReminder,
   handleUpdateReminderList,
 } from './handlers.js';
@@ -26,7 +37,11 @@ import {
  */
 export async function handleToolCall(
   name: string,
-  args?: RemindersToolArgs | ListsToolArgs,
+  args?:
+    | RemindersToolArgs
+    | ListsToolArgs
+    | CalendarToolArgs
+    | PermissionsToolArgs,
 ): Promise<CallToolResult> {
   switch (name) {
     case 'reminders': {
@@ -83,6 +98,75 @@ export async function handleToolCall(
               {
                 type: 'text',
                 text: MESSAGES.ERROR.UNKNOWN_ACTION('lists', String(action)),
+              },
+            ],
+            isError: true,
+          };
+      }
+    }
+    case 'calendar': {
+      const action = args?.action;
+      if (!args) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: 'No arguments provided',
+            },
+          ],
+          isError: true,
+        };
+      }
+      switch (action) {
+        case 'read':
+          return handleReadCalendarEvents(args as CalendarToolArgs);
+        case 'create':
+          return handleCreateCalendarEvent(args as CalendarToolArgs);
+        case 'update':
+          return handleUpdateCalendarEvent(args as CalendarToolArgs);
+        case 'delete':
+          return handleDeleteCalendarEvent(args as CalendarToolArgs);
+        default:
+          return {
+            content: [
+              {
+                type: 'text',
+                text: MESSAGES.ERROR.UNKNOWN_ACTION('calendar', String(action)),
+              },
+            ],
+            isError: true,
+          };
+      }
+    }
+    case 'permissions': {
+      const permissionArgs = args as PermissionsToolArgs | undefined;
+      if (!permissionArgs) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: 'No arguments provided',
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const action = permissionArgs.action;
+      switch (action) {
+        case 'status':
+          return handlePermissionStatus(permissionArgs);
+        case 'request':
+          return handlePermissionRequest(permissionArgs);
+        default:
+          return {
+            content: [
+              {
+                type: 'text',
+                text: MESSAGES.ERROR.UNKNOWN_ACTION(
+                  'permissions',
+                  String(action),
+                ),
               },
             ],
             isError: true,
