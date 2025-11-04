@@ -26,9 +26,9 @@ async function main() {
   }
 
   const scriptDir = path.resolve(process.cwd(), 'src', 'swift');
-  const sourceFile = path.join(scriptDir, 'RemindersCLI.swift');
+  const sourceFile = path.join(scriptDir, 'EventKitCLI.swift');
   const binDir = path.resolve(process.cwd(), 'bin');
-  const outputFile = path.join(binDir, 'RemindersCLI');
+  const outputFile = path.join(binDir, 'EventKitCLI');
 
   try {
     await fs.access(sourceFile);
