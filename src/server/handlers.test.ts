@@ -176,7 +176,7 @@ describe('Server Handlers', () => {
         [
           'daily-task-organizer',
           { today_focus: 'finish quarterly report and prepare slides' },
-          'Comprehensive daily task organization',
+          'Proactive daily task organization with intelligent reminder creation and optimization',
           'finish quarterly report and prepare slides',
         ],
         [
@@ -208,8 +208,8 @@ describe('Server Handlers', () => {
         [
           'daily-task-organizer',
           {},
-          "Today's focus ideas: none provided",
-          'Planning horizon: today',
+          'Organization focus: comprehensive task organization including urgency-based organization, gap filling, and reminder setup',
+          'Action scope: all active reminders and potential new reminders for today',
         ],
         ['smart-reminder-creator', {}, 'Task idea:', undefined],
       ])(

@@ -7,6 +7,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ZodSchema } from 'zod/v3';
 import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
+import { normalizeNotesText } from '../utils/notesFormatter.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 import {
   CreateReminderListSchema,
@@ -53,6 +54,13 @@ const formatReminderMarkdown = (reminder: {
 
 // --- Reminder Handlers ---
 
+/**
+ * Normalize reminder notes to ensure correct deep link format
+ */
+function normalizeReminderNotes(notes: string | undefined): string | undefined {
+  return notes ? normalizeNotesText(notes) : undefined;
+}
+
 export const handleCreateReminder = async (
   args: RemindersToolArgs,
 ): Promise<CallToolResult> => {
@@ -60,7 +68,7 @@ export const handleCreateReminder = async (
     const validatedArgs = extractAndValidateArgs(args, CreateReminderSchema);
     const reminder = await reminderRepository.createReminder({
       title: validatedArgs.title,
-      notes: validatedArgs.note,
+      notes: normalizeReminderNotes(validatedArgs.note),
       url: validatedArgs.url,
       list: validatedArgs.targetList,
       dueDate: validatedArgs.dueDate,
@@ -77,7 +85,7 @@ export const handleUpdateReminder = async (
     const reminder = await reminderRepository.updateReminder({
       id: validatedArgs.id,
       newTitle: validatedArgs.title,
-      notes: validatedArgs.note,
+      notes: normalizeReminderNotes(validatedArgs.note),
       url: validatedArgs.url,
       isCompleted: validatedArgs.completed,
       list: validatedArgs.targetList,

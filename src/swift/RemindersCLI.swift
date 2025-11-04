@@ -12,21 +12,45 @@ struct ListJSON: Codable { let id: String, title: String }
 
 // MARK: - Date Parsing Helper (Robust Implementation)
 private func parseDateComponents(from dateString: String) -> DateComponents? {
+    // First, try ISO8601DateFormatter for formats with explicit timezone (Z or +HH:MM/-HH:MM)
+    // This handles UTC and timezone-aware formats correctly
+    if dateString.contains("Z") || (dateString.contains("+") || dateString.contains("-")) && dateString.range(of: #"T\d{2}:\d{2}"#, options: .regularExpression) != nil {
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let isoDate = isoFormatter.date(from: dateString) {
+            // Convert to local timezone components
+            // This ensures UTC times are correctly converted to local timezone for storage
+            let components: Set<Calendar.Component> = dateString.contains(":") || dateString.contains("T") 
+                ? [.year, .month, .day, .hour, .minute, .second]
+                : [.year, .month, .day]
+            return Calendar.current.dateComponents(components, from: isoDate)
+        } else {
+            // Try without fractional seconds
+            isoFormatter.formatOptions = [.withInternetDateTime]
+            if let isoDate = isoFormatter.date(from: dateString) {
+                let components: Set<Calendar.Component> = dateString.contains(":") || dateString.contains("T")
+                    ? [.year, .month, .day, .hour, .minute, .second]
+                    : [.year, .month, .day]
+                return Calendar.current.dateComponents(components, from: isoDate)
+            }
+        }
+    }
+    
+    // For formats without explicit timezone (assumed to be local time)
+    // This is the preferred format: "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss"
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX") // Best practice for fixed formats
-    formatter.timeZone = TimeZone.current // Use local timezone
+    formatter.timeZone = TimeZone.current // Use local timezone - CRITICAL for correct parsing
 
     // Support multiple date formats for flexibility with LLM inputs
     let formatsToTry = [
-        // ISO 8601 formats
-        "yyyy-MM-dd'T'HH:mm:ssZZZZZ", // 2025-10-30T04:00:00Z
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ", // 2025-10-30T04:00:00.000Z
-        "yyyy-MM-dd'T'HH:mm:ss", // 2025-10-30T04:00:00
-        "yyyy-MM-dd'T'HH:mm", // 2025-10-30T04:00
-        // Standard formats
-        "yyyy-MM-dd HH:mm:ss", // 2025-10-30 04:00:00
-        "yyyy-MM-dd HH:mm", // 2025-10-30 04:00
-        "yyyy-MM-dd" // 2025-10-30
+        // ISO 8601 formats without timezone (treated as local)
+        "yyyy-MM-dd'T'HH:mm:ss", // 2025-10-30T18:00:00 (local time)
+        "yyyy-MM-dd'T'HH:mm", // 2025-10-30T18:00 (local time)
+        // Standard formats (preferred - most explicit)
+        "yyyy-MM-dd HH:mm:ss", // 2025-10-30 18:00:00 (local time)
+        "yyyy-MM-dd HH:mm", // 2025-10-30 18:00 (local time)
+        "yyyy-MM-dd" // 2025-10-30 (date only)
     ]
 
     var date: Date?
@@ -38,19 +62,6 @@ private func parseDateComponents(from dateString: String) -> DateComponents? {
         }
     }
 
-    // If all formats fail, try ISO8601DateFormatter as fallback
-    if date == nil {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let isoDate = isoFormatter.date(from: dateString) {
-            date = isoDate
-        } else {
-            // Try without fractional seconds
-            isoFormatter.formatOptions = [.withInternetDateTime]
-            date = isoFormatter.date(from: dateString)
-        }
-    }
-
     guard let validDate = date else { return nil }
 
     // Determine which components to include based on the original string
@@ -59,6 +70,7 @@ private func parseDateComponents(from dateString: String) -> DateComponents? {
         ? [.year, .month, .day, .hour, .minute, .second]
         : [.year, .month, .day]
     
+    // Extract components in local timezone - this ensures the stored time matches user intent
     return Calendar.current.dateComponents(components, from: validDate)
 }
 
@@ -206,8 +218,41 @@ class RemindersManager {
     func deleteList(title: String) throws { try eventStore.removeCalendar(try findList(named: title), commit: true) }
 }
 
+// MARK: - Date Formatting Helper
+private func formatDueDateWithTimezone(from dateComponents: DateComponents?) -> String? {
+    guard let dateComponents = dateComponents,
+          let date = Calendar.current.date(from: dateComponents) else {
+        return nil
+    }
+    
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
+    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+    
+    let timezoneOffset = formatter.timeZone.secondsFromGMT(for: date)
+    let hours = abs(timezoneOffset) / 3600
+    let minutes = (abs(timezoneOffset) % 3600) / 60
+    let sign = timezoneOffset >= 0 ? "+" : "-"
+    let tzString = String(format: "%@%02d:%02d", sign, hours, minutes)
+    
+    return formatter.string(from: date) + tzString
+}
+
 // MARK: - Extensions & Main
-extension EKReminder { func toJSON() -> ReminderJSON { ReminderJSON(id: self.calendarItemIdentifier, title: self.title, isCompleted: self.isCompleted, list: self.calendar.title, notes: self.notes, url: self.url?.absoluteString, dueDate: self.dueDateComponents?.date.map { ISO8601DateFormatter().string(from: $0) }) } }
+extension EKReminder { 
+    func toJSON() -> ReminderJSON { 
+        ReminderJSON(
+            id: self.calendarItemIdentifier,
+            title: self.title,
+            isCompleted: self.isCompleted,
+            list: self.calendar.title,
+            notes: self.notes,
+            url: self.url?.absoluteString,
+            dueDate: formatDueDateWithTimezone(from: self.dueDateComponents)
+        )
+    }
+}
 extension EKCalendar { func toJSON() -> ListJSON { ListJSON(id: self.calendarIdentifier, title: self.title) } }
 
 struct ArgumentParser { private let args: [String: String]; init() { var dict = [String: String](); var i=0; let arguments=Array(CommandLine.arguments.dropFirst()); while i<arguments.count { let key=arguments[i].replacingOccurrences(of:"--",with:""); if i+1<arguments.count && !arguments[i+1].hasPrefix("--") { dict[key]=arguments[i+1]; i+=2 } else { dict[key]="true"; i+=1 } }; self.args=dict }; func get(_ key: String)->String?{return args[key]} }
