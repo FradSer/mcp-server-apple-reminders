@@ -10,8 +10,6 @@ import {
   handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
-  handlePermissionRequest,
-  handlePermissionStatus,
   handleReadCalendarEvents,
   handleReadReminderLists,
   handleReadReminders,
@@ -21,7 +19,6 @@ import {
 } from '../tools/handlers.js';
 import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
-import { permissionRepository } from '../utils/permissionRepository.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 
 // Mock the cliExecutor to avoid import.meta issues
@@ -32,7 +29,6 @@ jest.mock('../utils/cliExecutor.js', () => ({
 // Mock the repository and error handling
 jest.mock('../utils/reminderRepository.js');
 jest.mock('../utils/calendarRepository.js');
-jest.mock('../utils/permissionRepository.js');
 jest.mock('../utils/errorHandling.js');
 
 const mockReminderRepository = reminderRepository as jest.Mocked<
@@ -40,9 +36,6 @@ const mockReminderRepository = reminderRepository as jest.Mocked<
 >;
 const mockCalendarRepository = calendarRepository as jest.Mocked<
   typeof calendarRepository
->;
-const mockPermissionRepository = permissionRepository as jest.Mocked<
-  typeof permissionRepository
 >;
 const mockHandleAsyncOperation = handleAsyncOperation as jest.Mock;
 
@@ -394,52 +387,6 @@ describe('Tool Handlers', () => {
       const content = result.content[0].text as string;
       expect(content).toContain('### Calendar Events (Total: 0)');
       expect(content).toContain('No calendar events found.');
-    });
-  });
-
-  describe('handlePermissionStatus', () => {
-    it('should surface calendar permission status with instructions', async () => {
-      mockPermissionRepository.getPermissionStatus.mockResolvedValue({
-        scope: 'calendar',
-        status: 'denied',
-        promptAllowed: false,
-        instructions:
-          'Open System Settings > Privacy & Security > Calendars to enable access.',
-      });
-
-      const result = await handlePermissionStatus({
-        action: 'status',
-        target: 'calendar',
-      });
-
-      const content = String(result.content[0]?.text);
-      expect(content).toContain('### Calendar Permissions');
-      expect(content).toContain('Status: denied');
-      expect(content).toContain('Prompt allowed: No');
-      expect(content).toContain('Open System Settings');
-    });
-  });
-
-  describe('handlePermissionRequest', () => {
-    it('should relay reminders permission request outcome', async () => {
-      mockPermissionRepository.requestPermission.mockResolvedValue({
-        scope: 'reminders',
-        status: 'authorized',
-        promptAllowed: false,
-        instructions:
-          'Reminders access granted. Return to the requesting app to continue.',
-      });
-
-      const result = await handlePermissionRequest({
-        action: 'request',
-        target: 'reminders',
-      });
-
-      const content = String(result.content[0]?.text);
-      expect(content).toContain('### Reminders Permissions');
-      expect(content).toContain('Status: authorized');
-      expect(content).toContain('Prompt allowed: No');
-      expect(content).toContain('Reminders access granted.');
     });
   });
 });
