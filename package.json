@@ -19,8 +19,8 @@
     "automation"
   ],
   "type": "module",
-  "main": "src/index.ts",
-  "module": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "bin": {
     "mcp-server-apple-reminders": "./bin/run.cjs"
   },
