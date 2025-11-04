@@ -5,23 +5,41 @@
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ZodSchema } from 'zod/v3';
-import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
+import type {
+  CalendarToolArgs,
+  ListsToolArgs,
+  PermissionStatus,
+  PermissionsToolArgs,
+  RemindersToolArgs,
+} from '../types/index.js';
+import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { normalizeNotesText } from '../utils/notesFormatter.js';
+import { permissionRepository } from '../utils/permissionRepository.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 import {
+  CreateCalendarEventSchema,
   CreateReminderListSchema,
   CreateReminderSchema,
+  DeleteCalendarEventSchema,
   DeleteReminderListSchema,
   DeleteReminderSchema,
+  PermissionTargetSchema,
+  ReadCalendarEventsSchema,
   ReadRemindersSchema,
+  UpdateCalendarEventSchema,
   UpdateReminderListSchema,
   UpdateReminderSchema,
   validateInput,
 } from '../validation/schemas.js';
 
 const extractAndValidateArgs = <T>(
-  args: RemindersToolArgs | ListsToolArgs | undefined,
+  args:
+    | RemindersToolArgs
+    | ListsToolArgs
+    | CalendarToolArgs
+    | PermissionsToolArgs
+    | undefined,
   schema: ZodSchema<T>,
 ): T => {
   const { action: _, ...rest } = args ?? {};
@@ -211,4 +229,181 @@ export const handleDeleteReminderList = async (
     await reminderRepository.deleteReminderList(validatedArgs.name);
     return `Successfully deleted list "${validatedArgs.name}".`;
   }, 'delete reminder list');
+};
+
+// --- Calendar Event Handlers ---
+
+/**
+ * Formats a calendar event as a markdown list item
+ */
+const formatEventMarkdown = (event: {
+  title: string;
+  calendar?: string;
+  id?: string;
+  startDate?: string;
+  endDate?: string;
+  notes?: string;
+  location?: string;
+  url?: string;
+  isAllDay?: boolean;
+}): string[] => {
+  const lines: string[] = [];
+  lines.push(`- ${event.title}`);
+  if (event.calendar) lines.push(`  - Calendar: ${event.calendar}`);
+  if (event.id) lines.push(`  - ID: ${event.id}`);
+  if (event.startDate) lines.push(`  - Start: ${event.startDate}`);
+  if (event.endDate) lines.push(`  - End: ${event.endDate}`);
+  if (event.isAllDay) lines.push(`  - All Day: ${event.isAllDay}`);
+  if (event.location) lines.push(`  - Location: ${event.location}`);
+  if (event.notes)
+    lines.push(`  - Notes: ${event.notes.replace(/\n/g, '\n    ')}`);
+  if (event.url) lines.push(`  - URL: ${event.url}`);
+  return lines;
+};
+
+const formatPermissionMarkdown = (permission: PermissionStatus): string => {
+  const scopeLabel = permission.scope === 'calendar' ? 'Calendar' : 'Reminders';
+  const promptAllowed = permission.promptAllowed ? 'Yes' : 'No';
+  const lines: string[] = [
+    `### ${scopeLabel} Permissions`,
+    '',
+    `- Status: ${permission.status}`,
+    `- Prompt allowed: ${promptAllowed}`,
+  ];
+
+  if (permission.instructions.trim().length > 0) {
+    lines.push('', permission.instructions);
+  }
+
+  return lines.join('\n');
+};
+
+export const handleCreateCalendarEvent = async (
+  args: CalendarToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    const validatedArgs = extractAndValidateArgs(
+      args,
+      CreateCalendarEventSchema,
+    );
+    const event = await calendarRepository.createEvent({
+      title: validatedArgs.title,
+      startDate: validatedArgs.startDate,
+      endDate: validatedArgs.endDate,
+      calendar: validatedArgs.targetCalendar,
+      notes: validatedArgs.note,
+      location: validatedArgs.location,
+      url: validatedArgs.url,
+      isAllDay: validatedArgs.isAllDay,
+    });
+    return `Successfully created event "${event.title}".\n- ID: ${event.id}`;
+  }, 'create calendar event');
+};
+
+export const handleUpdateCalendarEvent = async (
+  args: CalendarToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    const validatedArgs = extractAndValidateArgs(
+      args,
+      UpdateCalendarEventSchema,
+    );
+    const event = await calendarRepository.updateEvent({
+      id: validatedArgs.id,
+      title: validatedArgs.title,
+      startDate: validatedArgs.startDate,
+      endDate: validatedArgs.endDate,
+      calendar: validatedArgs.targetCalendar,
+      notes: validatedArgs.note,
+      location: validatedArgs.location,
+      url: validatedArgs.url,
+      isAllDay: validatedArgs.isAllDay,
+    });
+    return `Successfully updated event "${event.title}".\n- ID: ${event.id}`;
+  }, 'update calendar event');
+};
+
+export const handleDeleteCalendarEvent = async (
+  args: CalendarToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    const validatedArgs = extractAndValidateArgs(
+      args,
+      DeleteCalendarEventSchema,
+    );
+    await calendarRepository.deleteEvent(validatedArgs.id);
+    return `Successfully deleted event with ID "${validatedArgs.id}".`;
+  }, 'delete calendar event');
+};
+
+export const handleReadCalendarEvents = async (
+  args: CalendarToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    const validatedArgs = extractAndValidateArgs(
+      args,
+      ReadCalendarEventsSchema,
+    );
+
+    if (validatedArgs.id) {
+      const event = await calendarRepository.findEventById(validatedArgs.id);
+      return formatEventMarkdown(event).join('\n');
+    }
+
+    const events = await calendarRepository.findEvents({
+      startDate: validatedArgs.startDate,
+      endDate: validatedArgs.endDate,
+      calendarName: validatedArgs.filterCalendar,
+      search: validatedArgs.search,
+    });
+
+    const calendars = await calendarRepository.findAllCalendars();
+    const markdownLines: string[] = [];
+    markdownLines.push(`### Calendars (Total: ${calendars.length})`);
+    markdownLines.push('');
+    if (calendars.length === 0) {
+      markdownLines.push('No calendars found.');
+    } else {
+      calendars.forEach((c) => {
+        markdownLines.push(`- ${c.title} (ID: ${c.id})`);
+      });
+    }
+    markdownLines.push('');
+    markdownLines.push(`### Calendar Events (Total: ${events.length})`);
+    markdownLines.push('');
+
+    if (events.length === 0) {
+      markdownLines.push('No calendar events found.');
+    } else {
+      events.forEach((e) => {
+        markdownLines.push(...formatEventMarkdown(e));
+      });
+    }
+
+    return markdownLines.join('\n');
+  }, 'read calendar events');
+};
+
+export const handlePermissionStatus = async (
+  args: PermissionsToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    const validatedArgs = extractAndValidateArgs(args, PermissionTargetSchema);
+    const permission = await permissionRepository.getPermissionStatus(
+      validatedArgs.target,
+    );
+    return formatPermissionMarkdown(permission);
+  }, 'check permissions');
+};
+
+export const handlePermissionRequest = async (
+  args: PermissionsToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    const validatedArgs = extractAndValidateArgs(args, PermissionTargetSchema);
+    const permission = await permissionRepository.requestPermission(
+      validatedArgs.target,
+    );
+    return formatPermissionMarkdown(permission);
+  }, 'request permission');
 };

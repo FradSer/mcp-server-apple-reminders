@@ -4,16 +4,24 @@
  */
 
 import {
+  handleCreateCalendarEvent,
   handleCreateReminder,
   handleCreateReminderList,
+  handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
+  handlePermissionRequest,
+  handlePermissionStatus,
+  handleReadCalendarEvents,
   handleReadReminderLists,
   handleReadReminders,
+  handleUpdateCalendarEvent,
   handleUpdateReminder,
   handleUpdateReminderList,
 } from '../tools/handlers.js';
+import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
+import { permissionRepository } from '../utils/permissionRepository.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 
 // Mock the cliExecutor to avoid import.meta issues
@@ -23,10 +31,18 @@ jest.mock('../utils/cliExecutor.js', () => ({
 
 // Mock the repository and error handling
 jest.mock('../utils/reminderRepository.js');
+jest.mock('../utils/calendarRepository.js');
+jest.mock('../utils/permissionRepository.js');
 jest.mock('../utils/errorHandling.js');
 
 const mockReminderRepository = reminderRepository as jest.Mocked<
   typeof reminderRepository
+>;
+const mockCalendarRepository = calendarRepository as jest.Mocked<
+  typeof calendarRepository
+>;
+const mockPermissionRepository = permissionRepository as jest.Mocked<
+  typeof permissionRepository
 >;
 const mockHandleAsyncOperation = handleAsyncOperation as jest.Mock;
 
@@ -249,6 +265,181 @@ describe('Tool Handlers', () => {
       });
       const content = result.content[0].text as string;
       expect(content).toBe('Successfully deleted list "Old List".');
+    });
+  });
+
+  // --- Calendar Event Handlers ---
+
+  describe('handleCreateCalendarEvent', () => {
+    it('should return a success message with event ID', async () => {
+      const mockEvent = {
+        id: 'event-123',
+        title: 'New Event',
+        startDate: '2025-11-04T14:00:00+08:00',
+        endDate: '2025-11-04T16:00:00+08:00',
+        calendar: 'Work',
+        notes: null,
+        location: null,
+        url: null,
+        isAllDay: false,
+      };
+      mockCalendarRepository.createEvent.mockResolvedValue(mockEvent);
+      const result = await handleCreateCalendarEvent({
+        action: 'create',
+        title: 'New Event',
+        startDate: '2025-11-04 14:00:00',
+        endDate: '2025-11-04 16:00:00',
+        targetCalendar: 'Work',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toContain('Successfully created event "New Event"');
+      expect(content).toContain('- ID: event-123');
+    });
+  });
+
+  describe('handleUpdateCalendarEvent', () => {
+    it('should return a success message with event ID', async () => {
+      const mockEvent = {
+        id: 'event-456',
+        title: 'Updated Event',
+        startDate: '2025-11-04T15:00:00+08:00',
+        endDate: '2025-11-04T17:00:00+08:00',
+        calendar: 'Work',
+        notes: null,
+        location: null,
+        url: null,
+        isAllDay: false,
+      };
+      mockCalendarRepository.updateEvent.mockResolvedValue(mockEvent);
+      const result = await handleUpdateCalendarEvent({
+        action: 'update',
+        id: 'event-456',
+        title: 'Updated Event',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toContain('Successfully updated event "Updated Event"');
+      expect(content).toContain('- ID: event-456');
+    });
+  });
+
+  describe('handleDeleteCalendarEvent', () => {
+    it('should return a success message', async () => {
+      mockCalendarRepository.deleteEvent.mockResolvedValue(undefined);
+      const result = await handleDeleteCalendarEvent({
+        action: 'delete',
+        id: 'event-789',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toBe('Successfully deleted event with ID "event-789".');
+    });
+  });
+
+  describe('handleReadCalendarEvents', () => {
+    it('should return calendars and events formatted as Markdown', async () => {
+      const mockCalendars = [
+        { id: 'cal-1', title: 'Work' },
+        { id: 'cal-2', title: 'Personal' },
+      ];
+      const mockEvents = [
+        {
+          id: 'event-1',
+          title: 'Meeting',
+          startDate: '2025-11-04T09:00:00+08:00',
+          endDate: '2025-11-04T10:00:00+08:00',
+          calendar: 'Work',
+          isAllDay: false,
+        },
+      ];
+      mockCalendarRepository.findAllCalendars.mockResolvedValue(mockCalendars);
+      mockCalendarRepository.findEvents.mockResolvedValue(mockEvents);
+      const result = await handleReadCalendarEvents({ action: 'read' });
+      const content = result.content[0].text as string;
+      expect(content).toContain('### Calendars (Total: 2)');
+      expect(content).toContain('- Work (ID: cal-1)');
+      expect(content).toContain('- Personal (ID: cal-2)');
+      expect(content).toContain('### Calendar Events (Total: 1)');
+      expect(content).toContain('- Meeting');
+    });
+
+    it('should return single event when id is provided', async () => {
+      const mockEvent = {
+        id: 'event-123',
+        title: 'Single Event',
+        startDate: '2025-11-04T14:00:00+08:00',
+        endDate: '2025-11-04T16:00:00+08:00',
+        calendar: 'Work',
+        notes: 'Some notes',
+        location: 'Office',
+        url: 'https://example.com',
+        isAllDay: false,
+      };
+      mockCalendarRepository.findEventById.mockResolvedValue(mockEvent);
+      const result = await handleReadCalendarEvents({
+        action: 'read',
+        id: 'event-123',
+      });
+      const content = result.content[0].text as string;
+      expect(content).toContain('- Single Event');
+      expect(content).toContain('- Calendar: Work');
+      expect(content).toContain('- ID: event-123');
+      expect(content).toContain('- Notes: Some notes');
+      expect(content).toContain('- Location: Office');
+      expect(content).toContain('- URL: https://example.com');
+    });
+
+    it('should return empty message when no events found', async () => {
+      mockCalendarRepository.findAllCalendars.mockResolvedValue([]);
+      mockCalendarRepository.findEvents.mockResolvedValue([]);
+      const result = await handleReadCalendarEvents({ action: 'read' });
+      const content = result.content[0].text as string;
+      expect(content).toContain('### Calendar Events (Total: 0)');
+      expect(content).toContain('No calendar events found.');
+    });
+  });
+
+  describe('handlePermissionStatus', () => {
+    it('should surface calendar permission status with instructions', async () => {
+      mockPermissionRepository.getPermissionStatus.mockResolvedValue({
+        scope: 'calendar',
+        status: 'denied',
+        promptAllowed: false,
+        instructions:
+          'Open System Settings > Privacy & Security > Calendars to enable access.',
+      });
+
+      const result = await handlePermissionStatus({
+        action: 'status',
+        target: 'calendar',
+      });
+
+      const content = String(result.content[0]?.text);
+      expect(content).toContain('### Calendar Permissions');
+      expect(content).toContain('Status: denied');
+      expect(content).toContain('Prompt allowed: No');
+      expect(content).toContain('Open System Settings');
+    });
+  });
+
+  describe('handlePermissionRequest', () => {
+    it('should relay reminders permission request outcome', async () => {
+      mockPermissionRepository.requestPermission.mockResolvedValue({
+        scope: 'reminders',
+        status: 'authorized',
+        promptAllowed: false,
+        instructions:
+          'Reminders access granted. Return to the requesting app to continue.',
+      });
+
+      const result = await handlePermissionRequest({
+        action: 'request',
+        target: 'reminders',
+      });
+
+      const content = String(result.content[0]?.text);
+      expect(content).toContain('### Reminders Permissions');
+      expect(content).toContain('Status: authorized');
+      expect(content).toContain('Prompt allowed: No');
+      expect(content).toContain('Reminders access granted.');
     });
   });
 });
