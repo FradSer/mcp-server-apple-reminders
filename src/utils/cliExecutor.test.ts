@@ -78,7 +78,7 @@ describe('cliExecutor', () => {
       expect(result).toEqual({ id: '123', title: 'Test reminder' });
       expect(mockFindProjectRoot).toHaveBeenCalled();
       expect(mockExecFile).toHaveBeenCalledWith(
-        '/test/project/bin/RemindersCLI',
+        '/test/project/bin/EventKitCLI',
         ['--action', 'read', '--id', '123'],
         expect.any(Function),
       );
@@ -158,7 +158,7 @@ describe('cliExecutor', () => {
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
-      ).rejects.toThrow('RemindersCLI execution failed: Command failed');
+      ).rejects.toThrow('EventKitCLI execution failed: Command failed');
     });
 
     it('should throw error when stdout is invalid JSON', async () => {
@@ -193,7 +193,7 @@ describe('cliExecutor', () => {
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
-      ).rejects.toThrow('RemindersCLI execution failed');
+      ).rejects.toThrow('EventKitCLI execution failed');
     });
 
     it('should handle non-Error exceptions', async () => {
@@ -232,7 +232,7 @@ describe('cliExecutor', () => {
 
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
-      ).rejects.toThrow('RemindersCLI execution failed: string error');
+      ).rejects.toThrow('EventKitCLI execution failed: string error');
     });
 
     it('should compute CLI path using findProjectRoot', async () => {
@@ -274,7 +274,7 @@ describe('cliExecutor', () => {
       await executeCli(['--action', 'read']);
 
       expect(mockExecFile).toHaveBeenCalledWith(
-        '/custom/project/path/bin/RemindersCLI',
+        '/custom/project/path/bin/EventKitCLI',
         ['--action', 'read'],
         expect.any(Function),
       );

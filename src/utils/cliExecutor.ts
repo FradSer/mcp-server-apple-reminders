@@ -1,6 +1,6 @@
 /**
  * utils/cliExecutor.ts
- * Executes the RemindersCLI binary and parses the JSON output.
+ * Executes the EventKitCLI binary and parses the JSON output.
  */
 
 import { execFile } from 'node:child_process';
@@ -28,14 +28,14 @@ interface CliErrorResponse {
 type CliResponse<T> = CliSuccessResponse<T> | CliErrorResponse;
 
 /**
- * Executes the RemindersCLI binary with the given arguments.
+ * Executes the EventKitCLI binary with the given arguments.
  * @param args - An array of arguments to pass to the CLI.
  * @returns The parsed JSON result from the CLI.
  * @throws An error if the CLI execution fails or returns an error status.
  */
 export async function executeCli<T>(args: string[]): Promise<T> {
   // Compute CLI path lazily to ensure proper environment context
-  const cliPath = `${findProjectRoot()}/bin/RemindersCLI`;
+  const cliPath = `${findProjectRoot()}/bin/EventKitCLI`;
 
   try {
     const { stdout } = await execFileAsync(cliPath, args);
@@ -49,6 +49,6 @@ export async function executeCli<T>(args: string[]): Promise<T> {
   } catch (error) {
     // Improve error message for better debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`RemindersCLI execution failed: ${errorMessage}`);
+    throw new Error(`EventKitCLI execution failed: ${errorMessage}`);
   }
 }
