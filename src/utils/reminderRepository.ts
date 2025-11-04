@@ -1,6 +1,6 @@
 /**
  * reminderRepository.ts
- * Repository pattern implementation for reminder data access operations using RemindersCLI.
+ * Repository pattern implementation for reminder data access operations using EventKitCLI.
  */
 
 import type { Reminder, ReminderList } from '../types/index.js';
@@ -8,7 +8,7 @@ import { executeCli } from './cliExecutor.js';
 import type { ReminderFilters } from './dateFiltering.js';
 import { applyReminderFilters } from './dateFiltering.js';
 
-// Types matching the JSON output from RemindersCLI
+// Types matching the JSON output from EventKitCLI
 interface ReminderJSON {
   id: string;
   title: string;
