@@ -8,7 +8,6 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 const REMINDER_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
 const LIST_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
 const CALENDAR_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
-const PERMISSION_ACTIONS = ['status', 'request'] as const;
 const DUE_WITHIN_OPTIONS = [
   'today',
   'tomorrow',
@@ -216,42 +215,6 @@ export const TOOLS: Tool[] = [
             },
             { properties: { action: { const: 'update' } }, required: ['id'] },
             { properties: { action: { const: 'delete' } }, required: ['id'] },
-          ],
-        },
-      },
-    },
-  },
-  {
-    name: 'permissions',
-    description:
-      'Checks and requests calendar or reminders access to resolve permission blockers.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        action: {
-          type: 'string',
-          enum: PERMISSION_ACTIONS,
-          description:
-            'Whether to inspect status or trigger a permission prompt.',
-        },
-        target: {
-          type: 'string',
-          enum: ['reminders', 'calendar'],
-          description: 'Permission scope to evaluate.',
-        },
-      },
-      required: ['action', 'target'],
-      dependentSchemas: {
-        action: {
-          oneOf: [
-            {
-              properties: { action: { const: 'status' } },
-              required: ['target'],
-            },
-            {
-              properties: { action: { const: 'request' } },
-              required: ['target'],
-            },
           ],
         },
       },

@@ -7,7 +7,6 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type {
   CalendarToolArgs,
   ListsToolArgs,
-  PermissionsToolArgs,
   RemindersToolArgs,
 } from '../types/index.js';
 import { MESSAGES } from '../utils/constants.js';
@@ -19,8 +18,6 @@ import {
   handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
-  handlePermissionRequest,
-  handlePermissionStatus,
   handleReadCalendarEvents,
   handleReadReminderLists,
   handleReadReminders,
@@ -37,11 +34,7 @@ import {
  */
 export async function handleToolCall(
   name: string,
-  args?:
-    | RemindersToolArgs
-    | ListsToolArgs
-    | CalendarToolArgs
-    | PermissionsToolArgs,
+  args?: RemindersToolArgs | ListsToolArgs | CalendarToolArgs,
 ): Promise<CallToolResult> {
   switch (name) {
     case 'reminders': {
@@ -132,41 +125,6 @@ export async function handleToolCall(
               {
                 type: 'text',
                 text: MESSAGES.ERROR.UNKNOWN_ACTION('calendar', String(action)),
-              },
-            ],
-            isError: true,
-          };
-      }
-    }
-    case 'permissions': {
-      const permissionArgs = args as PermissionsToolArgs | undefined;
-      if (!permissionArgs) {
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'No arguments provided',
-            },
-          ],
-          isError: true,
-        };
-      }
-
-      const action = permissionArgs.action;
-      switch (action) {
-        case 'status':
-          return handlePermissionStatus(permissionArgs);
-        case 'request':
-          return handlePermissionRequest(permissionArgs);
-        default:
-          return {
-            content: [
-              {
-                type: 'text',
-                text: MESSAGES.ERROR.UNKNOWN_ACTION(
-                  'permissions',
-                  String(action),
-                ),
               },
             ],
             isError: true,

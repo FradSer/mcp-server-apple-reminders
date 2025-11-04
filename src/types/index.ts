@@ -61,14 +61,12 @@ export interface ServerConfig {
 export type ReminderAction = 'read' | 'create' | 'update' | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
 export type CalendarAction = 'read' | 'create' | 'update' | 'delete';
-export type PermissionAction = 'status' | 'request';
 export type DueWithinOption =
   | 'today'
   | 'tomorrow'
   | 'this-week'
   | 'overdue'
   | 'no-date';
-export type PermissionScope = 'reminders' | 'calendar';
 
 /**
  * Base tool arguments interface
@@ -123,25 +121,6 @@ export interface CalendarToolArgs extends BaseToolArgs {
   isAllDay?: boolean;
   // Target calendar for create/update operations
   targetCalendar?: string;
-}
-
-export interface PermissionsToolArgs extends BaseToolArgs {
-  action: PermissionAction;
-  target: PermissionScope;
-}
-
-export interface PermissionStatus {
-  scope: PermissionScope;
-  status:
-    | 'authorized'
-    | 'denied'
-    | 'restricted'
-    | 'notDetermined'
-    | 'fullAccess'
-    | 'writeOnly'
-    | 'unknown';
-  promptAllowed: boolean;
-  instructions: string;
 }
 
 /**

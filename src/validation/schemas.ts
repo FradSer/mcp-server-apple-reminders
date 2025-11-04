@@ -89,8 +89,6 @@ const DueWithinEnum = z
   .enum(['today', 'tomorrow', 'this-week', 'overdue', 'no-date'])
   .optional();
 
-const PermissionTargetEnum = z.enum(['reminders', 'calendar']);
-
 /**
  * Common field combinations for reusability
  */
@@ -201,10 +199,6 @@ export const UpdateReminderListSchema = z.object({
 
 export const DeleteReminderListSchema = z.object({
   name: RequiredListNameSchema,
-});
-
-export const PermissionTargetSchema = z.object({
-  target: PermissionTargetEnum,
 });
 
 /**

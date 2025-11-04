@@ -22,8 +22,6 @@ jest.mock('./handlers.js', () => ({
   handleReadCalendarEvents: jest.fn(),
   handleUpdateCalendarEvent: jest.fn(),
   handleDeleteCalendarEvent: jest.fn(),
-  handlePermissionStatus: jest.fn(),
-  handlePermissionRequest: jest.fn(),
 }));
 
 jest.mock('./definitions.js', () => ({
@@ -31,10 +29,6 @@ jest.mock('./definitions.js', () => ({
     { name: 'reminders', description: 'Unified reminders tool' },
     { name: 'lists', description: 'Reminder lists tool' },
     { name: 'calendar', description: 'Calendar events tool' },
-    {
-      name: 'permissions',
-      description: 'Checks and requests calendar or reminders access',
-    },
   ],
 }));
 
@@ -45,8 +39,6 @@ import {
   handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
-  handlePermissionRequest,
-  handlePermissionStatus,
   handleReadCalendarEvents,
   handleReadReminderLists,
   handleReadReminders,
@@ -99,13 +91,6 @@ const mockHandleDeleteCalendarEvent =
   handleDeleteCalendarEvent as jest.MockedFunction<
     typeof handleDeleteCalendarEvent
   >;
-const mockHandlePermissionStatus =
-  handlePermissionStatus as jest.MockedFunction<typeof handlePermissionStatus>;
-const mockHandlePermissionRequest =
-  handlePermissionRequest as jest.MockedFunction<
-    typeof handlePermissionRequest
-  >;
-
 describe('Tools Index', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -374,51 +359,6 @@ describe('Tools Index', () => {
       expect(toolNames).toContain('reminders');
       expect(toolNames).toContain('lists');
       expect(toolNames).toContain('calendar');
-      expect(toolNames).toContain('permissions');
-    });
-  });
-
-  describe('permissions tool routing', () => {
-    it('should route status action to permission status handler', async () => {
-      const expected: CallToolResult = {
-        content: [{ type: 'text', text: 'Calendar status' }],
-        isError: false,
-      };
-      mockHandlePermissionStatus.mockResolvedValue(expected);
-
-      const args = { action: 'status' as const, target: 'calendar' };
-      const result = await handleToolCall('permissions', args);
-
-      expect(mockHandlePermissionStatus).toHaveBeenCalledWith(args);
-      expect(result).toEqual(expected);
-    });
-
-    it('should route request action to permission request handler', async () => {
-      const expected: CallToolResult = {
-        content: [{ type: 'text', text: 'Request done' }],
-        isError: false,
-      };
-      mockHandlePermissionRequest.mockResolvedValue(expected);
-
-      const args = { action: 'request' as const, target: 'reminders' };
-      const result = await handleToolCall('permissions', args);
-
-      expect(mockHandlePermissionRequest).toHaveBeenCalledWith(args);
-      expect(result).toEqual(expected);
-    });
-
-    it('should return error for unknown permission action', async () => {
-      const result = await handleToolCall('permissions', {
-        action: 'invalid',
-        target: 'calendar',
-      } as unknown as { action: 'status'; target: 'calendar' });
-
-      expect(result).toEqual({
-        content: [
-          { type: 'text', text: 'Unknown permissions action: invalid' },
-        ],
-        isError: true,
-      });
     });
   });
 

@@ -9,7 +9,7 @@ describe('Tools Definitions', () => {
     it('should export TOOLS array', () => {
       expect(TOOLS).toBeDefined();
       expect(Array.isArray(TOOLS)).toBe(true);
-      expect(TOOLS.length).toBe(4);
+      expect(TOOLS.length).toBe(3);
     });
 
     it('should contain reminders tool definition', () => {
@@ -34,15 +34,6 @@ describe('Tools Definitions', () => {
       expect(calendarTool?.description).toContain('Manages calendar events');
       expect(calendarTool?.inputSchema).toBeDefined();
       expect(calendarTool?.inputSchema.type).toBe('object');
-    });
-
-    it('should contain permissions tool definition', () => {
-      const permissionsTool = TOOLS.find((tool) => tool.name === 'permissions');
-      expect(permissionsTool).toBeDefined();
-      expect(permissionsTool?.description).toContain(
-        'Checks and requests calendar or reminders access',
-      );
-      expect(permissionsTool?.inputSchema?.type).toBe('object');
     });
 
     it('should have correct reminder actions enum', () => {
@@ -73,24 +64,6 @@ describe('Tools Definitions', () => {
           | undefined
       )?.enum;
       expect(actionEnum).toEqual(['read', 'create', 'update', 'delete']);
-    });
-
-    it('should have correct permission actions enum', () => {
-      const permissionsTool = TOOLS.find((tool) => tool.name === 'permissions');
-      const actionEnum = (
-        permissionsTool?.inputSchema.properties?.action as
-          | { enum?: readonly string[] }
-          | undefined
-      )?.enum;
-      expect(actionEnum).toEqual(['status', 'request']);
-    });
-
-    it('should require target scope for permissions tool', () => {
-      const permissionsTool = TOOLS.find((tool) => tool.name === 'permissions');
-      const target = permissionsTool?.inputSchema.properties?.target as
-        | { enum?: readonly string[] }
-        | undefined;
-      expect(target?.enum).toEqual(['reminders', 'calendar']);
     });
 
     it('should have correct dueWithin options enum', () => {
