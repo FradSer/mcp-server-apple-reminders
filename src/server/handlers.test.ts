@@ -208,13 +208,16 @@ describe('Server Handlers', () => {
         [
           'daily-task-organizer',
           {},
-          'Organization focus: comprehensive task organization including urgency-based organization, gap filling, and reminder setup',
-          'Action scope: all active reminders and potential new reminders for today',
+          [
+            'Organization focus: comprehensive task organization including urgency-based organization, gap filling, and reminder setup',
+            "Time horizon: today's schedule only",
+            "Action scope: existing reminders and potential gaps tied to today's calendar commitments",
+          ],
         ],
-        ['smart-reminder-creator', {}, 'Task idea:', undefined],
+        ['smart-reminder-creator', {}, ['Task idea:']],
       ])(
         'should handle %s with empty arguments',
-        async (name, args, expectedText1, expectedText2) => {
+        async (name, args, expectedTexts) => {
           const request = {
             params: { name, arguments: args },
           };
@@ -224,9 +227,8 @@ describe('Server Handlers', () => {
           expect(result).toBeDefined();
           expect(result.messages[0].content.type).toBe('text');
           const text = (result.messages[0].content as MessageContent).text;
-          expect(text).toContain(expectedText1);
-          if (expectedText2) {
-            expect(text).toContain(expectedText2);
+          for (const snippet of expectedTexts as string[]) {
+            expect(text).toContain(snippet);
           }
         },
       );
