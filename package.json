@@ -19,8 +19,8 @@
     "automation"
   ],
   "type": "module",
-  "main": "dist/index.js",
-  "module": "src/index.js",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
   "bin": {
     "mcp-server-apple-reminders": "./bin/run.cjs"
   },
@@ -29,7 +29,7 @@
     "build:ts": "tsc -p tsconfig.json",
     "build": "pnpm run clean && pnpm run build:ts && pnpm run build:swift",
     "build:swift": "node scripts/build-swift.mjs",
-    "dev": "node ./bin/run-dev.cjs",
+    "dev": "node ./bin/run.cjs",
     "start": "node ./bin/run.cjs",
     "test": "jest",
     "check": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json",
@@ -54,5 +54,6 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd"
 }
