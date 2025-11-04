@@ -33,6 +33,7 @@
     "start": "node ./bin/run.cjs",
     "test": "jest",
     "check": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json",
+    "permissions": "node scripts/request-permissions.mjs",
     "prepublishOnly": "pnpm run build"
   },
   "dependencies": {

@@ -21,7 +21,32 @@ pnpm test src/utils/cliExecutor.test.ts
 
 # Development with enhanced logging
 NODE_ENV=development pnpm start
+
+# IMPORTANT: Permission setup for Cursor/Claude Desktop users
+node scripts/request-permissions.mjs  # MUST run this BEFORE using MCP server in Cursor
 ```
+
+## Automatic Permission Handling
+
+**New in this version**: Permissions are now automatically requested when you use MCP tools!
+
+When you call any reminder or calendar tool, the server will:
+1. Check if permissions are granted
+2. If not, automatically trigger macOS permission dialogs via AppleScript
+3. Wait for you to grant permissions
+4. Continue with the operation
+
+**If automatic permission request fails** (due to macOS TCC limitations in Cursor/Claude Desktop):
+- You'll see a detailed error message with troubleshooting steps
+- Fallback option: Run `node scripts/request-permissions.mjs` manually from Terminal
+- See `CURSOR_PERMISSIONS.md` for detailed troubleshooting
+
+**Optional pre-authorization** (recommended for better UX):
+```bash
+node scripts/request-permissions.mjs  # Run once before using MCP server
+```
+
+This pre-authorization avoids the 30-second timeout during tool execution and ensures smoother operation.
 
 ## Critical Build Requirements
 
@@ -31,6 +56,7 @@ NODE_ENV=development pnpm start
 - Build script: `scripts/build-swift.mjs` compiles Swift with EventKit and Foundation frameworks
 - Binary location: `bin/EventKitCLI` (resolved via project root discovery in `cliExecutor.ts`)
 - Test environment: Sets `NODE_ENV=test` to mock binary paths and avoid Swift dependency
+- **Info.plist embedding**: `src/swift/Info.plist` is embedded into binary via `-Xlinker -sectcreate` flags - this is REQUIRED for macOS permission dialogs to appear when running from MCP clients like Cursor
 
 ### Project Structure Constraints
 - **ES Modules only**: Package type is `"module"`, all imports must use `.js` extensions even for `.ts` files
@@ -89,6 +115,9 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - macOS 14+: `requestFullAccessToReminders()` and `requestFullAccessToEvents()`
 - Pre-macOS 14: `requestAccess(to: .reminder)` and `requestAccess(to: .event)`
 - Blocking: Uses `DispatchSemaphore` to wait for async permission grant before proceeding
+- **Info.plist requirement**: Binary must have embedded Info.plist with `NSCalendarsUsageDescription` and `NSRemindersUsageDescription` keys for system permission dialogs to appear - build script automatically embeds `src/swift/Info.plist`
+- **RunLoop requirement**: `RunLoop.main.run()` keeps process alive for async permission callbacks (line 693)
+- Permission flow: TypeScript layer spawns CLI process → Swift requests permission → macOS shows dialog → user grants/denies → CLI returns status
 
 ### Validation Strategy (`src/validation/schemas.ts`)
 
@@ -203,6 +232,10 @@ Six production-ready templates with shared structure: mission statement, numbere
 ## macOS-Specific Considerations
 
 - **Permissions**: First run triggers system dialogs for EventKit and Automation access
+  - **Critical**: Binary requires embedded Info.plist with privacy usage descriptions (`NSCalendarsUsageDescription`, `NSRemindersUsageDescription`)
+  - Without Info.plist, permission dialogs will NOT appear in MCP clients (Cursor, Claude Desktop, etc.)
+  - Build script automatically embeds `src/swift/Info.plist` using `-Xlinker -sectcreate __TEXT __info_plist`
+  - Verify embedding with: `otool -s __TEXT __info_plist bin/EventKitCLI`
 - **Platform Check**: Build script exits on non-macOS platforms
 - **Swift Compiler**: Uses `swiftc` with `-framework EventKit -framework Foundation`
 - **Locale Handling**: Swift uses `en_US_POSIX` locale for date parsing to avoid user locale issues
