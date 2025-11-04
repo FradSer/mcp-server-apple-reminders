@@ -26,10 +26,10 @@ NODE_ENV=development pnpm start
 ## Critical Build Requirements
 
 ### Swift Binary Compilation
-- **MUST run `pnpm build` before server startup** - compiles `src/swift/RemindersCLI.swift` to `bin/RemindersCLI`
+- **MUST run `pnpm build` before server startup** - compiles `src/swift/EventKitCLI.swift` to `bin/EventKitCLI`
 - Requires **Xcode Command Line Tools** (install via `xcode-select --install`)
 - Build script: `scripts/build-swift.mjs` compiles Swift with EventKit and Foundation frameworks
-- Binary location: `bin/RemindersCLI` (resolved via project root discovery in `cliExecutor.ts`)
+- Binary location: `bin/EventKitCLI` (resolved via project root discovery in `cliExecutor.ts`)
 - Test environment: Sets `NODE_ENV=test` to mock binary paths and avoid Swift dependency
 
 ### Project Structure Constraints
@@ -52,11 +52,12 @@ NODE_ENV=development pnpm start
 - `handlers.ts`: Tool implementation - all handlers use `handleAsyncOperation` wrapper for consistent error handling
 - `index.ts`: Routes tool calls by action type (read/create/update/delete/move)
 
-**3. Swift CLI Execution** (`src/swift/RemindersCLI.swift`)
-- **Single source of truth** for all reminder operations - TypeScript layer ONLY calls this binary
-- EventKit integration: Reads and writes reminders via native macOS APIs
+**3. Swift CLI Execution** (`src/swift/EventKitCLI.swift`)
+- **Single source of truth** for all EventKit operations (Reminders and Calendar Events) - TypeScript layer ONLY calls this binary
+- EventKit integration: Reads and writes reminders and calendar events via native macOS APIs
 - JSON I/O: Accepts CLI args, returns `{status: "success", result: T}` or `{status: "error", message: string}`
-- Actions: `read`, `create`, `update`, `delete`, `move`, `create-list`, `update-list`, `delete-list`
+- Reminder actions: `read`, `create`, `update`, `delete`, `move`, `create-list`, `update-list`, `delete-list`
+- Calendar event actions: `read-events`, `read-calendars`, `create-event`, `update-event`, `delete-event`
 
 ### Data Flow
 
@@ -65,13 +66,13 @@ User Request → MCP Protocol → tools/index.ts (routing)
   → tools/handlers.ts (validation via Zod schemas)
   → utils/reminderRepository.ts (wraps cliExecutor)
   → utils/cliExecutor.ts (executes Swift binary)
-  → Swift RemindersCLI (EventKit operations)
+  → Swift EventKitCLI (EventKit operations)
   → JSON response back through layers
 ```
 
 ## Key Implementation Details
 
-### Swift CLI Interface (`src/swift/RemindersCLI.swift`)
+### Swift CLI Interface (`src/swift/EventKitCLI.swift`)
 
 **Date Handling:**
 - Supports 7 input formats: ISO 8601 variants, `YYYY-MM-DD HH:mm:ss`, `YYYY-MM-DD HH:mm`, `YYYY-MM-DD`
@@ -85,8 +86,8 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - TypeScript utilities in `src/utils/urlHelpers.ts`: `extractUrlsFromNotes`, `parseReminderNote`, `formatNoteWithUrls`
 
 **Permission Handling:**
-- macOS 14+: `requestFullAccessToReminders()`
-- Pre-macOS 14: `requestAccess(to: .reminder)`
+- macOS 14+: `requestFullAccessToReminders()` and `requestFullAccessToEvents()`
+- Pre-macOS 14: `requestAccess(to: .reminder)` and `requestAccess(to: .event)`
 - Blocking: Uses `DispatchSemaphore` to wait for async permission grant before proceeding
 
 ### Validation Strategy (`src/validation/schemas.ts`)
@@ -135,7 +136,7 @@ User Request → MCP Protocol → tools/index.ts (routing)
 
 ### Adding a New Reminder Field
 
-1. **Swift binary** (`src/swift/RemindersCLI.swift`):
+1. **Swift binary** (`src/swift/EventKitCLI.swift`):
    - Add parameter to `ArgumentParser.get()` in main switch cases
    - Add parameter to `RemindersManager` method (e.g., `createReminder()`)
    - Update `ReminderJSON` struct with new field
@@ -160,10 +161,10 @@ User Request → MCP Protocol → tools/index.ts (routing)
 
 ```bash
 # Manual CLI invocation to test Swift binary
-./bin/RemindersCLI --action read --showCompleted true
+./bin/EventKitCLI --action read --showCompleted true
 
 # Check binary exists and is executable
-ls -la bin/RemindersCLI
+ls -la bin/EventKitCLI
 
 # Rebuild Swift binary
 pnpm build
@@ -172,7 +173,7 @@ pnpm build
 pnpm build 2>&1 | grep warning
 
 # Test with enhanced logging
-NODE_ENV=development ./bin/RemindersCLI --action read
+NODE_ENV=development ./bin/EventKitCLI --action read
 ```
 
 ### Updating MCP Protocol Version

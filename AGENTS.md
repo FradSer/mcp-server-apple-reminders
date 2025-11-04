@@ -1,37 +1,22 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Source lives in `src/`, segmented into clean architecture rings enforcing inward-only dependencies.
-Transport logic in `src/server/` consumes the Swift bridge without leaning on outer layers.
-Workflows sit in `src/tools/`, AppleScript helpers in `src/utils/`, and validation contracts in `src/validation/` guard reminder payloads.
-macOS helpers in `src/swift/` compile into distributable artifacts, so treat `dist/` as generated and rebuild instead of editing outputs.
-Tests sit beside subjects as `*.test.ts` like `src/index.test.ts`, keeping guardrails close.
+Source lives in `src/`, segmented into clean architecture rings so dependencies flow inward. Transport adapters sit in `src/server/`, the Swift bridge lives in `src/swift/`, and automation workflows stay under `src/tools/`. Shared helpers live in `src/utils/`, while `src/validation/` enforces Zod contracts on every reminder payload. Tests co-locate as `*.test.ts` beside subjects to keep TDD feedback immediate, and generated binaries rebuild instead of touching `dist/`.
 
 ## Build, Test, and Development Commands
-Run `pnpm install` to sync dependencies with the locked graph and prevent drift between TypeScript and Swift components.
-Use `pnpm dev` for watch-mode CLI parity without rebuilding Swift.
-Execute `pnpm build:swift` whenever AppleScript or Swift helper changes because the server binary is not version-controlled.
-Run `pnpm test` and `pnpm exec biome check` before commits to enforce formatting and lint rules.
+Run `pnpm install` to sync the locked dependency graph that coordinates TypeScript and Swift toolchains. Use `pnpm dev` for watch-mode development without recompiling Swift components. Execute `pnpm test` to run the Jest suite through `ts-jest` and mocks. Run `pnpm exec biome check` before commits to enforce formatting, linting, and import ordering, and rebuild native helpers with `pnpm build:swift` whenever AppleScript or Swift glue changes.
 
 ## Coding Style & Naming Conventions
-Biome enforces two-space indentation, single quotes, and sorted imports across the codebase.
-Adopt camelCase for variables, PascalCase for classes, and reuse existing constants from `src/utils/constants.ts` when screaming snake case is required.
-Prefer composition and dependency injection so outer layers lean only on inner abstractions.
-Never embed secrets or tokens; load configuration via `.env.local` and typed contracts in `src/validation/`.
+Biome enforces two-space indentation, single quotes, and sorted imports across `.ts` files. Choose camelCase for variables and functions, PascalCase for classes, and reuse screaming snake constants from `src/utils/constants.ts` when system identifiers need emphasis. Prefer composition, dependency injection, and repository abstractions to keep outer layers independent of inner logic, and comment only to justify architectural trade-offs or business rules.
 
 ## Testing Guidelines
-Practice strict TDD by writing the failing Jest spec first beside the unit under test.
-Leverage `ts-jest` with shared fixtures in `src/utils/__mocks__/` to keep reminder schema expectations stable.
-Guard new prompt templates by extending `src/server/prompts.test.ts` to assert structure and Zod compatibility.
-Isolate prompt failures with `pnpm test -- src/server/prompts.test.ts`.
+Follow strict RED-GREEN-REFACTOR cycles by writing a failing Jest spec beside each new unit. Use the fixtures under `src/__mocks__/` to stabilize reminder schema behavior and initialize shared state through `src/test-setup.ts`. Narrow prompt template changes by targeting `pnpm test -- src/server/prompts.test.ts`. Name specs `<module>.test.ts` for discoverability and prioritize schema and error-path coverage before happy paths.
 
 ## Commit & Pull Request Guidelines
-Commit messages follow lowercase conventional prefixes like `feat:` or `fix:` and stay under fifty characters.
-Group changes atomically so each commit tells a coherent story and leaves tests green.
-Before opening a pull request, document verification commands and link the relevant issue for traceability.
-Merge via merge commits only after CI passes, keeping a record of touched layers in the description.
+Craft conventional commits such as `feat: add transport validator`, keeping titles lowercase and under 50 characters. Ensure every commit leaves `pnpm test` and `pnpm exec biome check` green to maintain CI parity. PRs require actionable descriptions, verification command logs, and linked issues for traceability, and provide screenshots or logs when modifying transport flows or reminder outputs. Merge via merge commits only after CI and security checks pass.
 
 ## Security & Configuration Tips
-Grant macOS Reminders and Calendar permissions locally or the Swift bridge aborts before integration tests reach the transport layer.
-Store secrets in `.env.local` and exclude them from version control to prevent leaking reminder data.
-Run `pnpm audit --prod` ahead of release branches to surface platform-specific CVEs in the Swift toolchain.
+Store secrets exclusively in `.env.local` and load them through typed contracts to avoid leaking reminder data. Grant macOS Reminders and Calendar permissions locally; the Swift bridge aborts before integration tests without them. Run `pnpm audit --prod` ahead of release branches to surface Swift toolchain CVEs, and stub external services via dependency injection instead of hardcoding tokens or calendar IDs.
+
+## Permission Diagnostics
+Invoke the `permissions` MCP tool to surface EventKit authorization state before attempting reminder or calendar mutations, because the Swift bridge now returns scoped status metadata instead of failing silently. The CLI emits normalized status keys (`fullAccess`, `writeOnly`, `authorized`, `denied`, `restricted`, `notDetermined`) plus actionable instructions, so bubble those up verbatim in transport adapters to keep remediation guidance consistent. Always run `pnpm test -- src/utils/permissionRepository.test.ts src/tools/index.test.ts src/tools/handlers.test.ts` after wiring new permission flows to guarantee the repository and handler layers stay synchronized with the Swift contract. When adjusting the Swift bridge, rebuild the binary via `pnpm build:swift` and re-run a targeted tool smoke test such as `pnpm test -- src/utils/calendarRepository.test.ts` to confirm the regenerated executable is exercised by the TypeScript facade.
