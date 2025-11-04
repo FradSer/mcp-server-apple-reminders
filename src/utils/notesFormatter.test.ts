@@ -4,13 +4,12 @@
  */
 
 import {
-  extractAndNormalizeReminderIds,
+  extractReminderIdsFromText,
   formatStandardizedNotes,
   mergeNoteComponents,
   type NoteComponents,
   normalizeNotesText,
   parseNoteComponents,
-  validateAndNormalizeDeepLink,
 } from './notesFormatter.js';
 
 describe('notesFormatter', () => {
@@ -39,7 +38,7 @@ describe('notesFormatter', () => {
       expect(formatted).toContain('Complete the quarterly report');
       expect(formatted).toContain('Related reminders:');
       expect(formatted).toContain(
-        '[Get manager approval](x-reminders://reminder?id=rem-123) (Work)',
+        '[Get manager approval] (ID: rem-123) (Work)',
       );
     });
 
@@ -85,12 +84,8 @@ describe('notesFormatter', () => {
 
       const formatted = formatStandardizedNotes(components);
       expect(formatted).toContain('Related reminders:');
-      expect(formatted).toContain(
-        '[Task 1](x-reminders://reminder?id=rem-123)',
-      );
-      expect(formatted).toContain(
-        '[Task 2](x-reminders://reminder?id=rem-456) (Personal)',
-      );
+      expect(formatted).toContain('[Task 1] (ID: rem-123)');
+      expect(formatted).toContain('[Task 2] (ID: rem-456) (Personal)');
     });
 
     it('should handle empty components', () => {
@@ -107,7 +102,7 @@ Complete the quarterly report
 
 Related reminders:
 Dependencies:
-- [Get manager approval](x-reminders://reminder?id=rem-123) (Work)`;
+- [Get manager approval] (ID: rem-123) (Work)`;
 
       const parsed = parseNoteComponents(notes);
       expect(parsed.criticalInfo).toEqual({
@@ -147,64 +142,25 @@ Dependencies:
     });
   });
 
-  describe('validateAndNormalizeDeepLink', () => {
-    it('should validate and normalize correct deep link', () => {
-      const result = validateAndNormalizeDeepLink(
-        'x-reminders://reminder?id=test-123',
-      );
-      expect(result.valid).toBe(true);
-      expect(result.normalized).toBe('x-reminders://reminder?id=test-123');
-    });
-
-    it('should fix malformed link format', () => {
-      const result = validateAndNormalizeDeepLink('reminder?id=test-123');
-      expect(result.valid).toBe(true);
-      expect(result.normalized).toBe('x-reminders://reminder?id=test-123');
-    });
-
-    it('should handle URL-encoded IDs', () => {
-      const result = validateAndNormalizeDeepLink(
-        'x-reminders://reminder?id=test%2D123',
-      );
-      expect(result.valid).toBe(true);
-      expect(result.normalized).toBe('x-reminders://reminder?id=test-123');
-    });
-
-    it('should reject invalid format', () => {
-      const result = validateAndNormalizeDeepLink('invalid-link');
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('Invalid deep link format');
-    });
-  });
-
-  describe('extractAndNormalizeReminderIds', () => {
-    it('should extract reminder IDs from properly formatted links', () => {
+  describe('extractReminderIdsFromText', () => {
+    it('should extract reminder IDs from reference format', () => {
       const text =
-        'Related reminders:\n- [Task 1](x-reminders://reminder?id=rem-123)\n- [Task 2](x-reminders://reminder?id=rem-456)';
-      const results = extractAndNormalizeReminderIds(text);
-      expect(results).toHaveLength(2);
-      expect(results[0].id).toBe('rem-123');
-      expect(results[0].normalizedLink).toBe(
-        'x-reminders://reminder?id=rem-123',
-      );
-      expect(results[1].id).toBe('rem-456');
+        'Related reminders:\n- [Task 1] (ID: rem-123)\n- [Task 2] (ID: rem-456)';
+      const ids = extractReminderIdsFromText(text);
+      expect(ids).toHaveLength(2);
+      expect(ids).toContain('rem-123');
+      expect(ids).toContain('rem-456');
     });
 
-    it('should extract IDs from malformed links', () => {
-      const text = 'reminder?id=rem-123';
-      const results = extractAndNormalizeReminderIds(text);
-      expect(results).toHaveLength(1);
-      expect(results[0].id).toBe('rem-123');
-      expect(results[0].normalizedLink).toBe(
-        'x-reminders://reminder?id=rem-123',
-      );
+    it('should handle IDs with spaces', () => {
+      const text = '[Task] (ID: task with spaces)';
+      const ids = extractReminderIdsFromText(text);
+      expect(ids).toContain('task with spaces');
     });
 
-    it('should handle URL-encoded IDs', () => {
-      const text = 'x-reminders://reminder?id=rem%2D123';
-      const results = extractAndNormalizeReminderIds(text);
-      expect(results).toHaveLength(1);
-      expect(results[0].id).toBe('rem-123');
+    it('should return empty array for text without references', () => {
+      const ids = extractReminderIdsFromText('Just regular text');
+      expect(ids).toEqual([]);
     });
   });
 
@@ -280,28 +236,13 @@ Dependencies:
   });
 
   describe('normalizeNotesText', () => {
-    it('should normalize malformed deep links', () => {
-      const notes = 'Related reminders:\n- [Task 1](reminder?id=rem-123)';
-      const normalized = normalizeNotesText(notes);
-      expect(normalized).toContain('x-reminders://reminder?id=rem-123');
-    });
-
-    it('should preserve correctly formatted links', () => {
-      const notes =
-        'Related reminders:\n- [Task 1](x-reminders://reminder?id=rem-123)';
+    it('should return notes as-is (deep links no longer supported)', () => {
+      const notes = 'Related reminders:\n- [Task 1] (ID: rem-123)';
       const normalized = normalizeNotesText(notes);
       expect(normalized).toBe(notes);
     });
 
-    it('should normalize multiple malformed links', () => {
-      const notes =
-        'Related reminders:\n- [Task 1](reminder?id=rem-123)\n- [Task 2](reminder?id=rem-456)';
-      const normalized = normalizeNotesText(notes);
-      expect(normalized).toContain('x-reminders://reminder?id=rem-123');
-      expect(normalized).toContain('x-reminders://reminder?id=rem-456');
-    });
-
-    it('should handle notes without links', () => {
+    it('should handle notes without references', () => {
       const notes = 'Just some regular notes';
       const normalized = normalizeNotesText(notes);
       expect(normalized).toBe(notes);

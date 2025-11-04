@@ -1,56 +1,21 @@
 /**
  * notesFormatter.ts
  * Standardized formatting utilities for reminder notes to ensure consistency
- * and correct deep link format for related reminders.
+ * and correct format for related reminder references.
  */
 
 import {
-  createReminderDeepLink,
   formatRelatedReminders,
   type RelatedReminder,
 } from './reminderLinks.js';
 
 /**
- * Normalize notes text by validating and fixing deep link formats
- * This ensures all reminder links follow the correct format
+ * Normalize notes text (currently a no-op, kept for API compatibility)
+ * Previously normalized deep links, but deep links are no longer used
  */
 export function normalizeNotesText(notes: string): string {
-  if (!notes) {
-    return notes;
-  }
-
-  // Extract all reminder IDs and normalize their links
-  const normalizedLinks = extractAndNormalizeReminderIds(notes);
-
-  if (normalizedLinks.length === 0) {
-    // No links found, return as-is
-    return notes;
-  }
-
-  // Replace malformed links (those without x-reminders:// prefix)
-  // but preserve already correct links
-  let normalized = notes;
-
-  // Find and replace malformed patterns: reminder?id=... without x-reminders://
-  // But only if they're inside markdown link format [text](...)
-  normalized = normalized.replace(
-    /\[([^\]]+)\]\((reminder\?id=[^\s)]+)\)/g,
-    (match, title, link) => {
-      // If link already has x-reminders://, keep it
-      if (link.startsWith('x-reminders://')) {
-        return match;
-      }
-      // Otherwise, add the prefix
-      const idMatch = link.match(/reminder\?id=(.+)/);
-      if (idMatch) {
-        const id = decodeURIComponent(idMatch[1]);
-        return `[${title}](x-reminders://reminder?id=${encodeURIComponent(id)})`;
-      }
-      return match;
-    },
-  );
-
-  return normalized;
+  // Deep links are no longer supported, so just return as-is
+  return notes;
 }
 
 /**
@@ -167,7 +132,7 @@ export function parseNoteComponents(notes?: string): NoteComponents {
 
 /**
  * Parse related reminders from formatted text
- * Extracts reminder IDs and titles from markdown links
+ * Extracts reminder IDs and titles from reference format: [Title] (ID: {id}) (List)
  */
 function parseRelatedRemindersFromText(text: string): RelatedReminder[] {
   const reminders: RelatedReminder[] = [];
@@ -195,14 +160,14 @@ function parseRelatedRemindersFromText(text: string): RelatedReminder[] {
       }
     }
 
-    // Parse markdown link: [Title](x-reminders://reminder?id=ID) (List)
-    const linkMatch = trimmed.match(
-      /^-\s*\[(.+?)\]\(x-reminders:\/\/reminder\?id=([^)]+)\)(?:\s*\((.+?)\))?$/,
+    // Parse reference format: - [Title] (ID: {id}) (List)
+    const referenceMatch = trimmed.match(
+      /^-\s*\[(.+?)\]\s*\(ID:\s*([^)]+)\)(?:\s*\((.+?)\))?$/,
     );
-    if (linkMatch && currentRelationship) {
-      const [, title, id, list] = linkMatch;
+    if (referenceMatch && currentRelationship) {
+      const [, title, id, list] = referenceMatch;
       reminders.push({
-        id: decodeURIComponent(id),
+        id: id.trim(),
         title,
         list,
         relationship: currentRelationship,
@@ -214,82 +179,13 @@ function parseRelatedRemindersFromText(text: string): RelatedReminder[] {
 }
 
 /**
- * Validate and normalize reminder deep link format
- * Ensures the link follows the correct format: x-reminders://reminder?id={id}
+ * Extract reminder IDs from text references
+ * Format: [Title] (ID: {id})
  */
-export function validateAndNormalizeDeepLink(link: string): {
-  valid: boolean;
-  normalized?: string;
-  error?: string;
-} {
-  // Try to extract ID from various formats
-  const patterns = [
-    /x-reminders:\/\/reminder\?id=([^\s)]+)/,
-    /id=([^\s)]+)/,
-    /reminder\?id=([^\s)]+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = link.match(pattern);
-    if (match) {
-      const id = decodeURIComponent(match[1]);
-      return {
-        valid: true,
-        normalized: createReminderDeepLink(id),
-      };
-    }
-  }
-
-  return {
-    valid: false,
-    error: 'Invalid deep link format. Expected: x-reminders://reminder?id={id}',
-  };
-}
-
-/**
- * Extract reminder IDs from text that might contain malformed links
- * Attempts to fix common formatting issues
- */
-export function extractAndNormalizeReminderIds(
-  text: string,
-): Array<{ id: string; normalizedLink: string }> {
-  const results: Array<{ id: string; normalizedLink: string }> = [];
-
-  // Pattern 1: Standard format
-  const standardPattern = /x-reminders:\/\/reminder\?id=([^\s)]+)/g;
-  let match: RegExpExecArray | null = standardPattern.exec(text);
-  while (match !== null) {
-    const id = decodeURIComponent(match[1]);
-    results.push({
-      id,
-      normalizedLink: createReminderDeepLink(id),
-    });
-    match = standardPattern.exec(text);
-  }
-
-  // Pattern 2: Malformed format without proper encoding
-  const malformedPattern = /reminder\?id=([^\s)]+)/g;
-  const seen = new Set(results.map((r) => r.id));
-  match = malformedPattern.exec(text);
-  while (match !== null) {
-    let id = match[1];
-    // Try to decode if it's URL encoded
-    try {
-      id = decodeURIComponent(id);
-    } catch {
-      // If decoding fails, use as-is
-    }
-    if (!seen.has(id)) {
-      results.push({
-        id,
-        normalizedLink: createReminderDeepLink(id),
-      });
-      seen.add(id);
-    }
-    match = malformedPattern.exec(text);
-  }
-
-  return results;
+export function extractReminderIdsFromText(text: string): string[] {
+  const regex = /\[[^\]]+\]\s*\(ID:\s*([^)]+)\)/g;
+  const matches = [...text.matchAll(regex)];
+  return matches.map((match) => match[1].trim());
 }
 
 /**

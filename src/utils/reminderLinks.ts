@@ -1,24 +1,16 @@
 /**
  * reminderLinks.ts
- * Utilities for creating reminder deep links and managing related reminders
+ * Utilities for managing related reminders in notes
  */
 
 import type { Reminder } from '../types/index.js';
 
 /**
- * Apple Reminders deep link format
- * x-reminders://reminder?id={reminderId}
+ * Format reminder reference with ID for notes
+ * Format: [Reminder Title] (ID: {reminderId})
  */
-export function createReminderDeepLink(reminderId: string): string {
-  return `x-reminders://reminder?id=${encodeURIComponent(reminderId)}`;
-}
-
-/**
- * Create a markdown link for a reminder
- */
-export function createReminderMarkdownLink(reminder: Reminder): string {
-  const link = createReminderDeepLink(reminder.id);
-  return `[${reminder.title}](${link})`;
+export function formatReminderReference(reminder: Reminder): string {
+  return `[${reminder.title}] (ID: ${reminder.id})`;
 }
 
 /**
@@ -37,7 +29,8 @@ export interface RelatedReminder {
 }
 
 /**
- * Format related reminders as markdown links with relationship labels
+ * Format related reminders with relationship labels
+ * Format: [Title] (ID: {id}) (List Name)
  */
 export function formatRelatedReminders(related: RelatedReminder[]): string {
   if (related.length === 0) return '';
@@ -56,12 +49,11 @@ export function formatRelatedReminders(related: RelatedReminder[]): string {
   const sections = Object.entries(groupedByRelationship).map(
     ([relationship, reminders]) => {
       const relationshipLabel = getRelationshipLabel(relationship);
-      const links = reminders.map((r) =>
-        r.list
-          ? `[${r.title}](${createReminderDeepLink(r.id)}) (${r.list})`
-          : `[${r.title}](${createReminderDeepLink(r.id)})`,
-      );
-      return `${relationshipLabel}:\n${links.map((link) => `- ${link}`).join('\n')}`;
+      const references = reminders.map((r) => {
+        const base = `[${r.title}] (ID: ${r.id})`;
+        return r.list ? `${base} (${r.list})` : base;
+      });
+      return `${relationshipLabel}:\n${references.map((ref) => `- ${ref}`).join('\n')}`;
     },
   );
 
@@ -178,24 +170,35 @@ export function createEnhancedNotes(
 }
 
 /**
- * Extract reminder IDs from notes (for parsing existing links)
+ * Extract reminder IDs from notes (for parsing existing references)
+ * Format: [Title] (ID: {id})
  */
 export function extractReminderIdsFromNotes(notes?: string): string[] {
   if (!notes) return [];
 
-  // Match x-reminders://reminder?id=URL patterns
-  const regex = /x-reminders:\/\/reminder\?id=([^)\s]+)/g;
+  // Match [Title] (ID: {id}) patterns
+  const regex = /\[[^\]]+\]\s*\(ID:\s*([^)]+)\)/g;
   const matches = [...notes.matchAll(regex)];
 
-  return matches.map((match) => decodeURIComponent(match[1]));
+  return matches.map((match) => match[1].trim());
 }
 
 /**
- * Check if notes already contain a link to a specific reminder
+ * Check if notes already contain a reference to a specific reminder
  */
-export function hasReminderLink(notes: string, reminderId: string): boolean {
-  const link = createReminderDeepLink(reminderId);
-  return notes.includes(link);
+export function hasReminderReference(
+  notes: string,
+  reminderId: string,
+): boolean {
+  const pattern = new RegExp(`\\(ID:\\s*${escapeRegex(reminderId)}\\)`);
+  return pattern.test(notes);
+}
+
+/**
+ * Escape special regex characters
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /**

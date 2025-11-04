@@ -1,51 +1,20 @@
 /**
  * reminderLinks.test.ts
- * Tests for reminder deep links and note modification validation
+ * Tests for reminder references and note modification validation
  */
 
 import {
   CRITICAL_INFO_TYPES,
   createEnhancedNotes,
-  createReminderDeepLink,
-  createReminderMarkdownLink,
   extractReminderIdsFromNotes,
   formatRelatedReminders,
-  hasReminderLink,
+  hasReminderReference,
   type NoteModificationContext,
   type RelatedReminder,
   shouldModifyNotes,
 } from './reminderLinks.js';
 
 describe('reminderLinks', () => {
-  describe('createReminderDeepLink', () => {
-    it('should create proper deep link format', () => {
-      const link = createReminderDeepLink('test-123');
-      expect(link).toBe('x-reminders://reminder?id=test-123');
-    });
-
-    it('should handle special characters in reminder ID', () => {
-      const link = createReminderDeepLink('test-123&foo=bar');
-      expect(link).toBe('x-reminders://reminder?id=test-123%26foo%3Dbar');
-    });
-  });
-
-  describe('createReminderMarkdownLink', () => {
-    it('should create markdown link with reminder title', () => {
-      const reminder = {
-        id: 'test-123',
-        title: 'Test Task',
-        isCompleted: false,
-        list: 'Work',
-        notes: undefined,
-        dueDate: undefined,
-        url: undefined,
-      };
-
-      const link = createReminderMarkdownLink(reminder);
-      expect(link).toBe('[Test Task](x-reminders://reminder?id=test-123)');
-    });
-  });
-
   describe('formatRelatedReminders', () => {
     it('should format related reminders by relationship type', () => {
       const related: RelatedReminder[] = [
@@ -67,16 +36,10 @@ describe('reminderLinks', () => {
       const result = formatRelatedReminders(related);
 
       expect(result).toContain('Dependencies:');
-      expect(result).toContain(
-        '- [Dependency 1](x-reminders://reminder?id=dep1) (Work)',
-      );
-      expect(result).toContain(
-        '- [Dependency 2](x-reminders://reminder?id=dep2) (Personal)',
-      );
+      expect(result).toContain('- [Dependency 1] (ID: dep1) (Work)');
+      expect(result).toContain('- [Dependency 2] (ID: dep2) (Personal)');
       expect(result).toContain('Follow-up tasks:');
-      expect(result).toContain(
-        '- [Follow-up Task](x-reminders://reminder?id=follow1)',
-      );
+      expect(result).toContain('- [Follow-up Task] (ID: follow1)');
     });
 
     it('should handle reminders without lists', () => {
@@ -87,7 +50,7 @@ describe('reminderLinks', () => {
       const result = formatRelatedReminders(related);
 
       expect(result).toContain('Related reminders:');
-      expect(result).toContain('- [Task 1](x-reminders://reminder?id=task1)');
+      expect(result).toContain('- [Task 1] (ID: task1)');
     });
 
     it('should return empty string for no related reminders', () => {
@@ -220,9 +183,7 @@ describe('reminderLinks', () => {
       expect(result).toContain('Original notes');
       expect(result).toContain('Related reminders:');
       expect(result).toContain('Prerequisites:');
-      expect(result).toContain(
-        '[Get design files](x-reminders://reminder?id=dep1) (Work)',
-      );
+      expect(result).toContain('[Get design files] (ID: dep1) (Work)');
     });
 
     it('should handle empty original notes', () => {
@@ -250,25 +211,24 @@ describe('reminderLinks', () => {
   });
 
   describe('extractReminderIdsFromNotes', () => {
-    it('should extract reminder IDs from deep links', () => {
+    it('should extract reminder IDs from reference format', () => {
       const notes =
-        'Task notes\n\nRelated reminders:\n- [Task 1](x-reminders://reminder?id=task1)\n- [Task 2](x-reminders://reminder?id=task-2-with-dash)';
+        'Task notes\n\nRelated reminders:\n- [Task 1] (ID: task1)\n- [Task 2] (ID: task-2-with-dash)';
 
       const ids = extractReminderIdsFromNotes(notes);
       expect(ids).toContain('task1');
       expect(ids).toContain('task-2-with-dash');
     });
 
-    it('should handle URL-encoded IDs', () => {
-      const notes =
-        'Related: [Task](x-reminders://reminder?id=task%26param%3Dvalue)';
+    it('should handle IDs with spaces', () => {
+      const notes = 'Related: [Task] (ID: task with spaces)';
 
       const ids = extractReminderIdsFromNotes(notes);
-      expect(ids).toContain('task&param=value');
+      expect(ids).toContain('task with spaces');
     });
 
-    it('should return empty array for notes without links', () => {
-      const notes = 'Just regular notes without any links';
+    it('should return empty array for notes without references', () => {
+      const notes = 'Just regular notes without any references';
 
       const ids = extractReminderIdsFromNotes(notes);
       expect(ids).toEqual([]);
@@ -280,13 +240,12 @@ describe('reminderLinks', () => {
     });
   });
 
-  describe('hasReminderLink', () => {
-    it('should detect existing reminder links', () => {
-      const notes =
-        'Task notes\n\nRelated reminders:\n- [Task 1](x-reminders://reminder?id=task1)';
+  describe('hasReminderReference', () => {
+    it('should detect existing reminder references', () => {
+      const notes = 'Task notes\n\nRelated reminders:\n- [Task 1] (ID: task1)';
 
-      expect(hasReminderLink(notes, 'task1')).toBe(true);
-      expect(hasReminderLink(notes, 'task2')).toBe(false);
+      expect(hasReminderReference(notes, 'task1')).toBe(true);
+      expect(hasReminderReference(notes, 'task2')).toBe(false);
     });
   });
 
