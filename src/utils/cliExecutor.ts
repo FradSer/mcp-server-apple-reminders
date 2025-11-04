@@ -44,10 +44,11 @@ export async function executeCli<T>(args: string[]): Promise<T> {
     if (parsed.status === 'success') {
       return parsed.result;
     } else {
+      // Return error from Swift CLI
+      // Note: Permission errors are now handled at the handlers layer with auto-request
       throw new Error(parsed.message);
     }
   } catch (error) {
-    // Improve error message for better debugging
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`EventKitCLI execution failed: ${errorMessage}`);
   }

@@ -13,33 +13,6 @@ struct ListJSON: Codable { let id: String, title: String }
 struct EventJSON: Codable { let id: String, title: String, calendar: String, startDate: String, endDate: String, notes: String?, location: String?, url: String?, isAllDay: Bool }
 struct CalendarJSON: Codable { let id: String, title: String }
 struct EventsReadResult: Codable { let calendars: [CalendarJSON]; let events: [EventJSON] }
-struct PermissionStatusJSON: Codable { let scope: String; let status: String; let promptAllowed: Bool; let instructions: String }
-
-enum PermissionScope: String {
-    case reminders
-    case calendar
-
-    var entityType: EKEntityType {
-        switch self {
-        case .reminders: return .reminder
-        case .calendar: return .event
-        }
-    }
-
-    var displayName: String {
-        switch self {
-        case .reminders: return "Reminders"
-        case .calendar: return "Calendar"
-        }
-    }
-
-    var settingsLabel: String {
-        switch self {
-        case .reminders: return "Reminders"
-        case .calendar: return "Calendars"
-        }
-    }
-}
 
 // MARK: - Date Parsing Helper (Robust Implementation)
 private func parseDateComponents(from dateString: String) -> DateComponents? {
@@ -120,103 +93,6 @@ class RemindersManager {
         } else {
             eventStore.requestAccess(to: .event, completion: completion)
         }
-    }
-
-    private func authorizationStatusString(_ status: EKAuthorizationStatus) -> String {
-        if #available(macOS 14.0, *) {
-            if status == .fullAccess { return "fullAccess" }
-            if status == .writeOnly { return "writeOnly" }
-        }
-
-        switch status {
-        case .authorized: return "authorized"
-        case .denied: return "denied"
-        case .restricted: return "restricted"
-        case .notDetermined: return "notDetermined"
-        default:
-            if #available(macOS 14.0, *) {
-                if status == .fullAccess { return "fullAccess" }
-                if status == .writeOnly { return "writeOnly" }
-            }
-            return "unknown"
-        }
-    }
-
-    private func permissionInstructions(
-        for scope: PermissionScope,
-        statusLabel: String,
-        promptAllowed: Bool,
-        error: Error?
-    ) -> String {
-        let settingsPath = "System Settings > Privacy & Security > \(scope.settingsLabel)"
-        let baseMessage: String
-
-        switch statusLabel {
-        case "fullAccess":
-            baseMessage = "Full access already granted for \(scope.displayName)."
-        case "writeOnly":
-            baseMessage = "Write-only access granted for \(scope.displayName)."
-        case "authorized":
-            baseMessage = "Access already granted for \(scope.displayName)."
-        case "notDetermined":
-            baseMessage = "Use the permissions tool with action \"request\" to trigger the system prompt."
-        case "denied", "restricted":
-            baseMessage = "Open \(settingsPath) and enable access for \(scope.displayName)."
-        default:
-            baseMessage = promptAllowed
-                ? "Use the permissions tool with action \"request\" to trigger the system prompt."
-                : "Open \(settingsPath) and enable access for \(scope.displayName)."
-        }
-
-        if let error = error {
-            return "\(error.localizedDescription)\n\n\(baseMessage)"
-        }
-
-        return baseMessage
-    }
-
-    func permissionStatus(for scope: PermissionScope, error: Error? = nil) -> PermissionStatusJSON {
-        let status = EKEventStore.authorizationStatus(for: scope.entityType)
-        let label = authorizationStatusString(status)
-        let promptAllowed = status == .notDetermined
-        return PermissionStatusJSON(
-            scope: scope.rawValue,
-            status: label,
-            promptAllowed: promptAllowed,
-            instructions: permissionInstructions(
-                for: scope,
-                statusLabel: label,
-                promptAllowed: promptAllowed,
-                error: error
-            )
-        )
-    }
-
-    func requestPermission(for scope: PermissionScope) -> PermissionStatusJSON {
-        var granted = false
-        var capturedError: Error?
-        let semaphore = DispatchSemaphore(value: 0)
-
-        let completion: (Bool, Error?) -> Void = { success, error in
-            granted = success
-            capturedError = error
-            semaphore.signal()
-        }
-
-        switch scope {
-        case .calendar:
-            requestCalendarAccess(completion: completion)
-        case .reminders:
-            requestAccess(completion: completion)
-        }
-
-        semaphore.wait()
-
-        if granted {
-            return permissionStatus(for: scope)
-        }
-
-        return permissionStatus(for: scope, error: capturedError)
     }
     
     private func findReminder(withId id: String) -> EKReminder? { eventStore.calendarItem(withIdentifier: id) as? EKReminder }
@@ -585,29 +461,6 @@ func main() {
     let outputError = { (m: String) in if let d=try?encoder.encode(ErrorOutput(message:m)), let j=String(data:d,encoding:.utf8){print(j)}; exit(1) }
     
     let action = parser.get("action") ?? ""
-
-    if action == "permission-status" || action == "request-permission" {
-        guard let targetArgument = parser.get("target"),
-              let scope = PermissionScope(rawValue: targetArgument) else {
-            outputError("Missing or invalid --target. Use 'reminders' or 'calendar'.")
-            return
-        }
-
-        let permissionResult: PermissionStatusJSON
-        if action == "permission-status" {
-            permissionResult = manager.permissionStatus(for: scope)
-        } else {
-            permissionResult = manager.requestPermission(for: scope)
-        }
-
-        do {
-            let payload = try encoder.encode(StandardOutput(result: permissionResult))
-            if let json = String(data: payload, encoding: .utf8) { print(json) }
-        } catch {
-            outputError("Failed to encode permission response: \(error.localizedDescription)")
-        }
-        return
-    }
 
     let isCalendarAction = action == "read-events" || action == "read-calendars" || action == "create-event" || action == "update-event" || action == "delete-event"
     
