@@ -7,6 +7,8 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 const REMINDER_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
 const LIST_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
+const CALENDAR_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
+const PERMISSION_ACTIONS = ['status', 'request'] as const;
 const DUE_WITHIN_OPTIONS = [
   'today',
   'tomorrow',
@@ -131,6 +133,125 @@ export const TOOLS: Tool[] = [
               required: ['name', 'newName'],
             },
             { properties: { action: { const: 'delete' } }, required: ['name'] },
+          ],
+        },
+      },
+    },
+  },
+  {
+    name: 'calendar',
+    description:
+      'Manages calendar events (time blocks). Supports reading, creating, updating, and deleting calendar events.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: CALENDAR_ACTIONS,
+          description: 'The operation to perform.',
+        },
+        // ID-based operations
+        id: {
+          type: 'string',
+          description:
+            'The unique identifier of the event (REQUIRED for update, delete; optional for read to get single event).',
+        },
+        // Creation/Update properties
+        title: {
+          type: 'string',
+          description:
+            'The title of the event (REQUIRED for create, optional for update).',
+        },
+        startDate: {
+          type: 'string',
+          description:
+            "Start date and time. RECOMMENDED format: 'YYYY-MM-DD HH:mm:ss' (local time without timezone, e.g., '2025-11-04 09:00:00'). Also supports: 'YYYY-MM-DD', 'YYYY-MM-DDTHH:mm:ss', or ISO 8601 with timezone. When no timezone is specified, the time is interpreted as local time.",
+        },
+        endDate: {
+          type: 'string',
+          description:
+            "End date and time. RECOMMENDED format: 'YYYY-MM-DD HH:mm:ss' (local time without timezone, e.g., '2025-11-04 10:00:00'). Also supports: 'YYYY-MM-DD', 'YYYY-MM-DDTHH:mm:ss', or ISO 8601 with timezone. When no timezone is specified, the time is interpreted as local time.",
+        },
+        note: {
+          type: 'string',
+          description: 'Additional notes for the event.',
+        },
+        location: {
+          type: 'string',
+          description: 'Location for the event.',
+        },
+        url: {
+          type: 'string',
+          description: 'A URL to associate with the event.',
+          format: 'uri',
+        },
+        isAllDay: {
+          type: 'boolean',
+          description: 'Whether the event is an all-day event.',
+        },
+        targetCalendar: {
+          type: 'string',
+          description:
+            'The name of the calendar for create or update operations.',
+        },
+        // Read filters
+        filterCalendar: {
+          type: 'string',
+          description: 'Filter events by a specific calendar name.',
+        },
+        search: {
+          type: 'string',
+          description:
+            'A search term to filter events by title, notes, or location.',
+        },
+      },
+      required: ['action'],
+      dependentSchemas: {
+        action: {
+          oneOf: [
+            { properties: { action: { const: 'read' } } },
+            {
+              properties: { action: { const: 'create' } },
+              required: ['title', 'startDate', 'endDate'],
+            },
+            { properties: { action: { const: 'update' } }, required: ['id'] },
+            { properties: { action: { const: 'delete' } }, required: ['id'] },
+          ],
+        },
+      },
+    },
+  },
+  {
+    name: 'permissions',
+    description:
+      'Checks and requests calendar or reminders access to resolve permission blockers.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: PERMISSION_ACTIONS,
+          description:
+            'Whether to inspect status or trigger a permission prompt.',
+        },
+        target: {
+          type: 'string',
+          enum: ['reminders', 'calendar'],
+          description: 'Permission scope to evaluate.',
+        },
+      },
+      required: ['action', 'target'],
+      dependentSchemas: {
+        action: {
+          oneOf: [
+            {
+              properties: { action: { const: 'status' } },
+              required: ['target'],
+            },
+            {
+              properties: { action: { const: 'request' } },
+              required: ['target'],
+            },
           ],
         },
       },
