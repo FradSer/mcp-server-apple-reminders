@@ -162,6 +162,7 @@ dist
 
 # Compiled Swift binaries
 /bin/RemindersCLI
+/bin/EventKitCLI
 
 # yarn v2
 
