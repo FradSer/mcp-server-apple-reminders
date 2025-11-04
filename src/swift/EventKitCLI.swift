@@ -1,4 +1,5 @@
 import Foundation
+import Dispatch
 import EventKit
 
 // MARK: - Output Structures & JSON Models
@@ -9,6 +10,36 @@ struct DeleteResult: Codable { let id: String; let deleted = true }
 struct DeleteListResult: Codable { let title: String; let deleted = true }
 struct ReminderJSON: Codable { let id: String, title: String, isCompleted: Bool, list: String, notes: String?, url: String?, dueDate: String? }
 struct ListJSON: Codable { let id: String, title: String }
+struct EventJSON: Codable { let id: String, title: String, calendar: String, startDate: String, endDate: String, notes: String?, location: String?, url: String?, isAllDay: Bool }
+struct CalendarJSON: Codable { let id: String, title: String }
+struct EventsReadResult: Codable { let calendars: [CalendarJSON]; let events: [EventJSON] }
+struct PermissionStatusJSON: Codable { let scope: String; let status: String; let promptAllowed: Bool; let instructions: String }
+
+enum PermissionScope: String {
+    case reminders
+    case calendar
+
+    var entityType: EKEntityType {
+        switch self {
+        case .reminders: return .reminder
+        case .calendar: return .event
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .reminders: return "Reminders"
+        case .calendar: return "Calendar"
+        }
+    }
+
+    var settingsLabel: String {
+        switch self {
+        case .reminders: return "Reminders"
+        case .calendar: return "Calendars"
+        }
+    }
+}
 
 // MARK: - Date Parsing Helper (Robust Implementation)
 private func parseDateComponents(from dateString: String) -> DateComponents? {
@@ -82,7 +113,112 @@ class RemindersManager {
         if #available(macOS 14.0, *) { eventStore.requestFullAccessToReminders(completion: completion) }
         else { eventStore.requestAccess(to: .reminder, completion: completion) }
     }
+    
+    func requestCalendarAccess(completion: @escaping (Bool, Error?) -> Void) {
+        if #available(macOS 14.0, *) {
+            eventStore.requestFullAccessToEvents(completion: completion)
+        } else {
+            eventStore.requestAccess(to: .event, completion: completion)
+        }
+    }
 
+    private func authorizationStatusString(_ status: EKAuthorizationStatus) -> String {
+        if #available(macOS 14.0, *) {
+            if status == .fullAccess { return "fullAccess" }
+            if status == .writeOnly { return "writeOnly" }
+        }
+
+        switch status {
+        case .authorized: return "authorized"
+        case .denied: return "denied"
+        case .restricted: return "restricted"
+        case .notDetermined: return "notDetermined"
+        default:
+            if #available(macOS 14.0, *) {
+                if status == .fullAccess { return "fullAccess" }
+                if status == .writeOnly { return "writeOnly" }
+            }
+            return "unknown"
+        }
+    }
+
+    private func permissionInstructions(
+        for scope: PermissionScope,
+        statusLabel: String,
+        promptAllowed: Bool,
+        error: Error?
+    ) -> String {
+        let settingsPath = "System Settings > Privacy & Security > \(scope.settingsLabel)"
+        let baseMessage: String
+
+        switch statusLabel {
+        case "fullAccess":
+            baseMessage = "Full access already granted for \(scope.displayName)."
+        case "writeOnly":
+            baseMessage = "Write-only access granted for \(scope.displayName)."
+        case "authorized":
+            baseMessage = "Access already granted for \(scope.displayName)."
+        case "notDetermined":
+            baseMessage = "Use the permissions tool with action \"request\" to trigger the system prompt."
+        case "denied", "restricted":
+            baseMessage = "Open \(settingsPath) and enable access for \(scope.displayName)."
+        default:
+            baseMessage = promptAllowed
+                ? "Use the permissions tool with action \"request\" to trigger the system prompt."
+                : "Open \(settingsPath) and enable access for \(scope.displayName)."
+        }
+
+        if let error = error {
+            return "\(error.localizedDescription)\n\n\(baseMessage)"
+        }
+
+        return baseMessage
+    }
+
+    func permissionStatus(for scope: PermissionScope, error: Error? = nil) -> PermissionStatusJSON {
+        let status = EKEventStore.authorizationStatus(for: scope.entityType)
+        let label = authorizationStatusString(status)
+        let promptAllowed = status == .notDetermined
+        return PermissionStatusJSON(
+            scope: scope.rawValue,
+            status: label,
+            promptAllowed: promptAllowed,
+            instructions: permissionInstructions(
+                for: scope,
+                statusLabel: label,
+                promptAllowed: promptAllowed,
+                error: error
+            )
+        )
+    }
+
+    func requestPermission(for scope: PermissionScope) -> PermissionStatusJSON {
+        var granted = false
+        var capturedError: Error?
+        let semaphore = DispatchSemaphore(value: 0)
+
+        let completion: (Bool, Error?) -> Void = { success, error in
+            granted = success
+            capturedError = error
+            semaphore.signal()
+        }
+
+        switch scope {
+        case .calendar:
+            requestCalendarAccess(completion: completion)
+        case .reminders:
+            requestAccess(completion: completion)
+        }
+
+        semaphore.wait()
+
+        if granted {
+            return permissionStatus(for: scope)
+        }
+
+        return permissionStatus(for: scope, error: capturedError)
+    }
+    
     private func findReminder(withId id: String) -> EKReminder? { eventStore.calendarItem(withIdentifier: id) as? EKReminder }
 
     private func findList(named name: String?) throws -> EKCalendar {
@@ -216,6 +352,155 @@ class RemindersManager {
     func createList(title: String) throws -> ListJSON { let list = EKCalendar(for: .reminder, eventStore: eventStore); list.title = title; try eventStore.saveCalendar(list, commit: true); return list.toJSON() }
     func updateList(currentName: String, newName: String) throws -> ListJSON { let list = try findList(named: currentName); list.title = newName; try eventStore.saveCalendar(list, commit: true); return list.toJSON() }
     func deleteList(title: String) throws { try eventStore.removeCalendar(try findList(named: title), commit: true) }
+    
+    // MARK: Calendar Events Management
+    private func findCalendar(named name: String?) throws -> EKCalendar {
+        guard let calName = name, !calName.isEmpty else {
+            guard let defaultCal = eventStore.defaultCalendarForNewEvents else {
+                throw NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "No default calendar available."])
+            }
+            return defaultCal
+        }
+        guard let calendar = eventStore.calendars(for: .event).first(where: { $0.title == calName }) else {
+            throw NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "Calendar '\(calName)' not found."])
+        }
+        return calendar
+    }
+    
+    func getCalendars() -> [CalendarJSON] {
+        return eventStore.calendars(for: .event).map { $0.toCalendarJSON() }
+    }
+    
+    func getEvents(startDate: Date?, endDate: Date?, calendarName: String?, search: String?) throws -> [EventJSON] {
+        let calendars = calendarName != nil ? [try findCalendar(named: calendarName)] : eventStore.calendars(for: .event)
+        let predicate = eventStore.predicateForEvents(withStart: startDate ?? Date.distantPast, end: endDate ?? Date.distantFuture, calendars: calendars)
+        
+        let events = eventStore.events(matching: predicate)
+        var filtered = events
+        
+        if let searchTerm = search?.lowercased() {
+            filtered = filtered.filter {
+                $0.title.lowercased().contains(searchTerm) || 
+                ($0.notes?.lowercased().contains(searchTerm) ?? false) ||
+                ($0.location?.lowercased().contains(searchTerm) ?? false)
+            }
+        }
+        
+        return filtered.map { $0.toJSON() }
+    }
+    
+    func createEvent(title: String, calendarName: String?, startDateString: String, endDateString: String, notes: String?, location: String?, urlString: String?, isAllDay: Bool?) throws -> EventJSON {
+        let event = EKEvent(eventStore: eventStore)
+        event.calendar = try findCalendar(named: calendarName)
+        event.title = title
+        
+        guard let startDate = parseDate(from: startDateString),
+              let endDate = parseDate(from: endDateString) else {
+            throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid date format. Use 'YYYY-MM-DD HH:mm:ss' or ISO 8601 format."])
+        }
+        
+        event.startDate = startDate
+        event.endDate = endDate
+        event.isAllDay = isAllDay ?? false
+        
+        if let notesStr = notes { event.notes = notesStr }
+        if let locationStr = location { event.location = locationStr }
+        if let urlStr = urlString, !urlStr.isEmpty, let url = URL(string: urlStr) {
+            event.url = url
+        }
+        
+        do {
+            try eventStore.save(event, span: .thisEvent, commit: true)
+        } catch {
+            // Provide more detailed error information
+            let errorMsg = error.localizedDescription
+            throw NSError(domain: "", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to save calendar event: \(errorMsg). Please ensure calendar permissions are granted in System Settings > Privacy & Security > Calendars."])
+        }
+        return event.toJSON()
+    }
+    
+    private func findEvent(withId id: String) -> EKEvent? {
+        return eventStore.event(withIdentifier: id)
+    }
+    
+    func updateEvent(id: String, title: String?, calendarName: String?, startDateString: String?, endDateString: String?, notes: String?, location: String?, urlString: String?, isAllDay: Bool?) throws -> EventJSON {
+        guard let event = findEvent(withId: id) else {
+            throw NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "Event with ID '\(id)' not found."])
+        }
+        
+        if let newTitle = title { event.title = newTitle }
+        if let newCalendar = calendarName { event.calendar = try findCalendar(named: newCalendar) }
+        
+        if let startStr = startDateString {
+            guard let startDate = parseDate(from: startStr) else {
+                throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid start date format."])
+            }
+            event.startDate = startDate
+        }
+        
+        if let endStr = endDateString {
+            guard let endDate = parseDate(from: endStr) else {
+                throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid end date format."])
+            }
+            event.endDate = endDate
+        }
+        
+        if let notesStr = notes { event.notes = notesStr }
+        if let locationStr = location { event.location = locationStr }
+        if let urlStr = urlString {
+            if urlStr.isEmpty {
+                event.url = nil
+            } else if let url = URL(string: urlStr) {
+                event.url = url
+            }
+        }
+        if let allDay = isAllDay { event.isAllDay = allDay }
+        
+        try eventStore.save(event, span: .thisEvent, commit: true)
+        return event.toJSON()
+    }
+    
+    func deleteEvent(id: String) throws {
+        guard let event = findEvent(withId: id) else {
+            throw NSError(domain: "", code: 404, userInfo: [NSLocalizedDescriptionKey: "Event with ID '\(id)' not found."])
+        }
+        try eventStore.remove(event, span: .thisEvent, commit: true)
+    }
+    
+    func parseDate(from dateString: String) -> Date? {
+        // Use same parsing logic as parseDateComponents but return Date
+        if dateString.contains("Z") || (dateString.contains("+") || dateString.contains("-")) && dateString.range(of: #"T\d{2}:\d{2}"#, options: .regularExpression) != nil {
+            let isoFormatter = ISO8601DateFormatter()
+            isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let isoDate = isoFormatter.date(from: dateString) {
+                return isoDate
+            } else {
+                isoFormatter.formatOptions = [.withInternetDateTime]
+                return isoFormatter.date(from: dateString)
+            }
+        }
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        
+        let formatsToTry = [
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd"
+        ]
+        
+        for format in formatsToTry {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: dateString) {
+                return date
+            }
+        }
+        
+        return nil
+    }
 }
 
 // MARK: - Date Formatting Helper
@@ -253,7 +538,43 @@ extension EKReminder {
         )
     }
 }
-extension EKCalendar { func toJSON() -> ListJSON { ListJSON(id: self.calendarIdentifier, title: self.title) } }
+extension EKCalendar { 
+    func toJSON() -> ListJSON { ListJSON(id: self.calendarIdentifier, title: self.title) }
+    func toCalendarJSON() -> CalendarJSON { CalendarJSON(id: self.calendarIdentifier, title: self.title) }
+}
+
+extension EKEvent {
+    func toJSON() -> EventJSON {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+        
+        let startTimezoneOffset = formatter.timeZone.secondsFromGMT(for: self.startDate)
+        let startHours = abs(startTimezoneOffset) / 3600
+        let startMinutes = (abs(startTimezoneOffset) % 3600) / 60
+        let startSign = startTimezoneOffset >= 0 ? "+" : "-"
+        let startTzString = String(format: "%@%02d:%02d", startSign, startHours, startMinutes)
+        
+        let endTimezoneOffset = formatter.timeZone.secondsFromGMT(for: self.endDate)
+        let endHours = abs(endTimezoneOffset) / 3600
+        let endMinutes = (abs(endTimezoneOffset) % 3600) / 60
+        let endSign = endTimezoneOffset >= 0 ? "+" : "-"
+        let endTzString = String(format: "%@%02d:%02d", endSign, endHours, endMinutes)
+        
+        return EventJSON(
+            id: self.eventIdentifier,
+            title: self.title,
+            calendar: self.calendar.title,
+            startDate: formatter.string(from: self.startDate) + startTzString,
+            endDate: formatter.string(from: self.endDate) + endTzString,
+            notes: self.notes,
+            location: self.location,
+            url: self.url?.absoluteString,
+            isAllDay: self.isAllDay
+        )
+    }
+}
 
 struct ArgumentParser { private let args: [String: String]; init() { var dict = [String: String](); var i=0; let arguments=Array(CommandLine.arguments.dropFirst()); while i<arguments.count { let key=arguments[i].replacingOccurrences(of:"--",with:""); if i+1<arguments.count && !arguments[i+1].hasPrefix("--") { dict[key]=arguments[i+1]; i+=2 } else { dict[key]="true"; i+=1 } }; self.args=dict }; func get(_ key: String)->String?{return args[key]} }
 
@@ -262,11 +583,59 @@ func main() {
     let manager = RemindersManager()
     let encoder = JSONEncoder(); encoder.outputFormatting = .prettyPrinted
     let outputError = { (m: String) in if let d=try?encoder.encode(ErrorOutput(message:m)), let j=String(data:d,encoding:.utf8){print(j)}; exit(1) }
+    
+    let action = parser.get("action") ?? ""
 
-    manager.requestAccess { granted, error in
-        guard granted else { outputError("Permission denied. \(error?.localizedDescription ?? "")"); return }
+    if action == "permission-status" || action == "request-permission" {
+        guard let targetArgument = parser.get("target"),
+              let scope = PermissionScope(rawValue: targetArgument) else {
+            outputError("Missing or invalid --target. Use 'reminders' or 'calendar'.")
+            return
+        }
+
+        let permissionResult: PermissionStatusJSON
+        if action == "permission-status" {
+            permissionResult = manager.permissionStatus(for: scope)
+        } else {
+            permissionResult = manager.requestPermission(for: scope)
+        }
+
         do {
-            switch parser.get("action") {
+            let payload = try encoder.encode(StandardOutput(result: permissionResult))
+            if let json = String(data: payload, encoding: .utf8) { print(json) }
+        } catch {
+            outputError("Failed to encode permission response: \(error.localizedDescription)")
+        }
+        return
+    }
+
+    let isCalendarAction = action == "read-events" || action == "read-calendars" || action == "create-event" || action == "update-event" || action == "delete-event"
+    
+    let requestPermission: () -> Void = {
+        if isCalendarAction {
+            manager.requestCalendarAccess { granted, error in
+                guard granted else {
+                    let errorMsg = error?.localizedDescription ?? "Unknown error"
+                    outputError("Calendar permission denied. \(errorMsg)\n\nPlease grant calendar permissions in:\nSystem Settings > Privacy & Security > Calendars")
+                    return
+                }
+                handleAction()
+            }
+        } else {
+            manager.requestAccess { granted, error in
+                guard granted else {
+                    let errorMsg = error?.localizedDescription ?? "Unknown error"
+                    outputError("Reminder permission denied. \(errorMsg)\n\nPlease grant reminder permissions in:\nSystem Settings > Privacy & Security > Reminders")
+                    return
+                }
+                handleAction()
+            }
+        }
+    }
+    
+    func handleAction() {
+        do {
+            switch action {
             case "read":
                 let reminders = try manager.getReminders(showCompleted: parser.get("showCompleted") == "true", filterList: parser.get("filterList"), search: parser.get("search"), dueWithin: parser.get("dueWithin"))
                 print(String(data: try encoder.encode(StandardOutput(result: ReadResult(lists: manager.getLists(), reminders: reminders))), encoding: .utf8)!)
@@ -292,11 +661,35 @@ func main() {
             case "delete-list":
                 guard let title = parser.get("name") else { throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "--name required."]) }
                 try manager.deleteList(title: title); print(String(data: try encoder.encode(StandardOutput(result: DeleteListResult(title: title))), encoding: .utf8)!)
+            case "read-events":
+                let startDateStr = parser.get("startDate")
+                let endDateStr = parser.get("endDate")
+                let startDate = startDateStr != nil ? manager.parseDate(from: startDateStr!) : nil
+                let endDate = endDateStr != nil ? manager.parseDate(from: endDateStr!) : nil
+                let events = try manager.getEvents(startDate: startDate, endDate: endDate, calendarName: parser.get("filterCalendar"), search: parser.get("search"))
+                print(String(data: try encoder.encode(StandardOutput(result: EventsReadResult(calendars: manager.getCalendars(), events: events))), encoding: .utf8)!)
+            case "read-calendars":
+                print(String(data: try encoder.encode(StandardOutput(result: manager.getCalendars())), encoding: .utf8)!)
+            case "create-event":
+                guard let title = parser.get("title") else { throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "--title required."]) }
+                guard let startDate = parser.get("startDate") else { throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "--startDate required."]) }
+                guard let endDate = parser.get("endDate") else { throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "--endDate required."]) }
+                let event = try manager.createEvent(title: title, calendarName: parser.get("targetCalendar"), startDateString: startDate, endDateString: endDate, notes: parser.get("note"), location: parser.get("location"), urlString: parser.get("url"), isAllDay: parser.get("isAllDay").map { $0 == "true" })
+                print(String(data: try encoder.encode(StandardOutput(result: event)), encoding: .utf8)!)
+            case "update-event":
+                guard let id = parser.get("id") else { throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "--id required."]) }
+                let event = try manager.updateEvent(id: id, title: parser.get("title"), calendarName: parser.get("targetCalendar"), startDateString: parser.get("startDate"), endDateString: parser.get("endDate"), notes: parser.get("note"), location: parser.get("location"), urlString: parser.get("url"), isAllDay: parser.get("isAllDay").map { $0 == "true" })
+                print(String(data: try encoder.encode(StandardOutput(result: event)), encoding: .utf8)!)
+            case "delete-event":
+                guard let id = parser.get("id") else { throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "--id required."]) }
+                try manager.deleteEvent(id: id); print(String(data: try encoder.encode(StandardOutput(result: DeleteResult(id: id))), encoding: .utf8)!)
             default: throw NSError(domain: "", code: 400, userInfo: [NSLocalizedDescriptionKey: "Invalid or missing --action."])
             }
         } catch { outputError(error.localizedDescription) }
         exit(0)
     }
+    
+    requestPermission()
     RunLoop.main.run()
 }
 
