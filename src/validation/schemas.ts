@@ -89,6 +89,8 @@ const DueWithinEnum = z
   .enum(['today', 'tomorrow', 'this-week', 'overdue', 'no-date'])
   .optional();
 
+const PermissionTargetEnum = z.enum(['reminders', 'calendar']);
+
 /**
  * Common field combinations for reusability
  */
@@ -129,6 +131,65 @@ export const DeleteReminderSchema = z.object({
   id: SafeIdSchema,
 });
 
+// Calendar event schemas
+const _BaseCalendarEventFields = {
+  title: SafeTextSchema,
+  startDate: SafeDateSchema,
+  endDate: SafeDateSchema,
+  note: SafeNoteSchema,
+  location: createOptionalSafeTextSchema(200, 'Location'),
+  url: SafeUrlSchema,
+  isAllDay: z.boolean().optional(),
+  targetCalendar: SafeListNameSchema, // Reuse list name schema for calendar names
+};
+
+export const CreateCalendarEventSchema = z.object({
+  title: SafeTextSchema,
+  startDate: z
+    .string()
+    .regex(
+      DATE_PATTERN,
+      "Start date must be in format 'YYYY-MM-DD', 'YYYY-MM-DD HH:mm:ss', or ISO 8601",
+    )
+    .min(1, 'Start date is required'),
+  endDate: z
+    .string()
+    .regex(
+      DATE_PATTERN,
+      "End date must be in format 'YYYY-MM-DD', 'YYYY-MM-DD HH:mm:ss', or ISO 8601",
+    )
+    .min(1, 'End date is required'),
+  note: SafeNoteSchema,
+  location: createOptionalSafeTextSchema(200, 'Location'),
+  url: SafeUrlSchema,
+  isAllDay: z.boolean().optional(),
+  targetCalendar: SafeListNameSchema,
+});
+
+export const ReadCalendarEventsSchema = z.object({
+  id: SafeIdSchema.optional(),
+  filterCalendar: SafeListNameSchema,
+  search: SafeSearchSchema,
+  startDate: SafeDateSchema,
+  endDate: SafeDateSchema,
+});
+
+export const UpdateCalendarEventSchema = z.object({
+  id: SafeIdSchema,
+  title: SafeTextSchema.optional(),
+  startDate: SafeDateSchema,
+  endDate: SafeDateSchema,
+  note: SafeNoteSchema,
+  location: createOptionalSafeTextSchema(200, 'Location'),
+  url: SafeUrlSchema,
+  isAllDay: z.boolean().optional(),
+  targetCalendar: SafeListNameSchema,
+});
+
+export const DeleteCalendarEventSchema = z.object({
+  id: SafeIdSchema,
+});
+
 export const CreateReminderListSchema = z.object({
   name: RequiredListNameSchema,
 });
@@ -140,6 +201,10 @@ export const UpdateReminderListSchema = z.object({
 
 export const DeleteReminderListSchema = z.object({
   name: RequiredListNameSchema,
+});
+
+export const PermissionTargetSchema = z.object({
+  target: PermissionTargetEnum,
 });
 
 /**
