@@ -25,6 +25,29 @@ export interface ReminderList {
 }
 
 /**
+ * Calendar event interface
+ */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  calendar: string;
+  notes?: string;
+  location?: string;
+  url?: string;
+  isAllDay: boolean;
+}
+
+/**
+ * Calendar interface
+ */
+export interface Calendar {
+  id: string;
+  title: string;
+}
+
+/**
  * Server configuration
  */
 export interface ServerConfig {
@@ -37,12 +60,15 @@ export interface ServerConfig {
  */
 export type ReminderAction = 'read' | 'create' | 'update' | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
+export type CalendarAction = 'read' | 'create' | 'update' | 'delete';
+export type PermissionAction = 'status' | 'request';
 export type DueWithinOption =
   | 'today'
   | 'tomorrow'
   | 'this-week'
   | 'overdue'
   | 'no-date';
+export type PermissionScope = 'reminders' | 'calendar';
 
 /**
  * Base tool arguments interface
@@ -78,6 +104,44 @@ export interface ListsToolArgs extends BaseToolArgs {
   action: ListAction;
   name?: string;
   newName?: string;
+}
+
+export interface CalendarToolArgs extends BaseToolArgs {
+  action: CalendarAction;
+  // ID parameter
+  id?: string;
+  // Filtering parameters (for read action)
+  filterCalendar?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  // Single item parameters
+  title?: string;
+  note?: string;
+  location?: string;
+  url?: string;
+  isAllDay?: boolean;
+  // Target calendar for create/update operations
+  targetCalendar?: string;
+}
+
+export interface PermissionsToolArgs extends BaseToolArgs {
+  action: PermissionAction;
+  target: PermissionScope;
+}
+
+export interface PermissionStatus {
+  scope: PermissionScope;
+  status:
+    | 'authorized'
+    | 'denied'
+    | 'restricted'
+    | 'notDetermined'
+    | 'fullAccess'
+    | 'writeOnly'
+    | 'unknown';
+  promptAllowed: boolean;
+  instructions: string;
 }
 
 /**
