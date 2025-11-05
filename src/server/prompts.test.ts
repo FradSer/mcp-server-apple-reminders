@@ -60,10 +60,10 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /Name deep work blocks using the pattern "Deep Work — \[Reminder Title]/i,
     );
-    expect(text).toMatch(/Deep work blocks should last 90 minutes by default/i);
+    expect(text).toMatch(/Time block length: 60-90 minutes recommended/i);
     expect(text).toMatch(/Ensure the block spans the reminder's due time/i);
     expect(text).toMatch(
-      /Plan no more than (two|2) or (three|3) deep work blocks per day with 15-30 minute breaks/i,
+      /Daily deep work capacity: Plan (two|2)-(three|3) deep work blocks per day/i,
     );
   });
 

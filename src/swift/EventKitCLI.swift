@@ -15,67 +15,136 @@ struct CalendarJSON: Codable { let id: String, title: String }
 struct EventsReadResult: Codable { let calendars: [CalendarJSON]; let events: [EventJSON] }
 
 // MARK: - Date Parsing Helper (Robust Implementation)
+private struct ExplicitTimezone {
+    let suffix: String
+    let timeZone: TimeZone
+}
+
+private func detectExplicitTimezone(in dateString: String) -> ExplicitTimezone? {
+    let trimmed = dateString.trimmingCharacters(in: .whitespacesAndNewlines)
+    if trimmed.hasSuffix("Z") {
+        guard let tz = TimeZone(secondsFromGMT: 0) else { return nil }
+        return ExplicitTimezone(suffix: "Z", timeZone: tz)
+    }
+
+    let pattern = #"[+-]\d{2}:\d{2}$|[+-]\d{4}$|[+-]\d{2}$"#
+    guard let range = trimmed.range(of: pattern, options: .regularExpression) else {
+        return nil
+    }
+
+    let suffix = String(trimmed[range])
+    let sign: Int = suffix.first == "-" ? -1 : 1
+    let numeric = suffix.dropFirst()
+
+    let components: (hours: Int, minutes: Int)? = {
+        if suffix.contains(":") {
+            let parts = numeric.split(separator: ":")
+            guard parts.count == 2,
+                  let hourValue = Int(parts[0]),
+                  let minuteValue = Int(parts[1]) else { return nil }
+            return (hourValue, minuteValue)
+        }
+        if numeric.count == 4 {
+            let hoursPart = numeric.prefix(2)
+            let minutesPart = numeric.suffix(2)
+            guard let hourValue = Int(hoursPart),
+                  let minuteValue = Int(minutesPart) else { return nil }
+            return (hourValue, minuteValue)
+        }
+        if numeric.count == 2, let hourValue = Int(numeric) {
+            return (hourValue, 0)
+        }
+        return nil
+    }()
+
+    guard let offset = components else { return nil }
+    let totalSeconds = sign * ((offset.hours * 60 + offset.minutes) * 60)
+    guard let timeZone = TimeZone(secondsFromGMT: totalSeconds) else { return nil }
+    return ExplicitTimezone(suffix: suffix, timeZone: timeZone)
+}
+
+private func formatterWithBaseLocale() -> DateFormatter {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.calendar = Calendar(identifier: .gregorian)
+    return formatter
+}
+
+private func normalizedComponents(_ components: inout DateComponents, using calendar: Calendar, timeZone: TimeZone) {
+    components.calendar = calendar
+    components.timeZone = timeZone
+    if components.second == nil && components.hour != nil { components.second = 0 }
+    if components.nanosecond != nil { components.nanosecond = 0 }
+}
+
+private func componentsSet(for input: String) -> Set<Calendar.Component> {
+    if input.contains(":") || input.contains("T") {
+        return [.year, .month, .day, .hour, .minute, .second]
+    }
+    return [.year, .month, .day]
+}
+
 private func parseDateComponents(from dateString: String) -> DateComponents? {
-    // First, try ISO8601DateFormatter for formats with explicit timezone (Z or +HH:MM/-HH:MM)
-    // This handles UTC and timezone-aware formats correctly
-    if dateString.contains("Z") || (dateString.contains("+") || dateString.contains("-")) && dateString.range(of: #"T\d{2}:\d{2}"#, options: .regularExpression) != nil {
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let isoDate = isoFormatter.date(from: dateString) {
-            // Convert to local timezone components
-            // This ensures UTC times are correctly converted to local timezone for storage
-            let components: Set<Calendar.Component> = dateString.contains(":") || dateString.contains("T") 
-                ? [.year, .month, .day, .hour, .minute, .second]
-                : [.year, .month, .day]
-            return Calendar.current.dateComponents(components, from: isoDate)
-        } else {
-            // Try without fractional seconds
-            isoFormatter.formatOptions = [.withInternetDateTime]
-            if let isoDate = isoFormatter.date(from: dateString) {
-                let components: Set<Calendar.Component> = dateString.contains(":") || dateString.contains("T")
-                    ? [.year, .month, .day, .hour, .minute, .second]
-                    : [.year, .month, .day]
-                return Calendar.current.dateComponents(components, from: isoDate)
+    let trimmedInput = dateString.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if let tzInfo = detectExplicitTimezone(in: trimmedInput) {
+        let formatter = formatterWithBaseLocale()
+        formatter.timeZone = tzInfo.timeZone
+
+        let formatsWithTimezone = [
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ",
+            "yyyy-MM-dd HH:mm:ss.SSSZZZZZ",
+            "yyyy-MM-dd'T'HH:mm:ssZZZZZ",
+            "yyyy-MM-dd HH:mm:ssZZZZZ",
+            "yyyy-MM-dd'T'HH:mmZZZZZ",
+            "yyyy-MM-dd HH:mmZZZZZ",
+            "yyyy-MM-ddZZZZZ",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZZZ",
+            "yyyy-MM-dd HH:mm:ss.SSSZZZ",
+            "yyyy-MM-dd'T'HH:mm:ssZZZ",
+            "yyyy-MM-dd HH:mm:ssZZZ",
+            "yyyy-MM-dd'T'HH:mmZZZ",
+            "yyyy-MM-dd HH:mmZZZ",
+            "yyyy-MM-ddZZZ"
+        ]
+
+        for format in formatsWithTimezone {
+            formatter.dateFormat = format
+            if let parsedDate = formatter.date(from: trimmedInput) {
+                var calendar = Calendar(identifier: .gregorian)
+                calendar.timeZone = tzInfo.timeZone
+                var components = calendar.dateComponents(componentsSet(for: trimmedInput), from: parsedDate)
+                normalizedComponents(&components, using: calendar, timeZone: tzInfo.timeZone)
+                return components
             }
         }
     }
-    
-    // For formats without explicit timezone (assumed to be local time)
-    // This is the preferred format: "YYYY-MM-DD HH:mm:ss" or "YYYY-MM-DDTHH:mm:ss"
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US_POSIX") // Best practice for fixed formats
-    formatter.timeZone = TimeZone.current // Use local timezone - CRITICAL for correct parsing
 
-    // Support multiple date formats for flexibility with LLM inputs
-    let formatsToTry = [
-        // ISO 8601 formats without timezone (treated as local)
-        "yyyy-MM-dd'T'HH:mm:ss", // 2025-10-30T18:00:00 (local time)
-        "yyyy-MM-dd'T'HH:mm", // 2025-10-30T18:00 (local time)
-        // Standard formats (preferred - most explicit)
-        "yyyy-MM-dd HH:mm:ss", // 2025-10-30 18:00:00 (local time)
-        "yyyy-MM-dd HH:mm", // 2025-10-30 18:00 (local time)
-        "yyyy-MM-dd" // 2025-10-30 (date only)
+    let formatter = formatterWithBaseLocale()
+    formatter.timeZone = TimeZone.current
+
+    let localFormats = [
+        "yyyy-MM-dd'T'HH:mm:ss.SSS",
+        "yyyy-MM-dd HH:mm:ss.SSS",
+        "yyyy-MM-dd'T'HH:mm:ss",
+        "yyyy-MM-dd HH:mm:ss",
+        "yyyy-MM-dd'T'HH:mm",
+        "yyyy-MM-dd HH:mm",
+        "yyyy-MM-dd"
     ]
 
-    var date: Date?
-    for format in formatsToTry {
+    for format in localFormats {
         formatter.dateFormat = format
-        if let parsedDate = formatter.date(from: dateString) {
-            date = parsedDate
-            break
+        if let parsedDate = formatter.date(from: trimmedInput) {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = TimeZone.current
+            var components = calendar.dateComponents(componentsSet(for: trimmedInput), from: parsedDate)
+            normalizedComponents(&components, using: calendar, timeZone: TimeZone.current)
+            return components
         }
     }
 
-    guard let validDate = date else { return nil }
-
-    // Determine which components to include based on the original string
-    let hasTime = dateString.contains(":") || dateString.contains("T")
-    let components: Set<Calendar.Component> = hasTime
-        ? [.year, .month, .day, .hour, .minute, .second]
-        : [.year, .month, .day]
-    
-    // Extract components in local timezone - this ensures the stored time matches user intent
-    return Calendar.current.dateComponents(components, from: validDate)
+    return nil
 }
 
 // MARK: - RemindersManager Class
@@ -175,7 +244,15 @@ class RemindersManager {
         }
         if let finalNotes = finalNotes { reminder.notes = finalNotes }
         
-        if let dateStr = dueDateString { reminder.dueDateComponents = parseDateComponents(from: dateStr) }
+        if let dateStr = dueDateString {
+            if let parsedComponents = parseDateComponents(from: dateStr) {
+                reminder.dueDateComponents = parsedComponents
+                reminder.timeZone = parsedComponents.timeZone
+            } else {
+                reminder.dueDateComponents = nil
+                reminder.timeZone = nil
+            }
+        }
         try eventStore.save(reminder, commit: true)
         return reminder.toJSON()
     }
@@ -223,7 +300,15 @@ class RemindersManager {
         
         if let isCompleted = isCompleted { reminder.isCompleted = isCompleted }
         if let listName = listName { reminder.calendar = try findList(named: listName) }
-        if let dateStr = dueDateString { reminder.dueDateComponents = parseDateComponents(from: dateStr) }
+        if let dateStr = dueDateString {
+            if let parsedComponents = parseDateComponents(from: dateStr) {
+                reminder.dueDateComponents = parsedComponents
+                reminder.timeZone = parsedComponents.timeZone
+            } else {
+                reminder.dueDateComponents = nil
+                reminder.timeZone = nil
+            }
+        }
         try eventStore.save(reminder, commit: true)
         return reminder.toJSON()
     }
@@ -354,65 +439,53 @@ class RemindersManager {
     }
     
     func parseDate(from dateString: String) -> Date? {
-        // Use same parsing logic as parseDateComponents but return Date
-        if dateString.contains("Z") || (dateString.contains("+") || dateString.contains("-")) && dateString.range(of: #"T\d{2}:\d{2}"#, options: .regularExpression) != nil {
-            let isoFormatter = ISO8601DateFormatter()
-            isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            if let isoDate = isoFormatter.date(from: dateString) {
-                return isoDate
-            } else {
-                isoFormatter.formatOptions = [.withInternetDateTime]
-                return isoFormatter.date(from: dateString)
-            }
-        }
-        
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone.current
-        
-        let formatsToTry = [
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm",
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd HH:mm",
-            "yyyy-MM-dd"
-        ]
-        
-        for format in formatsToTry {
-            formatter.dateFormat = format
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-        }
-        
-        return nil
+        guard var components = parseDateComponents(from: dateString) else { return nil }
+        let calendar: Calendar = {
+            if let existing = components.calendar { return existing }
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = components.timeZone ?? TimeZone.current
+            return calendar
+        }()
+        components.calendar = calendar
+        components.timeZone = components.timeZone ?? calendar.timeZone
+        return calendar.date(from: components)
     }
 }
 
 // MARK: - Date Formatting Helper
-private func formatDueDateWithTimezone(from dateComponents: DateComponents?) -> String? {
-    guard let dateComponents = dateComponents,
-          let date = Calendar.current.date(from: dateComponents) else {
+private func formatDueDateWithTimezone(from dateComponents: DateComponents?, timeZoneHint: TimeZone?) -> String? {
+    guard var components = dateComponents else {
         return nil
     }
-    
+
+    let timeZone = components.timeZone
+        ?? timeZoneHint
+        ?? components.calendar?.timeZone
+        ?? TimeZone.current
+    var calendar = components.calendar ?? Calendar(identifier: .gregorian)
+    calendar.timeZone = timeZone
+
+    components.calendar = calendar
+    components.timeZone = timeZone
+    guard let date = calendar.date(from: components) else { return nil }
+
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone.current
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-    
-    let timezoneOffset = formatter.timeZone.secondsFromGMT(for: date)
-    let hours = abs(timezoneOffset) / 3600
-    let minutes = (abs(timezoneOffset) % 3600) / 60
-    let sign = timezoneOffset >= 0 ? "+" : "-"
-    let tzString = String(format: "%@%02d:%02d", sign, hours, minutes)
-    
-    return formatter.string(from: date) + tzString
+    formatter.timeZone = timeZone
+    formatter.calendar = calendar
+
+    if components.hour != nil {
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZZZZZ"
+    } else {
+        formatter.dateFormat = "yyyy-MM-ddZZZZZ"
+    }
+
+    return formatter.string(from: date)
 }
 
 // MARK: - Extensions & Main
-extension EKReminder { 
-    func toJSON() -> ReminderJSON { 
+extension EKReminder {
+    func toJSON() -> ReminderJSON {
         ReminderJSON(
             id: self.calendarItemIdentifier,
             title: self.title,
@@ -420,7 +493,7 @@ extension EKReminder {
             list: self.calendar.title,
             notes: self.notes,
             url: self.url?.absoluteString,
-            dueDate: formatDueDateWithTimezone(from: self.dueDateComponents)
+            dueDate: formatDueDateWithTimezone(from: self.dueDateComponents, timeZoneHint: self.timeZone)
         )
     }
 }
@@ -429,31 +502,26 @@ extension EKCalendar {
     func toCalendarJSON() -> CalendarJSON { CalendarJSON(id: self.calendarIdentifier, title: self.title) }
 }
 
+private func formatEventDate(_ date: Date, preferredTimeZone: TimeZone, includeTime: Bool) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.calendar = Calendar(identifier: .gregorian)
+    formatter.timeZone = preferredTimeZone
+    formatter.dateFormat = includeTime ? "yyyy-MM-dd'T'HH:mm:ssZZZZZ" : "yyyy-MM-ddZZZZZ"
+    return formatter.string(from: date)
+}
+
 extension EKEvent {
     func toJSON() -> EventJSON {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone.current
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-        
-        let startTimezoneOffset = formatter.timeZone.secondsFromGMT(for: self.startDate)
-        let startHours = abs(startTimezoneOffset) / 3600
-        let startMinutes = (abs(startTimezoneOffset) % 3600) / 60
-        let startSign = startTimezoneOffset >= 0 ? "+" : "-"
-        let startTzString = String(format: "%@%02d:%02d", startSign, startHours, startMinutes)
-        
-        let endTimezoneOffset = formatter.timeZone.secondsFromGMT(for: self.endDate)
-        let endHours = abs(endTimezoneOffset) / 3600
-        let endMinutes = (abs(endTimezoneOffset) % 3600) / 60
-        let endSign = endTimezoneOffset >= 0 ? "+" : "-"
-        let endTzString = String(format: "%@%02d:%02d", endSign, endHours, endMinutes)
-        
+        let eventTimeZone = self.timeZone ?? self.calendar.timeZone ?? TimeZone.current
+        let includeTime = !self.isAllDay
+
         return EventJSON(
             id: self.eventIdentifier,
             title: self.title,
             calendar: self.calendar.title,
-            startDate: formatter.string(from: self.startDate) + startTzString,
-            endDate: formatter.string(from: self.endDate) + endTzString,
+            startDate: formatEventDate(self.startDate, preferredTimeZone: eventTimeZone, includeTime: includeTime),
+            endDate: formatEventDate(self.endDate, preferredTimeZone: eventTimeZone, includeTime: includeTime),
             notes: self.notes,
             location: self.location,
             url: self.url?.absoluteString,
