@@ -4,7 +4,13 @@
  */
 
 import { execFile } from 'node:child_process';
+import path from 'node:path';
 import { promisify } from 'node:util';
+import {
+  findSecureBinaryPath,
+  getEnvironmentBinaryConfig,
+} from './binaryValidator.js';
+import { FILE_SYSTEM } from './constants.js';
 import { findProjectRoot } from './projectUtils.js';
 
 const execFileAsync = promisify(execFile);
@@ -35,7 +41,29 @@ type CliResponse<T> = CliSuccessResponse<T> | CliErrorResponse;
  */
 export async function executeCli<T>(args: string[]): Promise<T> {
   // Compute CLI path lazily to ensure proper environment context
-  const cliPath = `${findProjectRoot()}/bin/EventKitCLI`;
+  const projectRoot = findProjectRoot();
+  const binaryName = FILE_SYSTEM.SWIFT_BINARY_NAME;
+  const possiblePaths = [path.join(projectRoot, 'bin', binaryName)];
+
+  // Use secure binary path finder with environment-specific config
+  const config = {
+    ...getEnvironmentBinaryConfig(),
+    // Allow bin directory in addition to default allowed paths
+    allowedPaths: [
+      '/bin/',
+      '/dist/swift/bin/',
+      '/src/swift/bin/',
+      '/swift/bin/',
+    ],
+  };
+
+  const { path: cliPath } = findSecureBinaryPath(possiblePaths, config);
+
+  if (!cliPath) {
+    throw new Error(
+      `EventKitCLI binary not found or validation failed. Searched: ${possiblePaths.join(', ')}`,
+    );
+  }
 
   try {
     const { stdout } = await execFileAsync(cliPath, args);

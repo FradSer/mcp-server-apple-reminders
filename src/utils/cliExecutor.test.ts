@@ -9,6 +9,10 @@ import type {
   ExecFileOptions,
 } from 'node:child_process';
 import { execFile } from 'node:child_process';
+import {
+  findSecureBinaryPath,
+  getEnvironmentBinaryConfig,
+} from './binaryValidator.js';
 import { executeCli } from './cliExecutor.js';
 import { findProjectRoot } from './projectUtils.js';
 
@@ -25,16 +29,31 @@ jest.mock('node:child_process');
 jest.mock('./projectUtils.js', () => ({
   findProjectRoot: jest.fn(),
 }));
+jest.mock('./binaryValidator.js', () => ({
+  findSecureBinaryPath: jest.fn(),
+  getEnvironmentBinaryConfig: jest.fn(),
+}));
 
 const mockExecFile = execFile as jest.MockedFunction<typeof execFile>;
 const mockFindProjectRoot = findProjectRoot as jest.MockedFunction<
   typeof findProjectRoot
 >;
+const mockFindSecureBinaryPath = findSecureBinaryPath as jest.MockedFunction<
+  typeof findSecureBinaryPath
+>;
+const mockGetEnvironmentBinaryConfig =
+  getEnvironmentBinaryConfig as jest.MockedFunction<
+    typeof getEnvironmentBinaryConfig
+  >;
 
 describe('cliExecutor', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockFindProjectRoot.mockReturnValue('/test/project');
+    mockGetEnvironmentBinaryConfig.mockReturnValue({});
+    mockFindSecureBinaryPath.mockReturnValue({
+      path: '/test/project/bin/EventKitCLI',
+    });
   });
 
   describe('executeCli', () => {
@@ -77,6 +96,7 @@ describe('cliExecutor', () => {
 
       expect(result).toEqual({ id: '123', title: 'Test reminder' });
       expect(mockFindProjectRoot).toHaveBeenCalled();
+      expect(mockFindSecureBinaryPath).toHaveBeenCalled();
       expect(mockExecFile).toHaveBeenCalledWith(
         '/test/project/bin/EventKitCLI',
         ['--action', 'read', '--id', '123'],
@@ -122,6 +142,14 @@ describe('cliExecutor', () => {
       await expect(
         executeCli(['--action', 'read', '--id', '123']),
       ).rejects.toThrow('Failed to read reminder');
+    });
+
+    it('should throw error when binary path validation fails', async () => {
+      mockFindSecureBinaryPath.mockReturnValue({ path: null });
+
+      await expect(
+        executeCli(['--action', 'read', '--id', '123']),
+      ).rejects.toThrow('EventKitCLI binary not found or validation failed');
     });
 
     it('should throw error when CLI execution fails', async () => {
@@ -270,6 +298,10 @@ describe('cliExecutor', () => {
         }
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
+
+      mockFindSecureBinaryPath.mockReturnValue({
+        path: '/custom/project/path/bin/EventKitCLI',
+      });
 
       await executeCli(['--action', 'read']);
 

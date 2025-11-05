@@ -7,7 +7,7 @@ echo "🔐 检查 Apple Reminders MCP Server 权限..."
 
 # 检查EventKit权限
 echo "📅 检查 EventKit (提醒) 权限..."
-EVENTKIT_CHECK=$(./dist/swift/bin/GetReminders --check 2>&1)
+EVENTKIT_CHECK=$(./bin/EventKitCLI --action read --limit 1 2>&1)
 if [[ $? -eq 0 ]]; then
     echo "✅ EventKit 权限已授予"
 else

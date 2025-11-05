@@ -53,7 +53,7 @@ export const FILE_SYSTEM = {
   PACKAGE_JSON_FILENAME: 'package.json',
 
   /** Swift binary filename */
-  SWIFT_BINARY_NAME: 'GetReminders',
+  SWIFT_BINARY_NAME: 'EventKitCLI',
 } as const;
 
 /**
