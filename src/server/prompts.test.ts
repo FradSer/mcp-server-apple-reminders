@@ -58,12 +58,16 @@ describe('prompt time horizons', () => {
     );
     expect(text).toMatch(/use the exact format "\d{4}-\d{2}-\d{2} HH:mm:ss"/i);
     expect(text).toMatch(
-      /Name deep work blocks using the pattern "Deep Work — \[Reminder Title]/i,
+      /Name deep work blocks using the pattern "Deep Work — \[Project Name]/i,
     );
     expect(text).toMatch(/Time block length: 60-90 minutes recommended/i);
     expect(text).toMatch(/Ensure the block spans the reminder's due time/i);
     expect(text).toMatch(
       /Daily deep work capacity: Plan (two|2)-(three|3) deep work blocks per day/i,
+    );
+    expect(text).toMatch(/Break intervals: Schedule 15-20 minute breaks/i);
+    expect(text).toMatch(
+      /Standard tasks — highlight 30-60 minute commitments/i,
     );
   });
 
