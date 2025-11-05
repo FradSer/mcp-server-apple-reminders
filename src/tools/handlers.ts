@@ -13,11 +13,8 @@ import type {
 import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { normalizeNotesText } from '../utils/notesFormatter.js';
-import {
-  formatPermissionError,
-  requestCalendarPermission,
-  requestRemindersPermission,
-} from '../utils/permissionManager.js';
+// Permission checking is now handled in Swift layer (EventKitCLI.swift)
+// This layer trusts Swift layer's permission handling
 import { reminderRepository } from '../utils/reminderRepository.js';
 import {
   CreateCalendarEventSchema,
@@ -76,68 +73,18 @@ function normalizeReminderNotes(notes: string | undefined): string | undefined {
 }
 
 /**
- * Ensure reminders permission is granted, request if needed
- * @throws Error with detailed instructions if permission cannot be obtained
+ * Permission checking is now handled in Swift layer (EventKitCLI.swift)
+ * Swift layer uses EKEventStore.authorizationStatus() to check permission status
+ * before operations, following EventKit best practices.
+ *
+ * TypeScript layer trusts Swift layer's permission handling and does not
+ * duplicate permission checks here.
  */
-async function ensureRemindersPermission(): Promise<void> {
-  try {
-    // Try a simple read operation to check if permission is already granted
-    await reminderRepository.findAllLists();
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Check if this is a permission error
-    if (errorMessage.toLowerCase().includes('permission denied')) {
-      // Attempt to request permission via AppleScript
-      const result = await requestRemindersPermission();
-
-      if (!result.granted) {
-        throw new Error(formatPermissionError('reminders', result));
-      }
-
-      // Permission was granted, operation will succeed on next try
-    } else {
-      // Not a permission error, re-throw
-      throw error;
-    }
-  }
-}
-
-/**
- * Ensure calendar permission is granted, request if needed
- * @throws Error with detailed instructions if permission cannot be obtained
- */
-async function ensureCalendarPermission(): Promise<void> {
-  try {
-    // Try a simple read operation to check if permission is already granted
-    await calendarRepository.findAllCalendars();
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Check if this is a permission error
-    if (errorMessage.toLowerCase().includes('permission denied')) {
-      // Attempt to request permission via AppleScript
-      const result = await requestCalendarPermission();
-
-      if (!result.granted) {
-        throw new Error(formatPermissionError('calendar', result));
-      }
-
-      // Permission was granted, operation will succeed on next try
-    } else {
-      // Not a permission error, re-throw
-      throw error;
-    }
-  }
-}
 
 export const handleCreateReminder = async (
   args: RemindersToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(args, CreateReminderSchema);
     const reminder = await reminderRepository.createReminder({
       title: validatedArgs.title,
@@ -154,9 +101,6 @@ export const handleUpdateReminder = async (
   args: RemindersToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(args, UpdateReminderSchema);
     const reminder = await reminderRepository.updateReminder({
       id: validatedArgs.id,
@@ -175,9 +119,6 @@ export const handleDeleteReminder = async (
   args: RemindersToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(args, DeleteReminderSchema);
     await reminderRepository.deleteReminder(validatedArgs.id);
     return `Successfully deleted reminder with ID: ${validatedArgs.id}`;
@@ -188,9 +129,6 @@ export const handleReadReminders = async (
   args: RemindersToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(args, ReadRemindersSchema);
 
     // Check if id is provided in args (before validation)
@@ -234,9 +172,6 @@ export const handleReadReminders = async (
 
 export const handleReadReminderLists = async (): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const lists = await reminderRepository.findAllLists();
     const markdownLines: string[] = [];
     markdownLines.push(`### Reminder Lists (Total: ${lists.length})`);
@@ -258,9 +193,6 @@ export const handleCreateReminderList = async (
   args: ListsToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       CreateReminderListSchema,
@@ -276,9 +208,6 @@ export const handleUpdateReminderList = async (
   args: ListsToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       UpdateReminderListSchema,
@@ -295,9 +224,6 @@ export const handleDeleteReminderList = async (
   args: ListsToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure reminders permission is granted
-    await ensureRemindersPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       DeleteReminderListSchema,
@@ -341,9 +267,6 @@ export const handleCreateCalendarEvent = async (
   args: CalendarToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure calendar permission is granted
-    await ensureCalendarPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       CreateCalendarEventSchema,
@@ -366,9 +289,6 @@ export const handleUpdateCalendarEvent = async (
   args: CalendarToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure calendar permission is granted
-    await ensureCalendarPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       UpdateCalendarEventSchema,
@@ -392,9 +312,6 @@ export const handleDeleteCalendarEvent = async (
   args: CalendarToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure calendar permission is granted
-    await ensureCalendarPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       DeleteCalendarEventSchema,
@@ -408,9 +325,6 @@ export const handleReadCalendarEvents = async (
   args: CalendarToolArgs,
 ): Promise<CallToolResult> => {
   return handleAsyncOperation(async () => {
-    // Ensure calendar permission is granted
-    await ensureCalendarPermission();
-
     const validatedArgs = extractAndValidateArgs(
       args,
       ReadCalendarEventsSchema,

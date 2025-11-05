@@ -82,6 +82,15 @@ private func parseDateComponents(from dateString: String) -> DateComponents? {
 class RemindersManager {
     private let eventStore = EKEventStore()
 
+    // MARK: - Permission Status Checking (Best Practice)
+    func checkRemindersAuthorizationStatus() -> EKAuthorizationStatus {
+        return EKEventStore.authorizationStatus(for: .reminder)
+    }
+    
+    func checkCalendarAuthorizationStatus() -> EKAuthorizationStatus {
+        return EKEventStore.authorizationStatus(for: .event)
+    }
+
     func requestAccess(completion: @escaping (Bool, Error?) -> Void) {
         if #available(macOS 14.0, *) { eventStore.requestFullAccessToReminders(completion: completion) }
         else { eventStore.requestAccess(to: .reminder, completion: completion) }
@@ -288,9 +297,10 @@ class RemindersManager {
         do {
             try eventStore.save(event, span: .thisEvent, commit: true)
         } catch {
-            // Provide more detailed error information
+            // Provide detailed error information without permission hints
+            // Permission is already checked before this operation
             let errorMsg = error.localizedDescription
-            throw NSError(domain: "", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to save calendar event: \(errorMsg). Please ensure calendar permissions are granted in System Settings > Privacy & Security > Calendars."])
+            throw NSError(domain: "", code: 500, userInfo: [NSLocalizedDescriptionKey: "Failed to save calendar event: \(errorMsg)"])
         }
         return event.toJSON()
     }
@@ -464,24 +474,57 @@ func main() {
 
     let isCalendarAction = action == "read-events" || action == "read-calendars" || action == "create-event" || action == "update-event" || action == "delete-event"
     
-    let requestPermission: () -> Void = {
+    // Check permission status first (Best Practice)
+    let checkAndRequestPermission: () -> Void = {
         if isCalendarAction {
-            manager.requestCalendarAccess { granted, error in
-                guard granted else {
-                    let errorMsg = error?.localizedDescription ?? "Unknown error"
-                    outputError("Calendar permission denied. \(errorMsg)\n\nPlease grant calendar permissions in:\nSystem Settings > Privacy & Security > Calendars")
-                    return
-                }
+            let status = manager.checkCalendarAuthorizationStatus()
+            switch status {
+            case .authorized, .fullAccess:
+                // Already authorized, proceed directly
                 handleAction()
+            case .notDetermined:
+                // Need to request permission
+                manager.requestCalendarAccess { granted, error in
+                    guard granted else {
+                        let errorMsg = error?.localizedDescription ?? "Unknown error"
+                        outputError("Calendar permission denied. \(errorMsg)\n\nPlease grant calendar permissions in:\nSystem Settings > Privacy & Security > Calendars")
+                        return
+                    }
+                    handleAction()
+                }
+            case .denied, .restricted:
+                // Permission was denied or restricted
+                outputError("Calendar permission denied or restricted.\n\nPlease grant calendar permissions in:\nSystem Settings > Privacy & Security > Calendars")
+            case .writeOnly:
+                // Write-only access is not sufficient for reading calendars
+                outputError("Calendar permission is write-only, but read access is required.\n\nPlease grant full calendar permissions in:\nSystem Settings > Privacy & Security > Calendars")
+            @unknown default:
+                outputError("Unknown calendar permission status.")
             }
         } else {
-            manager.requestAccess { granted, error in
-                guard granted else {
-                    let errorMsg = error?.localizedDescription ?? "Unknown error"
-                    outputError("Reminder permission denied. \(errorMsg)\n\nPlease grant reminder permissions in:\nSystem Settings > Privacy & Security > Reminders")
-                    return
-                }
+            let status = manager.checkRemindersAuthorizationStatus()
+            switch status {
+            case .authorized, .fullAccess:
+                // Already authorized, proceed directly
                 handleAction()
+            case .notDetermined:
+                // Need to request permission
+                manager.requestAccess { granted, error in
+                    guard granted else {
+                        let errorMsg = error?.localizedDescription ?? "Unknown error"
+                        outputError("Reminder permission denied. \(errorMsg)\n\nPlease grant reminder permissions in:\nSystem Settings > Privacy & Security > Reminders")
+                        return
+                    }
+                    handleAction()
+                }
+            case .denied, .restricted:
+                // Permission was denied or restricted
+                outputError("Reminder permission denied or restricted.\n\nPlease grant reminder permissions in:\nSystem Settings > Privacy & Security > Reminders")
+            case .writeOnly:
+                // Write-only access is not sufficient for reading reminders
+                outputError("Reminder permission is write-only, but read access is required.\n\nPlease grant full reminder permissions in:\nSystem Settings > Privacy & Security > Reminders")
+            @unknown default:
+                outputError("Unknown reminder permission status.")
             }
         }
     }
@@ -542,7 +585,7 @@ func main() {
         exit(0)
     }
     
-    requestPermission()
+    checkAndRequestPermission()
     RunLoop.main.run()
 }
 
