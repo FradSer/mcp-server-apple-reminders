@@ -92,6 +92,7 @@ private func parseDateComponents(from dateString: String) -> DateComponents? {
         formatter.timeZone = tzInfo.timeZone
 
         let formatsWithTimezone = [
+            // Formats with colon timezone offsets (ZZZZZ, ZZZ)
             "yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ",
             "yyyy-MM-dd HH:mm:ss.SSSZZZZZ",
             "yyyy-MM-dd'T'HH:mm:ssZZZZZ",
@@ -105,7 +106,15 @@ private func parseDateComponents(from dateString: String) -> DateComponents? {
             "yyyy-MM-dd HH:mm:ssZZZ",
             "yyyy-MM-dd'T'HH:mmZZZ",
             "yyyy-MM-dd HH:mmZZZ",
-            "yyyy-MM-ddZZZ"
+            "yyyy-MM-ddZZZ",
+            // Formats with colonless timezone offsets (Z, ZZ) - supports +0200, +02
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+            "yyyy-MM-dd HH:mm:ss.SSSZ",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mmZ",
+            "yyyy-MM-dd HH:mmZ",
+            "yyyy-MM-ddZ"
         ]
 
         for format in formatsWithTimezone {
@@ -513,7 +522,7 @@ private func formatEventDate(_ date: Date, preferredTimeZone: TimeZone, includeT
 
 extension EKEvent {
     func toJSON() -> EventJSON {
-        let eventTimeZone = self.timeZone ?? self.calendar.timeZone ?? TimeZone.current
+        let eventTimeZone = self.timeZone ?? TimeZone.current
         let includeTime = !self.isAllDay
 
         return EventJSON(
