@@ -21,32 +21,18 @@ pnpm test src/utils/cliExecutor.test.ts
 
 # Development with enhanced logging
 NODE_ENV=development pnpm start
-
-# IMPORTANT: Permission setup for Cursor/Claude Desktop users
-node scripts/request-permissions.mjs  # MUST run this BEFORE using MCP server in Cursor
 ```
 
 ## Automatic Permission Handling
 
-**New in this version**: Permissions are now automatically requested when you use MCP tools!
+**Permissions are automatically requested when you use MCP tools!**
 
-When you call any reminder or calendar tool, the server will:
-1. Check if permissions are granted
-2. If not, automatically trigger macOS permission dialogs via AppleScript
-3. Wait for you to grant permissions
-4. Continue with the operation
+When you call any reminder or calendar tool, the Swift CLI (`src/swift/EventKitCLI.swift`) will:
+1. Check permission status using `EKEventStore.authorizationStatus()`
+2. If not authorized, automatically request permission
+3. Proceed with the operation once permission is granted
 
-**If automatic permission request fails** (due to macOS TCC limitations in Cursor/Claude Desktop):
-- You'll see a detailed error message with troubleshooting steps
-- Fallback option: Run `node scripts/request-permissions.mjs` manually from Terminal
-- See `CURSOR_PERMISSIONS.md` for detailed troubleshooting
-
-**Optional pre-authorization** (recommended for better UX):
-```bash
-node scripts/request-permissions.mjs  # Run once before using MCP server
-```
-
-This pre-authorization avoids the 30-second timeout during tool execution and ensures smoother operation.
+The Swift layer handles all permission checking and requesting following EventKit best practices.
 
 ## Critical Build Requirements
 

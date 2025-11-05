@@ -19,4 +19,9 @@ Craft conventional commits such as `feat: add transport validator`, keeping titl
 Store secrets exclusively in `.env.local` and load them through typed contracts to avoid leaking reminder data. Grant macOS Reminders and Calendar permissions locally; the Swift bridge aborts before integration tests without them. Run `pnpm audit --prod` ahead of release branches to surface Swift toolchain CVEs, and stub external services via dependency injection instead of hardcoding tokens or calendar IDs.
 
 ## Permission Handling
-macOS permissions for Reminders and Calendar are now automatically requested when needed. Each tool handler (`src/tools/handlers.ts`) checks permissions before operations and automatically triggers AppleScript permission dialogs via `src/utils/permissionManager.ts` if access is not granted. If auto-request fails (due to macOS TCC limitations when running from Cursor/Claude Desktop), handlers return detailed error messages with troubleshooting steps including manual setup via `node scripts/request-permissions.mjs`. The Swift CLI (`src/swift/EventKitCLI.swift`) validates permissions on every invocation. For deep troubleshooting of TCC attribution issues, see `CURSOR_PERMISSIONS.md`.
+macOS permissions for Reminders and Calendar are now automatically requested when needed. The Swift CLI (`src/swift/EventKitCLI.swift`) handles all permission checking and requesting using `EKEventStore.authorizationStatus()` following EventKit best practices. It checks permission status before operations:
+- If authorized: proceeds directly
+- If notDetermined: requests permission automatically
+- If denied/restricted: returns clear error message
+
+TypeScript handlers trust Swift layer's permission handling and do not duplicate permission checks. The Swift CLI automatically handles permission requests following EventKit best practices.
