@@ -44,8 +44,8 @@ export function detectActionUrgency(actionDescription: string): ActionUrgency {
   }
   if (
     description.includes('immediate') ||
-    description.includes('立刻') ||
-    description.includes('立即')
+    description.includes('now') ||
+    description.includes('instantly')
   ) {
     return 'immediate';
   }
@@ -57,7 +57,7 @@ export function detectActionUrgency(actionDescription: string): ActionUrgency {
   }
   if (
     description.includes('urgent') ||
-    description.includes('紧急') ||
+    description.includes('pressing') ||
     description.includes('asap')
   ) {
     return 'urgent';
@@ -66,8 +66,8 @@ export function detectActionUrgency(actionDescription: string): ActionUrgency {
   // Check for same-day indicators
   if (
     description.includes('today') ||
-    description.includes('今天') ||
-    description.includes('本日')
+    description.includes('this day') ||
+    description.includes('same day')
   ) {
     return 'today';
   }
@@ -82,7 +82,7 @@ export function detectActionUrgency(actionDescription: string): ActionUrgency {
   // Check for low priority indicators
   if (
     description.includes('low priority') ||
-    description.includes('可以稍后') ||
+    description.includes('can wait') ||
     description.includes('later')
   ) {
     return 'low-priority';
