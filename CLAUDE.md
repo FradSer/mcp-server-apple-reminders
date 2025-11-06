@@ -215,6 +215,44 @@ Six production-ready templates with shared structure: mission statement, numbere
 
 **Testing:** `src/server/prompts.test.ts` validates metadata completeness, argument schemas, and output format consistency.
 
+### Prompt Abstractions (`src/server/promptAbstractions.ts`)
+
+Shared abstractions for consistent behavior across all prompt templates:
+
+**Confidence Level System:**
+- `HIGH` (>80%): Actions are EXECUTED immediately using MCP tool calls
+- `MEDIUM` (60-80%): Actions are provided as RECOMMENDATIONS in tool call format
+- `LOW` (<60%): Actions are described as text, requiring user confirmation
+
+**Helper Functions:**
+- `buildConfidenceAction()`: Format confidence-based actions with tool calls
+- `buildToolCall()`: Standard MCP tool call formatting
+- `buildTimeFormat()`: Consistent time string generation (YYYY-MM-DD HH:mm:ss)
+- `formatConfidenceAction()`: Format actions for output display
+- `getActionQueueFormat()`: Standard action queue with confidence levels
+- `getVerificationLogFormat()`: Standard verification output
+- `buildStandardConstraints()`: Reusable constraint blocks
+
+**Shared Constraint Patterns:**
+- `CONFIDENCE_CONSTRAINTS`: Standard confidence thresholds and execution rules
+- `TIME_CONSISTENCY_CONSTRAINTS`: Due date alignment with urgency (immediate → 2hrs, quick wins → same day)
+- `NOTE_FORMATTING_CONSTRAINTS`: Plain text only, keyword annotations (Blocked:, Depends:, Duration:)
+- `CALENDAR_INTEGRATION_CONSTRAINTS`: When to create blocks vs. reminders
+- `BATCHING_CONSTRAINTS`: Idempotency checks, duplicate prevention, tool call optimization
+
+**Standard Output Format:**
+- `Current state`: Metrics (total, overdue, urgent)
+- `Action queue`: Prioritized actions with confidence levels and tool calls
+- `Verification log`: Confirms executed actions with timestamps
+- Prompt-specific sections (gaps, questions, insights)
+
+**Benefits:**
+- DRY principle: No duplicated constraint logic between prompts
+- Consistent UX: All prompts follow same action execution patterns
+- Easy maintenance: Update constraints in one place
+- Type safety: Interfaces prevent inconsistencies
+- Testability: 18 tests validate abstraction consistency
+
 ## macOS-Specific Considerations
 
 - **Permissions**: First run triggers system dialogs for EventKit and Automation access
