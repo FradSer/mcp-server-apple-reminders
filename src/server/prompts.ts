@@ -17,6 +17,20 @@ import {
   getFuzzyTimeSuggestions,
   getTimeContext,
 } from '../utils/timeHelpers.js';
+import {
+  APPLE_REMINDERS_LIMITATIONS,
+  BATCHING_CONSTRAINTS,
+  buildStandardOutputFormat,
+  CALENDAR_INTEGRATION_CONSTRAINTS,
+  CALENDAR_PERMISSION_CONSTRAINTS,
+  CONFIDENCE_CONSTRAINTS,
+  CONTEXT_CALIBRATION,
+  DEEP_WORK_CONSTRAINTS,
+  NOTE_FORMATTING_CONSTRAINTS,
+  TIME_BLOCK_CREATION_CONSTRAINTS,
+  TIME_CONSISTENCY_CONSTRAINTS,
+  WORKLOAD_CALIBRATION,
+} from './promptAbstractions.js';
 
 type PromptRegistry = {
   [K in PromptName]: PromptTemplate<K>;
@@ -78,12 +92,35 @@ const isNonEmptyString = (value: unknown): value is string =>
 const parseOptionalString = (value: unknown): string | undefined =>
   isNonEmptyString(value) ? value : undefined;
 
+/**
+ * Build daily task organizer prompt for same-day task management
+ *
+ * Creates an intelligent daily task organization prompt that analyzes existing
+ * reminders, identifies gaps, and proactively creates or optimizes reminders
+ * with appropriate time-based properties.
+ *
+ * @param args - Organization arguments
+ * @param args.today_focus - Optional focus area (e.g., "urgency-based", "gap filling")
+ * @returns Structured prompt response with executable action queue
+ *
+ * @example
+ * ```typescript
+ * // Comprehensive organization
+ * const prompt = buildDailyTaskOrganizerPrompt({});
+ *
+ * // Focused on urgent tasks
+ * const urgentPrompt = buildDailyTaskOrganizerPrompt({
+ *   today_focus: 'urgency-based organization'
+ * });
+ * ```
+ */
 const buildDailyTaskOrganizerPrompt = (
   args: DailyTaskOrganizerArgs,
 ): PromptResponse => {
   const todayFocus = args.today_focus ?? '';
   const timeContext = getTimeContext();
   const fuzzyTimes = getFuzzyTimeSuggestions();
+  const standardOutput = buildStandardOutputFormat(timeContext.currentDate);
 
   return {
     description:
@@ -113,73 +150,34 @@ const buildDailyTaskOrganizerPrompt = (
             'For high-confidence actions (>80%), immediately call the reminders tool to create/update reminders. For medium-confidence actions, provide recommendations in tool call format. For low-confidence actions, ask for user confirmation.',
           ],
           constraints: [
+            // Daily-task-organizer specific constraints
             'Take initiative and make reasonable assumptions about user preferences and task urgency patterns.',
             'Create new reminders when gaps are identified and confidence is medium or higher.',
             'Adjust reminder properties (due date, list) when optimization opportunities are clear. Note: Apple Reminders does not support priority fields - use due date urgency and list importance instead.',
             'Keep all scheduling decisions within today unless the user explicitly authorizes deferring beyond the current day.',
             'Redirect multi-day planning needs to the weekly planning workflow instead of stretching this prompt beyond today.',
-            'Avoid duplicate reminders: perform a similarity check on titles before creating; if a near-duplicate exists, update or annotate instead of creating a new one.',
-            'Batch tool calls when executing multiple changes to reduce overhead and keep actions atomic by concern (e.g., all creates, then updates).',
             'Do not modify recurrence rules, attachments, or sub-tasks unless explicitly requested by the user.',
             'Never schedule past times: if the target time is earlier than now, push it forward to the next viable slot and explain the adjustment.',
             `When labeling an action as "today" or "this morning", use the exact format "${timeContext.currentDate} HH:mm:ss" (local time) in tool arguments and verify the saved value matches.`,
-            'CRITICAL time consistency rules: ALWAYS align due dates with action urgency and list importance:',
-            '- "RIGHT NOW", "IMMEDIATE", or "CRITICAL BLOCKER" actions → due within 2 hours of current time, assign to important/urgent list',
-            '- "Quick Wins" (15-minute tasks) → due same day, ideally within 4 hours or end of work day (6PM)',
-            '- "Today" actions → due before 6PM same day',
-            '- "Critical blocker" tasks → urgent due dates (same day), assign to important list',
-            '- NEVER set distant due dates (tomorrow or later) for time-sensitive actions described as immediate',
-            'Strict note modification rules: ONLY modify reminder notes when ALL conditions are met: (a) adding CRITICAL completion information (missing resources, blocking issues, required coordination), (b) confidence >90%, (c) information is essential for task completion, (d) user has not explicitly requested to preserve notes.',
-            'Minimal intervention for creative workers: default to leaving notes untouched unless the added context clears a blocker or records a duration estimate required for planning.',
-            'When notes must be updated, use concise single-line keywords (Blocked:, Depends:, Next:, See:, Note:, Duration:) followed by plain text. Preserve the original user note on its own line after any new annotations.',
-            'Do NOT include reminder IDs, list names, or bracketed titles in notes. Keep references human-friendly (e.g., "See: Manager approval reminder" instead of listing IDs).',
-            'Duration annotations are optional and informational only. Format as "Duration: Quick Win (5-15 min)" or "Duration: Standard Task (30-60 min)" when clarity helps workload planning.',
             'Reminder duration estimates are for workload assessment only—do NOT create calendar events solely because a duration was recorded.',
             'When effort exceeds 60 minutes, recommend splitting into multiple subtasks that each fit within Quick Win or Standard Task bounds; highlight how related subtasks can share a deep work block.',
-            'Never modify notes for: task optimization, urgency guidance, execution suggestions, or general improvements—create new reminders instead.',
-            'Only ask for confirmation when confidence is low (<60%) or when decisions significantly impact user workflow.',
-            'Provide brief rationale for medium-confidence decisions before taking action.',
             'Assume standard working hours (9am-6pm) and reasonable task durations unless context suggests otherwise.',
-            '**Time block creation (STRICT RULES)**: ONLY use the calendar tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
-            '  - You have explicitly identified in your analysis that a task needs a fixed time slot (e.g., "2-hour deep work session", "Scheduled code review block")',
-            '  - The task benefits from calendar integration (visible in calendar apps, prevents double-booking)',
-            '  - You have determined a specific start and end time that should be blocked',
-            '  - You have stated in your output that you are creating a time block for this task',
-            '  - **CRITICAL**: If you include "Time block:" or similar time block references in a reminder note, you MUST also create a calendar event for that time block. Do NOT mention time blocks in notes without creating the corresponding calendar event.',
-            '  - For HIGH CONFIDENCE (>80%) time blocks: Actually call the calendar tool with action="create". Format: "HIGH CONFIDENCE (90%): Creating time block\nTool: calendar\nArgs: {action: "create", title: "Deep Work — Project Phoenix", startDate: "2025-11-04 14:00:00", endDate: "2025-11-04 16:00:00", targetCalendar: "Work", note: "Focused time for uninterrupted work on Project Phoenix"}"',
-            '  - For MEDIUM CONFIDENCE (60-80%) time blocks: Provide recommendation in tool call format. Format: "MEDIUM CONFIDENCE (70%): RECOMMENDATION - Create time block\nSuggested tool call: calendar with {action: "create", title: "Deep Work — Project Phoenix", startDate: "2025-11-04 14:00:00", endDate: "2025-11-04 16:00:00", targetCalendar: "Work", note: "Focused time for uninterrupted work on Project Phoenix"}\nRationale: [brief explanation]"',
-            '  - Always use local time format "YYYY-MM-DD HH:mm:ss" for startDate and endDate (e.g., "2025-11-04 14:00:00" for today 2PM)',
-            '  - CRITICAL: If you mention "Time block:" in a reminder note, you MUST create the calendar event. If you are NOT creating a time block (neither in note nor calendar), use reminders tool only.',
-            '  - Name deep work blocks using the pattern "Deep Work — [Project Name]" so the calendar highlights the project while allowing multiple related tasks within a single block.',
-            '  - Clarify in notes when a deep work block spans multiple tasks for the same project; highlight the shared objective instead of individual task names.',
-            '  - **Deep work time block guidelines**:',
-            '    - Time block length: 60-90 minutes recommended (avoid sessions shorter than 60 minutes as they are too brief to enter deep focus state; avoid sessions longer than 90 minutes to prevent fatigue)',
-            '    - Scheduling priority: Place time blocks during peak energy hours (typically morning, 9am-12pm). Schedule 2-4 hours of deep work time total per day across multiple blocks (typically 2-3 blocks)',
-            '    - Daily deep work capacity: Plan 2-3 deep work blocks per day, totaling 2-4 hours of deep work time (e.g., two 90-minute blocks = 3 hours, or three 60-minute blocks = 3 hours)',
-            '    - Break intervals: Schedule 15-20 minute breaks between time blocks (these breaks are NOT calendar events—plan the pause without creating events). Do NOT create calendar events for breaks',
-            '    - Distraction reduction: Include in notes: "Close notifications, inform others you are focusing, avoid email and social media"',
-            '    - Clear objectives: Each time block should have a specific, clear goal stated in the notes. Include the specific objective or deliverable for that session',
-            "    - Ensure the block spans the reminder's due time: start early enough that the session finishes exactly at or slightly before the due timestamp, or extend the block when the due time sits mid-session",
-            '**Calendar permission troubleshooting**: If calendar event creation fails, it may be due to insufficient permissions. macOS 14+ supports two permission levels: "Write-only" (can only create events) and "Full Access" (can create, read, and modify events). If creation fails, guide the user to:',
-            '  - Open System Settings > Privacy & Security > Calendars',
-            '  - Find and select the application (Terminal, Cursor, or the terminal app being used)',
-            '  - Ensure "Full Access" is selected instead of "Write-only"',
-            '  - Full Access permission is required for complete calendar functionality including reading existing events and modifying calendar properties',
+            // Shared constraint patterns
+            ...CONFIDENCE_CONSTRAINTS,
+            ...TIME_CONSISTENCY_CONSTRAINTS,
+            ...NOTE_FORMATTING_CONSTRAINTS,
+            ...TIME_BLOCK_CREATION_CONSTRAINTS,
+            ...DEEP_WORK_CONSTRAINTS,
+            ...CALENDAR_PERMISSION_CONSTRAINTS,
+            ...CALENDAR_INTEGRATION_CONSTRAINTS,
+            ...BATCHING_CONSTRAINTS,
           ],
           outputFormat: [
             '### Current state — brief overview with key metrics: total tasks, overdue items, urgent tasks (due today or soon), and main issues identified.',
             '### Gaps found — missing preparatory steps, follow-up tasks, or related reminders that should be created.',
-            '### Action queue — prioritized list of actions organized by confidence level (high/medium/low) and impact. IMPORTANT: High-confidence actions (>80%) should be EXECUTED immediately using MCP tool calls, not just described. Each action should specify:',
-            '  - For HIGH CONFIDENCE (>80%): Actually call the reminders tool with action="create" or action="update". Format: "HIGH CONFIDENCE (95%): Creating reminder\nTool: reminders\nArgs: {action: "create", title: "Submit report", targetList: "Work", dueDate: "2025-01-15 18:00:00", note: "CRITICAL: Blocked by - Need approval from manager first"}"',
-            '  - For MEDIUM CONFIDENCE (60-80%): Provide recommendation in tool call format, marked as "RECOMMENDATION". Format: "MEDIUM CONFIDENCE (75%): RECOMMENDATION - Create reminder\nSuggested tool call: reminders with {action: "create", title: "...", targetList: "...", dueDate: "YYYY-MM-DD HH:mm:ss"}\nRationale: [brief explanation]"',
-            '  - For LOW CONFIDENCE (<60%): Text description only, ask for confirmation. Format: "LOW CONFIDENCE (50%): Consider creating reminder for [task]. Should I proceed?"',
-            '  - Each action must include: confidence level, action type (create/update/recommendation), exact reminder properties (title, list, dueDate in format "YYYY-MM-DD HH:mm:ss" for local time, note if applicable, url if applicable), and brief rationale',
-            '  - IMPORTANT: Use local time format "YYYY-MM-DD HH:mm:ss" for dueDate (e.g., "2025-11-04 18:00:00" for today 6PM). Do NOT use UTC format with "Z" suffix unless explicitly needed - this prevents timezone conversion errors.',
-            '  - **CRITICAL note format rule**: When creating notes with checklists or bullet points, use plain text format "-" (hyphen), NOT markdown checkbox "- [ ]". Example: note: "Checklist:\n- Review status\n- Test functionality\n- Verify results" (NOT "- [ ] Review status")',
-            '  - **Time block creation (ONLY when explicitly needed)**: ONLY use the calendar tool when you have explicitly identified in your output that a task requires a dedicated time block. For HIGH CONFIDENCE (>80%) time blocks that you have explicitly stated you are creating, actually call the calendar tool. Format: "HIGH CONFIDENCE (90%): Creating time block\nTool: calendar\nArgs: {action: "create", title: "Deep Work — Project Phoenix", startDate: "2025-11-04 14:00:00", endDate: "2025-11-04 16:00:00", targetCalendar: "Work", note: "Focused time for uninterrupted work"}"\nFor MEDIUM CONFIDENCE (60-80%) time blocks, provide as recommendation. If you are NOT explicitly creating a time block, use reminders tool instead.',
-            '  - **CRITICAL consistency rule**: If you mention "Time block:" or include time block information in a reminder note, you MUST also create the corresponding calendar event. Do NOT reference time blocks in notes without creating calendar events.',
-            '### Questions — concise list of missing context (capacity, hard stop times, list preferences) needed to safely finalize today’s plan when confidence is below 60%.',
-            `### Verification log — bullet list confirming that each executed due date marked "today" uses ${timeContext.currentDate} in the tool call output and persisted value (include reminder title + due date).`,
+            ...standardOutput.actionQueue,
+            "### Questions — concise list of missing context (capacity, hard stop times, list preferences) needed to safely finalize today's plan when confidence is below 60%.",
+            standardOutput.verificationLog,
             '### Quick wins — 2-3 immediately actionable tasks that can be completed within 15 minutes, each with reminder title, list name, and duration annotation when helpful.',
             '### Standard tasks — highlight 30-60 minute commitments, grouped by project when possible, and note when task splitting or deep work batching is required.',
           ],
@@ -204,10 +202,9 @@ const buildDailyTaskOrganizerPrompt = (
             `Any due date labeled as "today" uses ${timeContext.currentDate} in both the tool call arguments and the persisted reminder record.`,
           ],
           calibration: [
-            'When workload appears overwhelming, prioritize critical path tasks (using urgent due dates and important lists) and suggest deferring non-essential items.',
-            'If multiple similar tasks exist, recommend consolidation or batching strategies.',
-            'When creating reminders for unknown tasks, use clear, descriptive titles and suggest appropriate list placement.',
-            'Remember: Apple Reminders does not support priority fields. Use due date urgency and list importance to convey task importance.',
+            ...WORKLOAD_CALIBRATION,
+            ...CONTEXT_CALIBRATION,
+            ...APPLE_REMINDERS_LIMITATIONS,
           ],
         }),
       ),
@@ -215,10 +212,30 @@ const buildDailyTaskOrganizerPrompt = (
   };
 };
 
+/**
+ * Build smart reminder creator prompt for single reminder creation
+ *
+ * Creates a focused prompt for crafting a single Apple Reminder with optimal
+ * scheduling, context, and metadata based on a task idea.
+ *
+ * @param args - Reminder creation arguments
+ * @param args.task_idea - Optional task description to convert into reminder
+ * @returns Structured prompt response for creating a single reminder
+ *
+ * @example
+ * ```typescript
+ * // Create reminder from task idea
+ * const prompt = buildSmartReminderCreatorPrompt({
+ *   task_idea: 'Submit quarterly report by Friday'
+ * });
+ * ```
+ */
 const buildSmartReminderCreatorPrompt = (
   args: SmartReminderCreatorArgs,
 ): PromptResponse => {
   const taskIdea = args.task_idea ?? '';
+  const timeContext = getTimeContext();
+  const standardOutput = buildStandardOutputFormat(timeContext.currentDate);
 
   return {
     description:
@@ -232,12 +249,16 @@ const buildSmartReminderCreatorPrompt = (
           contextInputs: [
             `Task idea: ${taskIdea || 'none provided — propose a sensible framing and ask for confirmation'}`,
             'Existing reminder landscape to cross-check for duplicates or related work.',
+            `Current time context: ${timeContext.timeDescription} (${timeContext.currentDate})`,
           ],
           process: [
             'Identify the primary execution scope, reference any overlapping reminders, and confirm intent before building the structure.',
             'Probe for missing critical context (location, collaborators, blockers, effort) so the reminder captures everything needed to start.',
             "Shape the reminder title, list placement, and fuzzy timing so it fits the user's schedule and urgency signals.",
             'Define supporting metadata—notes, subtasks, attachments—that clarify success criteria without inflating scope.',
+            'Run idempotency checks: search for likely duplicates by normalized title before creating.',
+            'Assess confidence level for the creation action (high >80%, medium 60-80%, low <60%).',
+            'For high-confidence actions (>80%), immediately call the reminders tool to create the reminder. For medium-confidence, provide recommendation in tool call format. For low-confidence, ask for confirmation.',
             'Outline optional follow-up nudges only if the user has opted in, keeping them tied to the same objective.',
           ],
           constraints: [
@@ -247,18 +268,16 @@ const buildSmartReminderCreatorPrompt = (
             'Limit the workflow to the specific reminder the user has asked about—do not create additional tasks unless they explicitly request them.',
             'Present follow-up or escalation reminders as opt-in suggestions and only when they serve the primary execution scope.',
             'Explicitly surface the primary execution focus before detailing the reminder structure.',
-            '**Note formatting rules**: Apple Reminders does NOT render markdown. When creating reminder notes:',
-            '  - Use plain text bullet points with "-" (hyphen), NOT markdown checkbox format "- [ ]"',
-            '  - Example CORRECT format: "Checklist:\n- Review status\n- Test functionality\n- Verify results"',
-            '  - Example INCORRECT format: "Checklist:\n- [ ] Review status\n- [ ] Test functionality"',
-            '  - Do NOT use markdown syntax like "- [ ]", "- [x]", "**bold**", "# headers", etc. in reminder notes',
-            '  - Use simple plain text formatting: "-" for bullet points, line breaks for separation',
+            ...CONFIDENCE_CONSTRAINTS,
+            ...NOTE_FORMATTING_CONSTRAINTS,
+            ...BATCHING_CONSTRAINTS,
           ],
           outputFormat: [
             '### Primary focus — one sentence naming the reminder objective and scope.',
-            '### Core reminder — name, target reminder list, fuzzy timing window.',
+            ...standardOutput.actionQueue,
             '### Support details — bullet list covering notes, subtasks, and relevant metadata.',
             '### Follow-up sequence — ordered list of optional next nudges (omit if the user declined additional reminders).',
+            standardOutput.verificationLog,
             '### Risks — short bullet list of potential failure points, assumptions, and mitigation ideas.',
           ],
           qualityBar: [
@@ -266,8 +285,11 @@ const buildSmartReminderCreatorPrompt = (
             'All dependencies are either satisfied or have explicit opt-in follow-up reminders.',
             'Output highlights any assumptions the user must confirm before saving the reminder.',
             'Each suggestion is actionable, tied to a specific reminder list, and anchored in the declared scope.',
+            'High-confidence actions (>80%) are ACTUALLY EXECUTED using MCP tool calls. Medium-confidence actions are provided as recommendations in tool call format.',
+            'Actions are clearly labeled with confidence levels (high >80%, medium 60-80%, low <60%) and include brief rationale.',
             'Recommendations remain lightweight and sustainable to execute.',
             'Response honors the no-extra-reminders rule, keeps optional items clearly labelled, and reiterates the main execution scope.',
+            'No duplicate reminders are created; similar items are merged or updated.',
           ],
           calibration: [
             'If context is insufficient to schedule confidently, respond with targeted clarification questions before delivering the final structure.',
@@ -279,10 +301,33 @@ const buildSmartReminderCreatorPrompt = (
   };
 };
 
+/**
+ * Build reminder review assistant prompt for cleanup and optimization
+ *
+ * Creates a prompt that audits current reminders and delivers actionable
+ * clean-up, scheduling, and habit recommendations to boost completion rates.
+ *
+ * @param args - Review arguments
+ * @param args.review_focus - Optional focus area (e.g., "overdue", list name)
+ * @returns Structured prompt response with cleanup recommendations
+ *
+ * @example
+ * ```typescript
+ * // Review all reminders
+ * const prompt = buildReminderReviewAssistantPrompt({});
+ *
+ * // Focus on overdue items
+ * const overduePrompt = buildReminderReviewAssistantPrompt({
+ *   review_focus: 'overdue reminders'
+ * });
+ * ```
+ */
 const buildReminderReviewAssistantPrompt = (
   args: ReminderReviewAssistantArgs,
 ): PromptResponse => {
   const reviewFocus = args.review_focus ?? '';
+  const timeContext = getTimeContext();
+  const standardOutput = buildStandardOutputFormat(timeContext.currentDate);
 
   return {
     description:
@@ -294,11 +339,14 @@ const buildReminderReviewAssistantPrompt = (
             'Mission: Audit current reminders and deliver actionable clean-up, scheduling, and habit recommendations that boost completion rates.',
           contextInputs: [
             `Review focus: ${reviewFocus || 'none provided — default to all lists and common hotspots'}`,
+            `Current time context: ${timeContext.timeDescription} (${timeContext.currentDate})`,
           ],
           process: [
             'Inventory reminders by status, list, and due window to surface hotspots.',
             'Diagnose root causes behind overdue or low-value reminders.',
             'Prioritize clean-up actions: archive, consolidate, retitle, or re-sequence reminders.',
+            'Assess confidence levels for each cleanup action (high >80%, medium 60-80%, low <60%).',
+            'For high-confidence cleanup actions (>80%), immediately execute using reminders tool. For medium-confidence, provide recommendations in tool call format. For low-confidence, ask for confirmation.',
             'Optimise scheduling with fuzzy time adjustments and batching opportunities.',
             'Recommend routines and automation that maintain a healthy reminder system.',
           ],
@@ -308,17 +356,25 @@ const buildReminderReviewAssistantPrompt = (
             'Keep recommendations grounded in Apple Reminders native functionality and settings.',
             'Do not invent brand-new reminders or tasks—limit guidance to curating and refining the existing set unless the user explicitly opts in.',
             'Call out the primary review scope or list focus before diving into detailed recommendations.',
+            ...CONFIDENCE_CONSTRAINTS,
+            ...NOTE_FORMATTING_CONSTRAINTS,
+            ...BATCHING_CONSTRAINTS,
           ],
           outputFormat: [
             '### Focus alignment — short paragraph identifying the primary review scope and headline issues.',
+            '### Current state — brief overview with key metrics: total reminders reviewed, overdue items, stale reminders, main issues identified.',
             '### Findings — bullet list of key insights about the current reminder landscape.',
-            '### Clean-up actions — table with columns: reminder/list, action, rationale.',
+            ...standardOutput.actionQueue,
+            standardOutput.verificationLog,
           ],
           qualityBar: [
             'Every suggested action ties back to a specific reminder list or identifiable pattern.',
+            'High-confidence cleanup actions (>80%) are ACTUALLY EXECUTED using MCP tool calls. Medium-confidence actions are provided as recommendations.',
+            'Actions are clearly labeled with confidence levels (high >80%, medium 60-80%, low <60%) and include brief rationale.',
             'Proposed routines are lightweight enough to sustain weekly without tool fatigue.',
             'Risks or dependencies (shared ownership, mandatory notifications) are surfaced with mitigation ideas.',
             'Response adheres to the no-new-reminders rule and makes the main review scope unmistakable.',
+            'No duplicate reminders are created; similar items are merged or updated.',
           ],
           calibration: [
             'If the inventory reveals more work than can be actioned immediately, flag phased recommendations with prioritized batches.',
@@ -329,11 +385,34 @@ const buildReminderReviewAssistantPrompt = (
   };
 };
 
+/**
+ * Build weekly planning workflow prompt for scheduling reminders
+ *
+ * Creates a prompt for building a resilient weekly execution playbook by
+ * assigning appropriate due dates to existing reminders, aligned with user
+ * planning ideas and current priorities.
+ *
+ * @param args - Weekly planning arguments
+ * @param args.user_ideas - Optional planning thoughts for the week
+ * @returns Structured prompt response with weekly scheduling plan
+ *
+ * @example
+ * ```typescript
+ * // Plan week with user ideas
+ * const prompt = buildWeeklyPlanningWorkflowPrompt({
+ *   user_ideas: 'Focus on project launch and client presentations'
+ * });
+ *
+ * // Auto-plan based on existing reminders
+ * const autoPrompt = buildWeeklyPlanningWorkflowPrompt({});
+ * ```
+ */
 const buildWeeklyPlanningWorkflowPrompt = (
   args: WeeklyPlanningWorkflowArgs,
 ): PromptResponse => {
   const userIdeas = args.user_ideas ?? '';
   const timeContext = getTimeContext();
+  const standardOutput = buildStandardOutputFormat(timeContext.currentDate);
 
   return {
     description:
@@ -358,6 +437,8 @@ const buildWeeklyPlanningWorkflowPrompt = (
             'Map fixed anchor events (existing due dates, calendar commitments) to create immovable time blocks.',
             'Match reminders to user priorities: assign fuzzy due dates to reminders that align with user ideas.',
             'Distribute remaining reminders across the week using intelligent scheduling: balance workload, avoid overloaded days, group similar tasks.',
+            'Assess confidence levels for each scheduling decision (high >80%, medium 60-80%, low <60%).',
+            'For high-confidence scheduling actions (>80%), immediately execute updates using reminders tool. For medium-confidence, provide recommendations in tool call format. For low-confidence, ask for confirmation.',
             'Identify scheduling conflicts, overloaded days, or reminders that need clarification before assigning dates.',
             'Recommend review checkpoints and adjustments for maintaining the plan throughout the week.',
           ],
@@ -373,22 +454,29 @@ const buildWeeklyPlanningWorkflowPrompt = (
             'State the primary weekly focus or themes up front so the user sees where the plan is anchored.',
             'Keep scheduling decisions inside the current week and flag anything that must move beyond it for separate follow-up.',
             'Do not assign due dates beyond this week unless the user explicitly directs it.',
+            ...CONFIDENCE_CONSTRAINTS,
+            ...NOTE_FORMATTING_CONSTRAINTS,
+            ...BATCHING_CONSTRAINTS,
           ],
           outputFormat: [
             '### Weekly focus — brief summary of primary themes and priorities for the week based on user ideas.',
-            '### Action plan — unified table with columns: reminder title, current list, suggested due date (fuzzy time), urgency level (based on due date), notes/conflicts.',
+            '### Current state — overview with metrics: total reminders to schedule, already scheduled, overdue items.',
+            ...standardOutput.actionQueue,
             '### Immediate next steps — what to do today and tomorrow to get the week started effectively.',
             '### Workload insights — key observations about task distribution, conflicts, or dependencies that need attention.',
+            standardOutput.verificationLog,
           ],
           qualityBar: [
             'Weekly focus clearly identifies primary themes and priorities based on user input.',
-            'Action plan provides a unified, scannable table with all necessary task information.',
+            'Current state provides clear metrics about the scheduling landscape.',
+            'High-confidence scheduling actions (>80%) are ACTUALLY EXECUTED using MCP tool calls. Medium-confidence actions are provided as recommendations.',
+            'Actions are clearly labeled with confidence levels (high >80%, medium 60-80%, low <60%) and include brief rationale.',
+            'Each action includes specific reminder titles, lists, and fuzzy due dates.',
             'Immediate next steps give clear guidance for today and tomorrow actions.',
             'Workload insights highlight important patterns, conflicts, or dependencies without being overwhelming.',
-            'Each recommendation includes specific reminder titles, lists, and fuzzy due dates.',
             'Plan maintains realistic workload distribution across the week.',
             'Response focuses on execution rather than extensive analysis.',
-            'Action plan consolidates all task assignments in a single, easy-to-follow table.',
+            'No duplicate reminders are created; similar items are merged or updated.',
           ],
           calibration: [
             'If user ideas cannot be mapped to existing reminders, summarize these as "future planning notes" without creating reminders.',
