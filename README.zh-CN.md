@@ -39,6 +39,29 @@ English | [简体中文](README.zh-CN.md)
 - **Xcode Command Line Tools**（编译 Swift 代码所需）
 - **pnpm**（推荐用于包管理）
 
+## macOS 权限要求（Sonoma 14+ / Sequoia 15）
+
+Apple 已将提醒事项和日历权限拆分为「仅写入」与「完全访问」范围。Swift 桥接层声明了以下隐私键，确保在你授权后 Claude 可以安全读取并写入所选数据：
+
+- `NSRemindersUsageDescription`
+- `NSRemindersFullAccessUsageDescription`
+- `NSRemindersWriteOnlyAccessUsageDescription`
+- `NSCalendarsUsageDescription`
+- `NSCalendarsFullAccessUsageDescription`
+- `NSCalendarsWriteOnlyAccessUsageDescription`
+
+当授权状态为 `notDetermined` 时，CLI 会调用 `requestFullAccessToReminders` / `requestFullAccessToEvents`，macOS 会弹出对应的授权对话框。如果系统遗失权限记录，可运行 `./check-permissions.sh` 重新触发请求。
+
+若 Claude 的工具调用依旧遇到权限错误，Node.js 层会自动运行一段最小化的 AppleScript（`osascript -e 'tell application "Reminders" …'`）来唤起系统弹窗，然后再次重试 Swift CLI。
+
+**验证命令**
+
+```bash
+pnpm test -- src/swift/Info.plist.test.ts
+```
+
+测试会确保所有必须的 usage-description 字段在发布前均已就绪。
+
 ## 快速开始
 
 通过 npm 全局安装：

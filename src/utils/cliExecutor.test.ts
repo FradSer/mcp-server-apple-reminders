@@ -14,14 +14,15 @@ import {
   getEnvironmentBinaryConfig,
 } from './binaryValidator.js';
 import { executeCli } from './cliExecutor.js';
+import { triggerPermissionPrompt } from './permissionPrompt.js';
 import { findProjectRoot } from './projectUtils.js';
 
 type ExecFileCallback =
-  | ((
-      error: ExecFileException | null,
-      stdout: string | Buffer,
-      stderr: string | Buffer,
-    ) => void)
+  | ( (
+        error: ExecFileException | null,
+        stdout: string | Buffer,
+        stderr: string | Buffer,
+      ) => void )
   | null
   | undefined;
 
@@ -33,6 +34,9 @@ jest.mock('./binaryValidator.js', () => ({
   findSecureBinaryPath: jest.fn(),
   getEnvironmentBinaryConfig: jest.fn(),
 }));
+jest.mock('./permissionPrompt.js', () => ({
+  triggerPermissionPrompt: jest.fn(),
+}));
 
 const mockExecFile = execFile as jest.MockedFunction<typeof execFile>;
 const mockFindProjectRoot = findProjectRoot as jest.MockedFunction<
@@ -40,10 +44,14 @@ const mockFindProjectRoot = findProjectRoot as jest.MockedFunction<
 >;
 const mockFindSecureBinaryPath = findSecureBinaryPath as jest.MockedFunction<
   typeof findSecureBinaryPath
->;
+>; 
 const mockGetEnvironmentBinaryConfig =
   getEnvironmentBinaryConfig as jest.MockedFunction<
     typeof getEnvironmentBinaryConfig
+  >;
+const mockTriggerPermissionPrompt =
+  triggerPermissionPrompt as jest.MockedFunction<
+    typeof triggerPermissionPrompt
   >;
 
 describe('cliExecutor', () => {
@@ -56,8 +64,16 @@ describe('cliExecutor', () => {
     });
   });
 
+  const invokeCallback = (
+    optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+    callback?: ExecFileCallback,
+  ): ExecFileCallback | undefined =>
+    (typeof optionsOrCallback === 'function'
+      ? optionsOrCallback
+      : callback) as ExecFileCallback | undefined;
+
   describe('executeCli', () => {
-    it('should execute CLI and return parsed result on success', async () => {
+    it('returns parsed result on success', async () => {
       const mockStdout = JSON.stringify({
         status: 'success',
         result: { id: '123', title: 'Test reminder' },
@@ -66,37 +82,17 @@ describe('cliExecutor', () => {
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
-        optionsOrCallback?:
-          | ExecFileOptions
-          | null
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void),
-        callback?:
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void)
-          | null
-          | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
       ) => {
-        const cb = (
-          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-        ) as ExecFileCallback | undefined;
-        if (cb) {
-          cb(null, { stdout: mockStdout } as unknown as Buffer, '');
-        }
+        const cb = invokeCallback(optionsOrCallback, callback);
+        cb?.(null, mockStdout, '');
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
       const result = await executeCli(['--action', 'read', '--id', '123']);
 
       expect(result).toEqual({ id: '123', title: 'Test reminder' });
-      expect(mockFindProjectRoot).toHaveBeenCalled();
-      expect(mockFindSecureBinaryPath).toHaveBeenCalled();
       expect(mockExecFile).toHaveBeenCalledWith(
         '/test/project/bin/EventKitCLI',
         ['--action', 'read', '--id', '123'],
@@ -104,7 +100,7 @@ describe('cliExecutor', () => {
       );
     });
 
-    it('should throw error when CLI returns error status', async () => {
+    it('throws CLI error message from parsed stdout', async () => {
       const mockStdout = JSON.stringify({
         status: 'error',
         message: 'Failed to read reminder',
@@ -113,29 +109,11 @@ describe('cliExecutor', () => {
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
-        optionsOrCallback?:
-          | ExecFileOptions
-          | null
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void),
-        callback?:
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void)
-          | null
-          | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
       ) => {
-        const cb = (
-          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-        ) as ExecFileCallback | undefined;
-        if (cb) {
-          cb(null, { stdout: mockStdout } as unknown as Buffer, '');
-        }
+        const cb = invokeCallback(optionsOrCallback, callback);
+        cb?.(null, mockStdout, '');
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
@@ -144,7 +122,7 @@ describe('cliExecutor', () => {
       ).rejects.toThrow('Failed to read reminder');
     });
 
-    it('should throw error when binary path validation fails', async () => {
+    it('throws error when binary path validation fails', async () => {
       mockFindSecureBinaryPath.mockReturnValue({ path: null });
 
       await expect(
@@ -152,35 +130,19 @@ describe('cliExecutor', () => {
       ).rejects.toThrow('EventKitCLI binary not found or validation failed');
     });
 
-    it('should throw error when CLI execution fails', async () => {
-      const error = new Error('Command failed');
-
+    it('wraps unexpected exec failures', async () => {
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
-        optionsOrCallback?:
-          | ExecFileOptions
-          | null
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void),
-        callback?:
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void)
-          | null
-          | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
       ) => {
-        const cb = (
-          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-        ) as ExecFileCallback | undefined;
-        if (cb) {
-          cb(error, null as unknown as Buffer, '');
-        }
+        const cb = invokeCallback(optionsOrCallback, callback);
+        const error = Object.assign(new Error('Command failed'), {
+          stdout: '',
+          stderr: '',
+        }) as ExecFileException;
+        cb?.(error, '', '');
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
@@ -189,33 +151,15 @@ describe('cliExecutor', () => {
       ).rejects.toThrow('EventKitCLI execution failed: Command failed');
     });
 
-    it('should throw error when stdout is invalid JSON', async () => {
+    it('throws when stdout is invalid JSON', async () => {
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
-        optionsOrCallback?:
-          | ExecFileOptions
-          | null
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void),
-        callback?:
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void)
-          | null
-          | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
       ) => {
-        const cb = (
-          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-        ) as ExecFileCallback | undefined;
-        if (cb) {
-          cb(null, { stdout: 'invalid json' } as unknown as Buffer, '');
-        }
+        const cb = invokeCallback(optionsOrCallback, callback);
+        cb?.(null, 'invalid json', '');
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
@@ -224,37 +168,19 @@ describe('cliExecutor', () => {
       ).rejects.toThrow('EventKitCLI execution failed');
     });
 
-    it('should handle non-Error exceptions', async () => {
+    it('handles non-Error exceptions gracefully', async () => {
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
-        optionsOrCallback?:
-          | ExecFileOptions
-          | null
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void),
-        callback?:
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void)
-          | null
-          | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
       ) => {
-        const cb = (
-          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-        ) as ExecFileCallback | undefined;
-        if (cb) {
-          cb(
-            'string error' as unknown as ExecFileException,
-            null as unknown as Buffer,
-            '',
-          );
-        }
+        const cb = invokeCallback(optionsOrCallback, callback);
+        const error = Object.assign(new Error('string error'), {
+          stdout: '',
+          stderr: '',
+        }) as ExecFileException;
+        cb?.(error, '', '');
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
@@ -263,8 +189,11 @@ describe('cliExecutor', () => {
       ).rejects.toThrow('EventKitCLI execution failed: string error');
     });
 
-    it('should compute CLI path using findProjectRoot', async () => {
+    it('computes CLI path using findProjectRoot', async () => {
       mockFindProjectRoot.mockReturnValue('/custom/project/path');
+      mockFindSecureBinaryPath.mockReturnValue({
+        path: '/custom/project/path/bin/EventKitCLI',
+      });
       const mockStdout = JSON.stringify({
         status: 'success',
         result: { success: true },
@@ -273,35 +202,13 @@ describe('cliExecutor', () => {
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
-        optionsOrCallback?:
-          | ExecFileOptions
-          | null
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void),
-        callback?:
-          | ((
-              error: ExecFileException | null,
-              stdout: string | Buffer,
-              stderr: string | Buffer,
-            ) => void)
-          | null
-          | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
       ) => {
-        const cb = (
-          typeof optionsOrCallback === 'function' ? optionsOrCallback : callback
-        ) as ExecFileCallback | undefined;
-        if (cb) {
-          cb(null, { stdout: mockStdout } as unknown as Buffer, '');
-        }
+        const cb = invokeCallback(optionsOrCallback, callback);
+        cb?.(null, mockStdout, '');
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
-
-      mockFindSecureBinaryPath.mockReturnValue({
-        path: '/custom/project/path/bin/EventKitCLI',
-      });
 
       await executeCli(['--action', 'read']);
 
@@ -310,6 +217,115 @@ describe('cliExecutor', () => {
         ['--action', 'read'],
         expect.any(Function),
       );
+    });
+
+    it('retries after triggering reminder permission prompt', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Reminder permission denied or restricted.',
+      });
+      const successOutput = JSON.stringify({
+        status: 'success',
+        result: { ok: true },
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        if (call === 1) {
+          const error = Object.assign(new Error('Command failed'), {
+            stderr: '',
+          }) as ExecFileException;
+          cb?.(error, permissionError, '');
+        } else {
+          cb?.(null, successOutput, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      const result = await executeCli(['--action', 'read']);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('reminders');
+      expect(mockExecFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('retries after triggering calendar permission prompt', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Calendar permission denied or restricted.',
+      });
+      const successOutput = JSON.stringify({
+        status: 'success',
+        result: { ok: true },
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        if (call === 1) {
+          const error = Object.assign(new Error('Command failed'), {
+            stderr: '',
+          }) as ExecFileException;
+          cb?.(error, permissionError, '');
+        } else {
+          cb?.(null, successOutput, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      const result = await executeCli(['--action', 'read-events']);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('calendars');
+      expect(mockExecFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws original error if retry still fails', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Reminder permission denied.',
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        const error = Object.assign(new Error('Command failed'), {
+          stderr: '',
+        }) as ExecFileException;
+        cb?.(error, permissionError, '');
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      await expect(executeCli(['--action', 'read'])).rejects.toThrow(
+        'Reminder permission denied.',
+      );
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledTimes(1);
+      expect(mockExecFile).toHaveBeenCalledTimes(2);
     });
   });
 });

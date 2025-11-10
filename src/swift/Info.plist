@@ -24,7 +24,15 @@
 	<true/>
 	<key>NSCalendarsUsageDescription</key>
 	<string>This app needs access to your calendar to manage events through the MCP server.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Full calendar access lets Claude read, update, and reconcile events you select through the MCP server.</string>
+	<key>NSCalendarsWriteOnlyAccessUsageDescription</key>
+	<string>Write-only calendar permission enables Claude to create new events without exposing existing calendars.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>This app needs access to your reminders to manage tasks through the MCP server.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Full reminder access is required so Claude can read and update selected reminders on your behalf.</string>
+	<key>NSRemindersWriteOnlyAccessUsageDescription</key>
+	<string>Write-only reminder permission enables Claude to add new reminders without revealing your lists.</string>
 </dict>
 </plist>

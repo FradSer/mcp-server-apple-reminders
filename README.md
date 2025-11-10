@@ -39,6 +39,29 @@ A Model Context Protocol (MCP) server that provides native integration with Appl
 - **Xcode Command Line Tools** (required for compiling Swift code)
 - **pnpm** (recommended for package management)
 
+## macOS Permission Requirements (Sonoma 14+ / Sequoia 15)
+
+Apple now separates Reminders and Calendar permissions into *write-only* and *full-access* scopes. The Swift bridge declares the following privacy keys so Claude can both read and write data when you approve access:
+
+- `NSRemindersUsageDescription`
+- `NSRemindersFullAccessUsageDescription`
+- `NSRemindersWriteOnlyAccessUsageDescription`
+- `NSCalendarsUsageDescription`
+- `NSCalendarsFullAccessUsageDescription`
+- `NSCalendarsWriteOnlyAccessUsageDescription`
+
+When the CLI detects a `notDetermined` authorization status it calls `requestFullAccessToReminders` / `requestFullAccessToEvents`, which in turn triggers macOS to show the correct prompt. If the OS ever loses track of permissions, rerun `./check-permissions.sh` to re-open the dialogs.
+
+If a Claude tool call still encounters a permission failure, the Node.js layer automatically runs a minimal AppleScript (`osascript -e 'tell application "Reminders" …'`) to surface the dialog and then retries the Swift CLI once.
+
+**Verification command**
+
+```bash
+pnpm test -- src/swift/Info.plist.test.ts
+```
+
+The test suite ensures all required usage-description strings are present before shipping the binary.
+
 ## Quick Start
 
 Install globally via npm:
