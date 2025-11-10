@@ -18,11 +18,11 @@ import { triggerPermissionPrompt } from './permissionPrompt.js';
 import { findProjectRoot } from './projectUtils.js';
 
 type ExecFileCallback =
-  | ( (
-        error: ExecFileException | null,
-        stdout: string | Buffer,
-        stderr: string | Buffer,
-      ) => void )
+  | ((
+      error: ExecFileException | null,
+      stdout: string | Buffer,
+      stderr: string | Buffer,
+    ) => void)
   | null
   | undefined;
 
@@ -44,7 +44,7 @@ const mockFindProjectRoot = findProjectRoot as jest.MockedFunction<
 >;
 const mockFindSecureBinaryPath = findSecureBinaryPath as jest.MockedFunction<
   typeof findSecureBinaryPath
->; 
+>;
 const mockGetEnvironmentBinaryConfig =
   getEnvironmentBinaryConfig as jest.MockedFunction<
     typeof getEnvironmentBinaryConfig
@@ -68,9 +68,9 @@ describe('cliExecutor', () => {
     optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
     callback?: ExecFileCallback,
   ): ExecFileCallback | undefined =>
-    (typeof optionsOrCallback === 'function'
-      ? optionsOrCallback
-      : callback) as ExecFileCallback | undefined;
+    (typeof optionsOrCallback === 'function' ? optionsOrCallback : callback) as
+      | ExecFileCallback
+      | undefined;
 
   describe('executeCli', () => {
     it('returns parsed result on success', async () => {
@@ -303,7 +303,7 @@ describe('cliExecutor', () => {
         message: 'Reminder permission denied.',
       });
 
-      let call = 0;
+      let _call = 0;
       mockExecFile.mockImplementation(((
         _cliPath: string,
         _args: readonly string[] | null | undefined,
@@ -311,7 +311,7 @@ describe('cliExecutor', () => {
         callback?: ExecFileCallback,
       ) => {
         const cb = invokeCallback(optionsOrCallback, callback);
-        call += 1;
+        _call += 1;
         const error = Object.assign(new Error('Command failed'), {
           stderr: '',
         }) as ExecFileException;

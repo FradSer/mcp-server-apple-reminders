@@ -12,8 +12,8 @@ import {
 } from './binaryValidator.js';
 import { FILE_SYSTEM } from './constants.js';
 import {
-  triggerPermissionPrompt,
   type PermissionDomain,
+  triggerPermissionPrompt,
 } from './permissionPrompt.js';
 import { findProjectRoot } from './projectUtils.js';
 
@@ -77,7 +77,7 @@ const bufferToString = (data?: string | Buffer | null): string | null => {
 };
 
 const extractAction = (args: string[]): string | undefined => {
-  const actionIndex = args.findIndex((arg) => arg === '--action');
+  const actionIndex = args.indexOf('--action');
   if (actionIndex >= 0 && actionIndex + 1 < args.length) {
     return args[actionIndex + 1];
   }
@@ -112,7 +112,7 @@ const parseCliOutput = <T>(output: string, args: string[]): T => {
   let parsed: CliResponse<T>;
   try {
     parsed = JSON.parse(output) as CliResponse<T>;
-  } catch (error) {
+  } catch (_error) {
     throw new Error('EventKitCLI execution failed: Invalid CLI output');
   }
 
