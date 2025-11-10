@@ -19,8 +19,21 @@ pnpm check                # Run Biome formatting + TypeScript type checking
 # Single test file
 pnpm test src/utils/cliExecutor.test.ts
 
+# Single test pattern
+pnpm test -- --testNamePattern="should handle create action"
+
+# Permission verification
+./check-permissions.sh    # Manual permission check script (Chinese UI)
+pnpm test -- src/swift/Info.plist.test.ts  # Verify Info.plist privacy keys
+
 # Development with enhanced logging
 NODE_ENV=development pnpm start
+
+# Manual Swift binary testing
+./bin/EventKitCLI --action read --showCompleted true
+
+# Verify Info.plist embedding
+otool -s __TEXT __info_plist bin/EventKitCLI
 ```
 
 ## Automatic Permission Handling
@@ -40,15 +53,26 @@ The Swift layer handles all permission checking and requesting following EventKi
 - **MUST run `pnpm build` before server startup** - compiles `src/swift/EventKitCLI.swift` to `bin/EventKitCLI`
 - Requires **Xcode Command Line Tools** (install via `xcode-select --install`)
 - Build script: `scripts/build-swift.mjs` compiles Swift with EventKit and Foundation frameworks
-- Binary location: `bin/EventKitCLI` (resolved via project root discovery in `cliExecutor.ts`)
-- Test environment: Sets `NODE_ENV=test` to mock binary paths and avoid Swift dependency
 - **Info.plist embedding**: `src/swift/Info.plist` is embedded into binary via `-Xlinker -sectcreate` flags - this is REQUIRED for macOS permission dialogs to appear when running from MCP clients like Cursor
 
 ### Project Structure Constraints
-- **ES Modules only**: Package type is `"module"`, all imports must use `.js` extensions even for `.ts` files
-- **TypeScript Config**: `moduleResolution: "NodeNext"` requires explicit `.js` in import paths
+
+**ES Modules Configuration:**
+- **Package type**: `"module"` in package.json - entire project uses ES modules
+- **Import extensions**: All imports must use `.js` extensions even for `.ts` files
+  - Correct: `import { foo } from './bar.js'`
+  - Incorrect: `import { foo } from './bar'` or `import { foo } from './bar.ts'`
+- **TypeScript Config**:
+  - `moduleResolution: "NodeNext"` requires explicit `.js` in import paths
+  - `module: "NodeNext"` for Node.js ESM compatibility
+  - `target: "ES2020"` for modern JavaScript features
+- **Entry point chain**: `bin/run.cjs` (CommonJS wrapper) → `dist/index.js` (compiled ES module)
 - **Project Root Discovery**: `src/utils/projectUtils.ts` walks up to 10 directories to find `package.json` with name `"mcp-server-apple-reminders"`
-- Entry point: `bin/run.cjs` (CommonJS wrapper) → `dist/index.js` (compiled ES module)
+
+**Critical Build Dependencies:**
+- Binary location: `bin/EventKitCLI` (resolved via project root discovery in `cliExecutor.ts`)
+- Test environment: Sets `NODE_ENV=test` to mock binary paths and avoid Swift dependency
+- **Info.plist embedding**: `src/swift/Info.plist` is embedded into binary via `-Xlinker -sectcreate` flags - this is REQUIRED for macOS permission dialogs to appear when running from MCP clients like Cursor
 
 ## Architecture Overview
 
@@ -87,10 +111,16 @@ User Request → MCP Protocol → tools/index.ts (routing)
 ### Swift CLI Interface (`src/swift/EventKitCLI.swift`)
 
 **Date Handling:**
-- Supports 7 input formats: ISO 8601 variants, `YYYY-MM-DD HH:mm:ss`, `YYYY-MM-DD HH:mm`, `YYYY-MM-DD`
-- Parser: `parseDateComponents()` tries DateFormatter with en_US_POSIX locale, falls back to ISO8601DateFormatter
+- Supports 7+ input formats: ISO 8601 variants, `YYYY-MM-DD HH:mm:ss`, `YYYY-MM-DD HH:mm`, `YYYY-MM-DD`
+- Timezone detection: Explicit timezone parsing via regex (`Z`, `±HH:MM`, `±HHMM`, `±HH`)
+- Parser strategy:
+  1. Detect explicit timezone suffix → extract timezone → parse with timezone-aware formatter
+  2. Try DateFormatter with `en_US_POSIX` locale and multiple format strings
+  3. Fallback to ISO8601DateFormatter
 - Time detection: Checks for `:` or `T` in input to determine if time components should be included
+- Date normalization: Uses `normalizedComponents()` to set calendar, timezone, and zero-out seconds/nanoseconds
 - Output: ISO 8601 format via `ISO8601DateFormatter().string(from:)`
+- **Critical**: All date parsing uses `en_US_POSIX` locale to avoid user locale issues
 
 **URL Storage Strategy:**
 - Dual storage: EventKit `url` field (single URL) + structured format in `notes` field
@@ -101,9 +131,12 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - macOS 14+: `requestFullAccessToReminders()` and `requestFullAccessToEvents()`
 - Pre-macOS 14: `requestAccess(to: .reminder)` and `requestAccess(to: .event)`
 - Blocking: Uses `DispatchSemaphore` to wait for async permission grant before proceeding
-- **Info.plist requirement**: Binary must have embedded Info.plist with `NSCalendarsUsageDescription` and `NSRemindersUsageDescription` keys for system permission dialogs to appear - build script automatically embeds `src/swift/Info.plist`
-- **RunLoop requirement**: `RunLoop.main.run()` keeps process alive for async permission callbacks (line 693)
+- **Info.plist requirement**: Binary must have embedded Info.plist with privacy usage descriptions for system permission dialogs to appear - build script automatically embeds `src/swift/Info.plist`
+  - Required keys: `NSRemindersUsageDescription`, `NSRemindersFullAccessUsageDescription`, `NSRemindersWriteOnlyAccessUsageDescription`
+  - Calendar keys: `NSCalendarsUsageDescription`, `NSCalendarsFullAccessUsageDescription`, `NSCalendarsWriteOnlyAccessUsageDescription`
+- **RunLoop requirement**: `RunLoop.main.run()` keeps process alive for async permission callbacks
 - Permission flow: TypeScript layer spawns CLI process → Swift requests permission → macOS shows dialog → user grants/denies → CLI returns status
+- **Auto-retry mechanism**: `cliExecutor.ts` detects permission errors via `CliPermissionError` → triggers AppleScript prompt via `permissionPrompt.ts` → retries Swift CLI once
 
 ### Validation Strategy (`src/validation/schemas.ts`)
 
@@ -132,6 +165,24 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - Logs errors via `logError()`
 - Returns formatted CallToolResult with `isError: true`
 
+### Binary Validation & Execution (`src/utils/cliExecutor.ts`, `src/utils/binaryValidator.ts`)
+
+**Security-First Binary Resolution:**
+- `findSecureBinaryPath()`: Validates binary existence and path constraints before execution
+- Allowed paths: `/bin/`, `/dist/swift/bin/`, `/src/swift/bin/`, `/swift/bin/`
+- Binary name: `EventKitCLI` (from `FILE_SYSTEM.SWIFT_BINARY_NAME`)
+- Project root discovery: Walks up to 10 directories to find `package.json` with name `"mcp-server-apple-reminders"`
+- Test environment: `NODE_ENV=test` mocks binary paths to avoid Swift dependency
+
+**Permission Error Detection & Auto-Retry:**
+- `CliPermissionError`: Thrown when permission keywords detected in CLI output
+- Detection keywords: `['permission', 'authoriz']` (case-insensitive)
+- Domain inference:
+  - Calendar actions: `read-events`, `read-calendars`, `create-event`, `update-event`, `delete-event` → `'calendars'`
+  - All other actions → `'reminders'`
+- Auto-retry flow: Error detected → `triggerPermissionPrompt()` → AppleScript dialog → Retry once
+- One-time retry: `retried` flag prevents infinite loops
+
 ### Testing Strategy (`jest.config.mjs`)
 
 **ESM Support:**
@@ -144,6 +195,11 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - `src/test-setup.ts`: Mocks console, sets `NODE_ENV=test`, mocks `import.meta`
 - `src/tools/handlers.test.ts`: Mocks `cliExecutor.js` to avoid binary dependency
 - Test isolation: Each handler test mocks `reminderRepository` methods
+
+**Coverage Requirements:**
+- 100% coverage enforced across statements, branches, functions, and lines
+- Excludes: test files, type definitions, mocks, `projectUtils.ts` (import.meta.url line)
+- Coverage reports: text, text-summary, html
 
 **Critical:** Obsolete test files (`projectUtils.test.ts`, `reminders.test.ts`) have been removed - they tested AppleScript implementation replaced by Swift CLI.
 
@@ -189,7 +245,19 @@ pnpm build 2>&1 | grep warning
 
 # Test with enhanced logging
 NODE_ENV=development ./bin/EventKitCLI --action read
+
+# Verify Info.plist is embedded in binary
+otool -s __TEXT __info_plist bin/EventKitCLI
+
+# Check permissions manually (Chinese UI)
+./check-permissions.sh
 ```
+
+**Common Issues:**
+- **Binary not found**: Run `pnpm build` to compile Swift binary
+- **Permission denied**: Swift binary requires embedded Info.plist - verify with `otool` command
+- **Permission dialogs not appearing**: Info.plist missing or not embedded - check build logs
+- **CLI returns empty output**: Check stderr, may be permission or EventKit error
 
 ### Updating MCP Protocol Version
 
