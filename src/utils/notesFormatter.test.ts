@@ -8,7 +8,6 @@ import {
   formatStandardizedNotes,
   mergeNoteComponents,
   type NoteComponents,
-  normalizeNotesText,
   parseNoteComponents,
 } from './notesFormatter.js';
 
@@ -232,25 +231,6 @@ Dependencies:
       // First occurrence should be kept
       expect(merged.relatedReminders?.[0].id).toBe('rem-1');
       expect(merged.relatedReminders?.[0].title).toBe('Task 1');
-    });
-  });
-
-  describe('normalizeNotesText', () => {
-    it('should return notes as-is (deep links no longer supported)', () => {
-      const notes = 'Related reminders:\n- [Task 1] (ID: rem-123)';
-      const normalized = normalizeNotesText(notes);
-      expect(normalized).toBe(notes);
-    });
-
-    it('should handle notes without references', () => {
-      const notes = 'Just some regular notes';
-      const normalized = normalizeNotesText(notes);
-      expect(normalized).toBe(notes);
-    });
-
-    it('should handle empty notes', () => {
-      const normalized = normalizeNotesText('');
-      expect(normalized).toBe('');
     });
   });
 });

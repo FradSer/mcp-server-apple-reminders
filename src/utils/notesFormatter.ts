@@ -8,22 +8,7 @@ import {
   formatRelatedReminders,
   type RelatedReminder,
 } from './reminderLinks.js';
-
-/**
- * Normalize notes text (currently a no-op, kept for API compatibility)
- * Previously normalized deep links, but deep links are no longer used
- */
-export function normalizeNotesText(notes: string): string {
-  // Deep links are no longer supported, so just return as-is
-  return notes;
-}
-
-/**
- * Escape special regex characters
- */
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
+import { escapeRegex } from './stringUtils.js';
 
 /**
  * Standardized note structure components
