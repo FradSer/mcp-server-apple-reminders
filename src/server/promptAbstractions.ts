@@ -193,6 +193,7 @@ export const CALENDAR_INTEGRATION_CONSTRAINTS = [
   '  - You have determined a specific start and end time that should be blocked',
   '  - You have stated in your output that you are creating a time block for this task',
   '  - **CRITICAL**: If you include "Time block:" or similar time block references in a reminder note, you MUST also create a calendar event for that time block. Do NOT mention time blocks in notes without creating the corresponding calendar event.',
+  '  - When adjusting or creating multiple reminders due today with explicit due times, convert the cluster into calendar.events blocks aligned to those due windows to prevent overcommitment.',
 ];
 
 /**
@@ -300,6 +301,7 @@ export const TIME_BLOCK_CREATION_CONSTRAINTS = [
   '  - CRITICAL: If you mention "Time block:" in a reminder note, you MUST create the calendar event. If you are NOT creating a time block (neither in note nor calendar), use reminders.tasks tool only.',
   '  - Name deep work blocks using the pattern "Deep Work — [Project Name]" so the calendar highlights the project while allowing multiple related tasks within a single block.',
   '  - Clarify in notes when a deep work block spans multiple tasks for the same project; highlight the shared objective instead of individual task names.',
+  '  - When adjusting or creating multiple reminders due today with explicit due times, convert the cluster into calendar.events blocks aligned to those due windows to prevent overcommitment.',
 ];
 
 /**

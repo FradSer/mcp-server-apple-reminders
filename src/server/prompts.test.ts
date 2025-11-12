@@ -56,6 +56,9 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /Build due date strings explicitly with today's date/i,
     );
+    expect(text).toMatch(
+      /schedule matching calendar\.events time blocks aligned to those due windows/i,
+    );
     expect(text).toMatch(/use the exact format "\d{4}-\d{2}-\d{2} HH:mm:ss"/i);
     expect(text).toMatch(
       /Name deep work blocks using the pattern "Deep Work — \[Project Name]/i,
@@ -82,5 +85,8 @@ describe('prompt time horizons', () => {
 
     expect(text).toMatch(/### Questions/i);
     expect(text).toMatch(/### Verification log/i);
+    expect(text).toMatch(
+      /calendar\.events time blocks are created using each reminder due time as the anchor/i,
+    );
   });
 });
