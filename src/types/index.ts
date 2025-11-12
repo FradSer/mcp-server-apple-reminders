@@ -56,6 +56,33 @@ export interface ServerConfig {
 }
 
 /**
+ * Work categorization for time blocking
+ */
+export type WorkCategory = 'deep-work' | 'shallow-work' | 'buffer-time';
+
+/**
+ * Work category configuration interface
+ */
+export interface WorkCategoryConfig {
+  category: WorkCategory;
+  minDurationMinutes: number;
+  maxDurationMinutes: number;
+  dailyMaxHours?: number;
+  dailyPercentage?: number;
+  calendarTitlePattern: string;
+}
+
+/**
+ * Daily capacity tracker for time block allocation
+ */
+export interface DailyCapacity {
+  deepWorkMinutes: number;
+  shallowWorkMinutes: number;
+  bufferTimeMinutes: number;
+  totalWorkMinutes: number;
+}
+
+/**
  * Shared type constants for better type safety and consistency
  */
 export type ReminderAction = 'read' | 'create' | 'update' | 'delete';
