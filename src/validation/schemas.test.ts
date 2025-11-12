@@ -152,38 +152,71 @@ describe('ValidationSchemas', () => {
   });
 
   describe('Tool-specific schemas', () => {
-    describe('CreateReminderSchema', () => {
-      it('should validate create reminder input', () => {
-        const validInput = {
-          title: 'Test reminder',
-          dueDate: '2024-01-15',
-          note: 'Test note',
-          url: 'https://example.com',
-          targetList: 'Work',
-        };
+    describe('Action schemas validation patterns', () => {
+      it.each([
+        {
+          name: 'CreateReminderSchema',
+          schema: CreateReminderSchema,
+          validInput: {
+            title: 'Test reminder',
+            dueDate: '2024-01-15',
+            note: 'Test note',
+            url: 'https://example.com',
+            targetList: 'Work',
+          },
+          minimalInput: { title: 'Test reminder' },
+          requiredFields: ['title'],
+        },
+        {
+          name: 'UpdateReminderSchema',
+          schema: UpdateReminderSchema,
+          validInput: {
+            id: '123',
+            title: 'Updated title',
+            dueDate: '2024-01-15',
+            note: 'Updated note',
+            url: 'https://example.com',
+            completed: false,
+            targetList: 'Work',
+          },
+          minimalInput: { id: '123' },
+          requiredFields: ['id'],
+        },
+        {
+          name: 'DeleteReminderSchema',
+          schema: DeleteReminderSchema,
+          validInput: { id: '123' },
+          minimalInput: { id: '123' },
+          requiredFields: ['id'],
+        },
+        {
+          name: 'CreateReminderListSchema',
+          schema: CreateReminderListSchema,
+          validInput: { name: 'New List' },
+          minimalInput: { name: 'New List' },
+          requiredFields: ['name'],
+        },
+      ])(
+        '$name validates correctly',
+        ({ schema, validInput, minimalInput, requiredFields }) => {
+          // Should validate full input
+          expect(() => schema.parse(validInput)).not.toThrow();
 
-        expect(() => CreateReminderSchema.parse(validInput)).not.toThrow();
-      });
+          // Should validate minimal input with only required fields
+          expect(() => schema.parse(minimalInput)).not.toThrow();
 
-      it('should require title', () => {
-        const invalidInput = {
-          dueDate: '2024-01-15',
-        };
-
-        expect(() => CreateReminderSchema.parse(invalidInput)).toThrow();
-      });
-
-      it('should make other fields optional', () => {
-        const minimalInput = {
-          title: 'Test reminder',
-        };
-
-        expect(() => CreateReminderSchema.parse(minimalInput)).not.toThrow();
-      });
+          // Should reject input missing required fields
+          for (const field of requiredFields) {
+            const invalidInput = { ...minimalInput } as Record<string, unknown>;
+            delete invalidInput[field];
+            expect(() => schema.parse(invalidInput)).toThrow();
+          }
+        },
+      );
     });
 
     describe('ReadRemindersSchema', () => {
-      it('should validate read reminders input', () => {
+      it('should validate read reminders input with all optional fields', () => {
         const validInput = {
           id: '123',
           filterList: 'Work',
@@ -193,84 +226,18 @@ describe('ValidationSchemas', () => {
         };
 
         expect(() => ReadRemindersSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should make all fields optional', () => {
         expect(() => ReadRemindersSchema.parse({})).not.toThrow();
       });
     });
 
-    describe('UpdateReminderSchema', () => {
-      it('should validate update reminder input', () => {
-        const validInput = {
-          id: '123',
-          title: 'Updated title',
-          dueDate: '2024-01-15',
-          note: 'Updated note',
-          url: 'https://example.com',
-          completed: false,
-          targetList: 'Work',
-        };
-
-        expect(() => UpdateReminderSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require id', () => {
-        const invalidInput = {
-          title: 'Updated title',
-        };
-
-        expect(() => UpdateReminderSchema.parse(invalidInput)).toThrow();
-      });
-
-      it('should make other fields optional', () => {
-        const minimalInput = {
-          id: '123',
-        };
-
-        expect(() => UpdateReminderSchema.parse(minimalInput)).not.toThrow();
-      });
-    });
-
-    describe('DeleteReminderSchema', () => {
-      it('should validate delete reminder input', () => {
-        const validInput = {
-          id: '123',
-        };
-
-        expect(() => DeleteReminderSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require id', () => {
-        expect(() => DeleteReminderSchema.parse({})).toThrow();
-      });
-    });
-
-    describe('CreateReminderListSchema', () => {
-      it('should validate create list input', () => {
-        const validInput = {
-          name: 'New List',
-        };
-
-        expect(() => CreateReminderListSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require name', () => {
-        expect(() => CreateReminderListSchema.parse({})).toThrow();
-      });
-    });
-
     describe('UpdateReminderListSchema', () => {
-      it('should validate update list input', () => {
+      it('should validate update list input with both required fields', () => {
         const validInput = {
           name: 'Old Name',
           newName: 'New Name',
         };
 
         expect(() => UpdateReminderListSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require both name and newName', () => {
         expect(() => UpdateReminderListSchema.parse({ name: 'Old' })).toThrow();
         expect(() =>
           UpdateReminderListSchema.parse({ newName: 'New' }),
