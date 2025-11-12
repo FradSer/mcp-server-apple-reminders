@@ -214,6 +214,41 @@ export const APPLE_REMINDERS_LIMITATIONS = [
 ];
 
 /**
+ * Context switching cost warnings and mitigation strategies
+ */
+export const CONTEXT_SWITCHING_CONSTRAINTS = [
+  '**Context switching costs**: Switching between unrelated tasks wastes 40% of productive time and requires average 23 minutes to refocus.',
+  '  - Avoid switching between different types of work within same time block',
+  '  - Cost example: Switching from coding to email to design = 46+ minutes lost refocusing',
+  '  - Mitigation: Use task batching to group similar tasks together',
+  '  - Financial impact: Context switching costs global economy $450B annually',
+];
+
+/**
+ * Task batching strategy for reducing context switches
+ */
+export const TASK_BATCHING_CONSTRAINTS = [
+  '**Task batching strategy**: Group similar tasks together and complete in dedicated time blocks to minimize context switching.',
+  '  - Examples: Batch all code reviews together, all emails together, all meetings together',
+  '  - Naming pattern: "Code Review Batch — 3 PRs", "Email Processing — Inbox Zero", "Admin Batch — 5 tasks"',
+  '  - Reduces context switching by 60-80% compared to handling tasks individually',
+  '  - Schedule batches: Similar cognitive requirements, tools, or workflows = good batch candidates',
+  '  - Avoid: Batching unrelated tasks that require different mental modes',
+];
+
+/**
+ * Time defense strategy for protecting deep work from interruptions
+ */
+export const TIME_DEFENSE_CONSTRAINTS = [
+  '**Defend deep work time**: Proactively protect focus time from meetings and interruptions.',
+  '  - Mark deep work blocks as "Busy" in calendar to block meeting requests',
+  '  - Context: Meetings increased 69.7% since 2020, must actively defend focus time',
+  '  - Block meeting-free zones: 9am-12pm for deep work (peak energy hours)',
+  '  - Communication: Add note "Deep work time - Please schedule around" to calendar blocks',
+  '  - Emergency availability: Set clear rules for when interruptions are acceptable',
+];
+
+/**
  * Deep work time block creation guidelines
  */
 export const DEEP_WORK_CONSTRAINTS = [
@@ -223,11 +258,13 @@ export const DEEP_WORK_CONSTRAINTS = [
   '    - Task title suggests cognitively demanding work (开发, 设计, 分析, 规划, 重构, 架构) with duration ≥60min → Medium-High confidence (75-85%)',
   '    - Multiple related tasks (same project/list) with explicit times due today, totaling ≥60min → High confidence (90%) to batch into single block',
   '    - Task notes mention "deep work", "focused time", "uninterrupted" → High confidence (85-90%)',
-  '  - Time block length: 60-90 minutes. Tasks <60 minutes use Focus Sprint (15-30 min) instead.',
-  '  - Scheduling: Peak energy hours (9am-12pm). Plan 2-3 blocks per day, totaling 2-4 hours.',
-  '  - Break intervals: 15-20 minutes between blocks (NOT calendar events—implicit gaps only).',
+  '  - Time block length: 90-120 minutes recommended (optimal for flow state). Minimum 60 minutes. Tasks <60 minutes use Focus Sprint (15-30 min) instead.',
+  '  - Flow state entry: Takes ~20 minutes to enter deep focus. Longer blocks (2 hours) maximize productive time in flow state.',
+  '  - Scheduling: Peak energy hours (9am-12pm). Plan 2 blocks per day (e.g., two 2-hour sessions = 4 hours total).',
+  '  - Break intervals: 15-30 minutes between blocks. Longer breaks (60+ minutes) after 4 hours of deep work.',
   '  - Clear objectives: Each block has specific goal in notes.',
   '  - Anchor to due times: Start time = due time - duration. If past, move forward.',
+  '  - Beginner path: Start with 45-minute sessions, increase to 60 minutes after 2 weeks, advance to 90+ minutes once comfortable.',
 ];
 
 /**

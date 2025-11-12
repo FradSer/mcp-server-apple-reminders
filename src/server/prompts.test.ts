@@ -50,36 +50,24 @@ describe('prompt time horizons', () => {
     const response = buildPromptResponse(template, null);
     const text = getPromptText(response);
 
-    expect(text).toMatch(/idempotency checks/i);
-    expect(text).toMatch(/Batch tool calls/i);
+    expect(text).toMatch(/Search for duplicates by normalized title/i);
+    expect(text).toMatch(/Batch tool calls by action type/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
-    expect(text).toMatch(
-      /Build due date strings with today's date/i,
-    );
-    expect(text).toMatch(
-      /CREATE calendar time blocks immediately for tasks/i,
-    );
+    expect(text).toMatch(/Build due date strings with today's date/i);
+    expect(text).toMatch(/CREATE calendar time blocks immediately for tasks/i);
     expect(text).toMatch(
       /Deep Work \(60-90 minutes for cognitively demanding/i,
     );
     expect(text).toMatch(/Shallow Tasks \(15-60 minutes for routine work/i);
-    expect(text).toMatch(
-      /automatically reserves ~20% buffer time/i,
-    );
-    expect(text).toMatch(
-      /anchor to reminder due times/i,
-    );
+    expect(text).toMatch(/automatically reserves ~20% buffer time/i);
+    expect(text).toMatch(/anchor to reminder due times/i);
     expect(text).toMatch(/use.*exact format.*\d{4}-\d{2}-\d{2} HH:mm:ss/i);
-    expect(text).toMatch(
-      /Name deep work blocks:.*"Deep Work — \[Project/i,
-    );
-    expect(text).toMatch(/Time block length: 60-90 minutes/i);
+    expect(text).toMatch(/Name deep work blocks:.*"Deep Work — \[Project/i);
+    expect(text).toMatch(/Time block length: 90-120 minutes recommended/i);
     expect(text).toMatch(/Tasks <60 minutes use Focus Sprint/i);
     expect(text).toMatch(/Anchor to due times:/i);
-    expect(text).toMatch(
-      /Plan 2-3 blocks per day, totaling 2-4 hours/i,
-    );
-    expect(text).toMatch(/Break intervals: 15-20 minutes between blocks/i);
+    expect(text).toMatch(/Plan 2 blocks per day/i);
+    expect(text).toMatch(/Break intervals: 15-30 minutes between blocks/i);
     expect(text).toMatch(/### Deep work blocks/i);
     expect(text).toMatch(/### Shallow tasks/i);
     expect(text).not.toMatch(/### Buffer time/i); // Buffer time is now implicit
@@ -88,12 +76,8 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /Deep Work \(60-90 minutes|Shallow Tasks \(15-60 minutes/i,
     );
-    expect(text).toMatch(
-      /implicit buffer time.*natural gaps/i,
-    );
-    expect(text).toMatch(
-      /Anchor.*due times|anchor to reminder due times/i,
-    );
+    expect(text).toMatch(/implicit buffer time.*natural gaps/i);
+    expect(text).toMatch(/Anchor.*due times|anchor to reminder due times/i);
   });
 
   it('daily organizer provides a questions section for missing info', () => {
