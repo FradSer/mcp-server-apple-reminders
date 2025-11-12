@@ -158,7 +158,9 @@ describe('timeHelpers', () => {
       expect(context.currentDate).toBe(expectedLocalDate);
 
       // currentDateTime should be in ISO format (UTC)
-      expect(context.currentDateTime).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(context.currentDateTime).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+      );
 
       // Current time should be in valid 24-hour format
       expect(context.currentTime).toMatch(/^\d{2}:\d{2}$/);

@@ -13,7 +13,6 @@ import type {
 } from '../types/index.js';
 import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
-import { normalizeNotesText } from '../utils/notesFormatter.js';
 // Permission checking is now handled in Swift layer (EventKitCLI.swift)
 // This layer trusts Swift layer's permission handling
 import { reminderRepository } from '../utils/reminderRepository.js';
@@ -73,13 +72,6 @@ const formatReminderMarkdown = (reminder: {
 // --- Reminder Handlers ---
 
 /**
- * Normalize reminder notes to ensure correct deep link format
- */
-function normalizeReminderNotes(notes: string | undefined): string | undefined {
-  return notes ? normalizeNotesText(notes) : undefined;
-}
-
-/**
  * Permission checking is now handled in Swift layer (EventKitCLI.swift)
  * Swift layer uses EKEventStore.authorizationStatus() to check permission status
  * before operations, following EventKit best practices.
@@ -95,7 +87,7 @@ export const handleCreateReminder = async (
     const validatedArgs = extractAndValidateArgs(args, CreateReminderSchema);
     const reminder = await reminderRepository.createReminder({
       title: validatedArgs.title,
-      notes: normalizeReminderNotes(validatedArgs.note),
+      notes: validatedArgs.note,
       url: validatedArgs.url,
       list: validatedArgs.targetList,
       dueDate: validatedArgs.dueDate,
@@ -112,7 +104,7 @@ export const handleUpdateReminder = async (
     const reminder = await reminderRepository.updateReminder({
       id: validatedArgs.id,
       newTitle: validatedArgs.title,
-      notes: normalizeReminderNotes(validatedArgs.note),
+      notes: validatedArgs.note,
       url: validatedArgs.url,
       isCompleted: validatedArgs.completed,
       list: validatedArgs.targetList,

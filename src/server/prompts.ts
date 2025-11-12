@@ -147,8 +147,7 @@ const buildDailyTaskOrganizerPrompt = (
             'Create new reminders for identified gaps (missing preparatory steps, follow-ups, or related tasks) when confidence >60%.',
             'Optimize existing reminders: adjust due dates, list assignments, and properties when opportunities are clear.',
             `Build due date strings with today's date (${timeContext.currentDate}) to prevent back-dating. Never schedule past times—push forward to next viable slot.`,
-            'For high-confidence actions (>80%), immediately execute using tool calls. For medium-confidence (60-80%), provide recommendations in tool call format. For low-confidence (<60%), ask for confirmation.',
-            'Batch tool calls by action type (creates, then updates) to minimize overhead while keeping actions atomic.',
+            'For high-confidence actions (>80%), immediately execute using tool calls. For medium-confidence (60-80%), provide recommendations in tool call format. For low-confidence (<60%), ask for confirmation. Batch tool calls by action type (creates, then updates) to minimize overhead.',
           ],
           constraints: [
             // Daily-task-organizer specific constraints
@@ -169,7 +168,6 @@ const buildDailyTaskOrganizerPrompt = (
             ...DEEP_WORK_CONSTRAINTS,
             ...SHALLOW_TASKS_CONSTRAINTS,
             ...DAILY_CAPACITY_CONSTRAINTS,
-            ...BATCHING_CONSTRAINTS,
           ],
           outputFormat: [
             '### Current state — brief overview with key metrics: total tasks, overdue items, urgent tasks (due today or soon), and main issues identified.',
