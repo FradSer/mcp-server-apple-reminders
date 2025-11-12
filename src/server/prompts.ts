@@ -185,7 +185,7 @@ const buildDailyTaskOrganizerPrompt = (
             'Current state provides clear metrics and context about the task landscape.',
             'Gaps found section identifies specific missing tasks that should be created.',
             'Action queue prioritizes actions by confidence level and impact.',
-            'High-confidence actions (>80%) are ACTUALLY EXECUTED using MCP tool calls (reminders.tasks or calendar.events.events tools), not just described. Medium-confidence actions are provided as recommendations in tool call format.',
+            'High-confidence actions (>80%) are ACTUALLY EXECUTED using MCP tool calls (reminders.tasks or calendar.events tools), not just described. Medium-confidence actions are provided as recommendations in tool call format.',
             'Each action includes specific tool calls (reminders.tasks or calendar.events) with exact property settings in proper MCP tool call format.',
             'Calendar tool is ONLY used when explicitly creating time blocks identified in the output. Regular tasks use reminders.tasks tool.',
             'Actions are clearly labeled with confidence levels (high >80%, medium 60-80%, low <60%) and include brief rationale.',
