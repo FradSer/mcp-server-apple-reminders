@@ -305,8 +305,12 @@ Shared abstractions for consistent behavior across all prompt templates:
 - `CONFIDENCE_CONSTRAINTS`: Standard confidence thresholds and execution rules
 - `TIME_CONSISTENCY_CONSTRAINTS`: Due date alignment with urgency (immediate → 2hrs, quick wins → same day)
 - `NOTE_FORMATTING_CONSTRAINTS`: Plain text only, keyword annotations (Blocked:, Depends:, Duration:)
-- `CALENDAR_INTEGRATION_CONSTRAINTS`: When to create blocks vs. reminders
-- `BATCHING_CONSTRAINTS`: Idempotency checks, duplicate prevention, tool call optimization
+- `TIME_BLOCK_CREATION_CONSTRAINTS`: When to create blocks vs. reminders (comprehensive calendar integration rules)
+- `DEEP_WORK_CONSTRAINTS`: 60-90 minute blocks, max 4 hours/day, peak energy scheduling
+- `SHALLOW_TASKS_CONSTRAINTS`: 15-60 minute blocks for routine work, batch when possible
+- `DAILY_CAPACITY_CONSTRAINTS`: Workload balancing with implicit 20% buffer time
+- `CALENDAR_PERMISSION_CONSTRAINTS`: Permission troubleshooting guidance
+- `BATCHING_CONSTRAINTS`: Idempotency checks and tool call optimization (consolidated from 6 to 2 items for clarity)
 
 **Standard Output Format:**
 - `Current state`: Metrics (total, overdue, urgent)
@@ -319,7 +323,8 @@ Shared abstractions for consistent behavior across all prompt templates:
 - Consistent UX: All prompts follow same action execution patterns
 - Easy maintenance: Update constraints in one place
 - Type safety: Interfaces prevent inconsistencies
-- Testability: 18 tests validate abstraction consistency
+- Testability: Tests validate abstraction consistency
+- **Simplified**: Recent refactoring removed unused config constants and redundant constraints, reducing from ~70+ to ~60 total constraints for better maintainability
 
 ## macOS-Specific Considerations
 
