@@ -6,6 +6,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ZodSchema } from 'zod/v3';
 import type {
+  CalendarsToolArgs,
   CalendarToolArgs,
   ListsToolArgs,
   RemindersToolArgs,
@@ -24,6 +25,7 @@ import {
   DeleteReminderListSchema,
   DeleteReminderSchema,
   ReadCalendarEventsSchema,
+  ReadCalendarsSchema,
   ReadRemindersSchema,
   UpdateCalendarEventSchema,
   UpdateReminderListSchema,
@@ -32,7 +34,12 @@ import {
 } from '../validation/schemas.js';
 
 const extractAndValidateArgs = <T>(
-  args: RemindersToolArgs | ListsToolArgs | CalendarToolArgs | undefined,
+  args:
+    | RemindersToolArgs
+    | ListsToolArgs
+    | CalendarToolArgs
+    | CalendarsToolArgs
+    | undefined,
   schema: ZodSchema<T>,
 ): T => {
   const { action: _, ...rest } = args ?? {};
@@ -342,18 +349,7 @@ export const handleReadCalendarEvents = async (
       search: validatedArgs.search,
     });
 
-    const calendars = await calendarRepository.findAllCalendars();
     const markdownLines: string[] = [];
-    markdownLines.push(`### Calendars (Total: ${calendars.length})`);
-    markdownLines.push('');
-    if (calendars.length === 0) {
-      markdownLines.push('No calendars found.');
-    } else {
-      calendars.forEach((c) => {
-        markdownLines.push(`- ${c.title} (ID: ${c.id})`);
-      });
-    }
-    markdownLines.push('');
     markdownLines.push(`### Calendar Events (Total: ${events.length})`);
     markdownLines.push('');
 
@@ -367,4 +363,26 @@ export const handleReadCalendarEvents = async (
 
     return markdownLines.join('\n');
   }, 'read calendar events');
+};
+
+export const handleReadCalendars = async (
+  args?: CalendarsToolArgs,
+): Promise<CallToolResult> => {
+  return handleAsyncOperation(async () => {
+    extractAndValidateArgs(args, ReadCalendarsSchema);
+    const calendars = await calendarRepository.findAllCalendars();
+    const markdownLines: string[] = [];
+    markdownLines.push(`### Calendars (Total: ${calendars.length})`);
+    markdownLines.push('');
+
+    if (calendars.length === 0) {
+      markdownLines.push('No calendars found.');
+    } else {
+      calendars.forEach((c) => {
+        markdownLines.push(`- ${c.title} (ID: ${c.id})`);
+      });
+    }
+
+    return markdownLines.join('\n');
+  }, 'read calendars');
 };

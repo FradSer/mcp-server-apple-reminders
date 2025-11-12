@@ -11,6 +11,7 @@ import {
   handleDeleteReminder,
   handleDeleteReminderList,
   handleReadCalendarEvents,
+  handleReadCalendars,
   handleReadReminderLists,
   handleReadReminders,
   handleUpdateCalendarEvent,
@@ -328,11 +329,7 @@ describe('Tool Handlers', () => {
   });
 
   describe('handleReadCalendarEvents', () => {
-    it('should return calendars and events formatted as Markdown', async () => {
-      const mockCalendars = [
-        { id: 'cal-1', title: 'Work' },
-        { id: 'cal-2', title: 'Personal' },
-      ];
+    it('should return events formatted as Markdown', async () => {
       const mockEvents = [
         {
           id: 'event-1',
@@ -343,15 +340,12 @@ describe('Tool Handlers', () => {
           isAllDay: false,
         },
       ];
-      mockCalendarRepository.findAllCalendars.mockResolvedValue(mockCalendars);
       mockCalendarRepository.findEvents.mockResolvedValue(mockEvents);
       const result = await handleReadCalendarEvents({ action: 'read' });
       const content = result.content[0].text as string;
-      expect(content).toContain('### Calendars (Total: 2)');
-      expect(content).toContain('- Work (ID: cal-1)');
-      expect(content).toContain('- Personal (ID: cal-2)');
       expect(content).toContain('### Calendar Events (Total: 1)');
       expect(content).toContain('- Meeting');
+      expect(mockCalendarRepository.findAllCalendars).not.toHaveBeenCalled();
     });
 
     it('should return single event when id is provided', async () => {
@@ -381,12 +375,35 @@ describe('Tool Handlers', () => {
     });
 
     it('should return empty message when no events found', async () => {
-      mockCalendarRepository.findAllCalendars.mockResolvedValue([]);
       mockCalendarRepository.findEvents.mockResolvedValue([]);
       const result = await handleReadCalendarEvents({ action: 'read' });
       const content = result.content[0].text as string;
       expect(content).toContain('### Calendar Events (Total: 0)');
       expect(content).toContain('No calendar events found.');
+      expect(mockCalendarRepository.findAllCalendars).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleReadCalendars', () => {
+    it('should return calendars formatted as Markdown', async () => {
+      const mockCalendars = [
+        { id: 'cal-1', title: 'Work' },
+        { id: 'cal-2', title: 'Personal' },
+      ];
+      mockCalendarRepository.findAllCalendars.mockResolvedValue(mockCalendars);
+      const result = await handleReadCalendars({ action: 'read' });
+      const content = result.content[0].text as string;
+      expect(content).toContain('### Calendars (Total: 2)');
+      expect(content).toContain('- Work (ID: cal-1)');
+      expect(content).toContain('- Personal (ID: cal-2)');
+    });
+
+    it('should support being called without args', async () => {
+      mockCalendarRepository.findAllCalendars.mockResolvedValue([]);
+      const result = await handleReadCalendars();
+      const content = result.content[0].text as string;
+      expect(content).toContain('### Calendars (Total: 0)');
+      expect(content).toContain('No calendars found.');
     });
   });
 });

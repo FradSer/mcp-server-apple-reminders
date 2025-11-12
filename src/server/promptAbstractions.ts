@@ -27,7 +27,11 @@ export const getConfidenceLevel = (percentage: number): ConfidenceLevel => {
  * Standard tool call format
  */
 export interface ToolCall {
-  tool: 'reminders' | 'calendar' | 'lists';
+  tool:
+    | 'reminders.tasks'
+    | 'reminders.lists'
+    | 'calendar.events'
+    | 'calendar.calendars';
   args: Record<string, unknown>;
 }
 
@@ -183,7 +187,7 @@ export const NOTE_FORMATTING_CONSTRAINTS = [
  * Standard calendar integration constraints
  */
 export const CALENDAR_INTEGRATION_CONSTRAINTS = [
-  '**Time block creation (STRICT RULES)**: ONLY use the calendar tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
+  '**Time block creation (STRICT RULES)**: ONLY use the calendar.events tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar.events tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
   '  - You have explicitly identified in your analysis that a task needs a fixed time slot (e.g., "2-hour deep work session", "Scheduled code review block")',
   '  - The task benefits from calendar integration (visible in calendar apps, prevents double-booking)',
   '  - You have determined a specific start and end time that should be blocked',
@@ -284,16 +288,16 @@ export const CALENDAR_PERMISSION_CONSTRAINTS = [
  * Time block creation strict rules
  */
 export const TIME_BLOCK_CREATION_CONSTRAINTS = [
-  '**Time block creation (STRICT RULES)**: ONLY use the calendar tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
+  '**Time block creation (STRICT RULES)**: ONLY use the calendar.events tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar.events tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
   '  - You have explicitly identified in your analysis that a task needs a fixed time slot (e.g., "2-hour deep work session", "Scheduled code review block")',
   '  - The task benefits from calendar integration (visible in calendar apps, prevents double-booking)',
   '  - You have determined a specific start and end time that should be blocked',
   '  - You have stated in your output that you are creating a time block for this task',
   '  - **CRITICAL**: If you include "Time block:" or similar time block references in a reminder note, you MUST also create a calendar event for that time block. Do NOT mention time blocks in notes without creating the corresponding calendar event.',
-  '  - For HIGH CONFIDENCE (>80%) time blocks: Actually call the calendar tool with action="create". Format: "HIGH CONFIDENCE (90%): Creating time block\\nTool: calendar\\nArgs: {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work on Project Phoenix\\"}"',
-  '  - For MEDIUM CONFIDENCE (60-80%) time blocks: Provide recommendation in tool call format. Format: "MEDIUM CONFIDENCE (70%): RECOMMENDATION - Create time block\\nSuggested tool call: calendar with {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work on Project Phoenix\\"}\\nRationale: [brief explanation]"',
+  '  - For HIGH CONFIDENCE (>80%) time blocks: Actually call the calendar.events tool with action="create". Format: "HIGH CONFIDENCE (90%): Creating time block\\nTool: calendar.events\\nArgs: {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work on Project Phoenix\\"}"',
+  '  - For MEDIUM CONFIDENCE (60-80%) time blocks: Provide recommendation in tool call format. Format: "MEDIUM CONFIDENCE (70%): RECOMMENDATION - Create time block\\nSuggested tool call: calendar.events with {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work on Project Phoenix\\"}\\nRationale: [brief explanation]"',
   '  - Always use local time format "YYYY-MM-DD HH:mm:ss" for startDate and endDate (e.g., "2025-11-04 14:00:00" for today 2PM)',
-  '  - CRITICAL: If you mention "Time block:" in a reminder note, you MUST create the calendar event. If you are NOT creating a time block (neither in note nor calendar), use reminders tool only.',
+  '  - CRITICAL: If you mention "Time block:" in a reminder note, you MUST create the calendar event. If you are NOT creating a time block (neither in note nor calendar), use reminders.tasks tool only.',
   '  - Name deep work blocks using the pattern "Deep Work — [Project Name]" so the calendar highlights the project while allowing multiple related tasks within a single block.',
   '  - Clarify in notes when a deep work block spans multiple tasks for the same project; highlight the shared objective instead of individual task names.',
 ];
@@ -303,8 +307,8 @@ export const TIME_BLOCK_CREATION_CONSTRAINTS = [
  */
 export const getActionQueueFormat = (_currentDate: string): string[] => [
   '### Action queue — prioritized list of actions organized by confidence level (high/medium/low) and impact. IMPORTANT: High-confidence actions (>80%) should be EXECUTED immediately using MCP tool calls, not just described. Each action should specify:',
-  '  - For HIGH CONFIDENCE (>80%): Actually call the tool with action="create" or action="update". Format: "HIGH CONFIDENCE (95%): Creating reminder\\nTool: reminders\\nArgs: {action: \\"create\\", title: \\"Submit report\\", targetList: \\"Work\\", dueDate: \\"2025-01-15 18:00:00\\", note: \\"CRITICAL: Blocked by - Need approval from manager first\\"}"',
-  '  - For MEDIUM CONFIDENCE (60-80%): Provide recommendation in tool call format, marked as "RECOMMENDATION". Format: "MEDIUM CONFIDENCE (75%): RECOMMENDATION - Create reminder\\nSuggested tool call: reminders with {action: \\"create\\", title: \\"...\\", targetList: \\"...\\", dueDate: \\"YYYY-MM-DD HH:mm:ss\\"}\\nRationale: [brief explanation]"',
+  '  - For HIGH CONFIDENCE (>80%): Actually call the tool with action="create" or action="update". Format: "HIGH CONFIDENCE (95%): Creating reminder\\nTool: reminders.tasks\\nArgs: {action: \\"create\\", title: \\"Submit report\\", targetList: \\"Work\\", dueDate: \\"2025-01-15 18:00:00\\", note: \\"CRITICAL: Blocked by - Need approval from manager first\\"}"',
+  '  - For MEDIUM CONFIDENCE (60-80%): Provide recommendation in tool call format, marked as "RECOMMENDATION". Format: "MEDIUM CONFIDENCE (75%): RECOMMENDATION - Create reminder\\nSuggested tool call: reminders.tasks with {action: \\"create\\", title: \\"...\\", targetList: \\"...\\", dueDate: \\"YYYY-MM-DD HH:mm:ss\\"}\\nRationale: [brief explanation]"',
   '  - For LOW CONFIDENCE (<60%): Text description only, ask for confirmation. Format: "LOW CONFIDENCE (50%): Consider creating reminder for [task]. Should I proceed?"',
   '  - Each action must include: confidence level, action type (create/update/recommendation), exact properties (title, list, dueDate in format "YYYY-MM-DD HH:mm:ss" for local time, note if applicable, url if applicable), and brief rationale',
   '  - IMPORTANT: Use local time format "YYYY-MM-DD HH:mm:ss" for dueDate (e.g., "2025-11-04 18:00:00" for today 6PM). Do NOT use UTC format with "Z" suffix unless explicitly needed - this prevents timezone conversion errors.',

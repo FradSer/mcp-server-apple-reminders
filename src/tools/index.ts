@@ -5,6 +5,7 @@
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type {
+  CalendarsToolArgs,
   CalendarToolArgs,
   ListsToolArgs,
   RemindersToolArgs,
@@ -19,6 +20,7 @@ import {
   handleDeleteReminder,
   handleDeleteReminderList,
   handleReadCalendarEvents,
+  handleReadCalendars,
   handleReadReminderLists,
   handleReadReminders,
   handleUpdateCalendarEvent,
@@ -34,10 +36,14 @@ import {
  */
 export async function handleToolCall(
   name: string,
-  args?: RemindersToolArgs | ListsToolArgs | CalendarToolArgs,
+  args?:
+    | RemindersToolArgs
+    | ListsToolArgs
+    | CalendarToolArgs
+    | CalendarsToolArgs,
 ): Promise<CallToolResult> {
   switch (name) {
-    case 'reminders': {
+    case 'reminders.tasks': {
       const action = args?.action;
       if (!args) {
         return {
@@ -65,7 +71,7 @@ export async function handleToolCall(
               {
                 type: 'text',
                 text: MESSAGES.ERROR.UNKNOWN_ACTION(
-                  'reminders',
+                  'reminders.tasks',
                   String(action),
                 ),
               },
@@ -74,7 +80,7 @@ export async function handleToolCall(
           };
       }
     }
-    case 'lists': {
+    case 'reminders.lists': {
       const action = args?.action;
       switch (action) {
         case 'read':
@@ -90,14 +96,17 @@ export async function handleToolCall(
             content: [
               {
                 type: 'text',
-                text: MESSAGES.ERROR.UNKNOWN_ACTION('lists', String(action)),
+                text: MESSAGES.ERROR.UNKNOWN_ACTION(
+                  'reminders.lists',
+                  String(action),
+                ),
               },
             ],
             isError: true,
           };
       }
     }
-    case 'calendar': {
+    case 'calendar.events': {
       const action = args?.action;
       if (!args) {
         return {
@@ -124,13 +133,18 @@ export async function handleToolCall(
             content: [
               {
                 type: 'text',
-                text: MESSAGES.ERROR.UNKNOWN_ACTION('calendar', String(action)),
+                text: MESSAGES.ERROR.UNKNOWN_ACTION(
+                  'calendar.events',
+                  String(action),
+                ),
               },
             ],
             isError: true,
           };
       }
     }
+    case 'calendar.calendars':
+      return handleReadCalendars(args as CalendarsToolArgs | undefined);
     default:
       return {
         content: [
