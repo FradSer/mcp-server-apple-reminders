@@ -130,17 +130,6 @@ export const DeleteReminderSchema = z.object({
 });
 
 // Calendar event schemas
-const _BaseCalendarEventFields = {
-  title: SafeTextSchema,
-  startDate: SafeDateSchema,
-  endDate: SafeDateSchema,
-  note: SafeNoteSchema,
-  location: createOptionalSafeTextSchema(200, 'Location'),
-  url: SafeUrlSchema,
-  isAllDay: z.boolean().optional(),
-  targetCalendar: SafeListNameSchema, // Reuse list name schema for calendar names
-};
-
 export const CreateCalendarEventSchema = z.object({
   title: SafeTextSchema,
   startDate: z

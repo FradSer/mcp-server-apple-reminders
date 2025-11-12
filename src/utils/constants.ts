@@ -4,25 +4,6 @@
  */
 
 /**
- * Timeout values for async operations (in milliseconds)
- */
-export const TIMEOUTS = {
-  /** Default timeout for general operations */
-  DEFAULT_OPERATION: 5000,
-} as const;
-
-/**
- * Exit codes for process operations
- */
-export const EXIT_CODES = {
-  /** Successful operation */
-  SUCCESS: 0,
-
-  /** General error */
-  ERROR: 1,
-} as const;
-
-/**
  * Date calculation constants
  */
 export const DATE_CONSTANTS = {
@@ -57,48 +38,6 @@ export const FILE_SYSTEM = {
 } as const;
 
 /**
- * Binary path configurations
- */
-export const BINARY_PATHS = {
-  /** Primary binary path (built distribution) */
-  DIST_PATH: 'dist/swift/bin',
-
-  /** Development binary path (source) */
-  SRC_PATH: 'src/swift/bin',
-
-  /** Fallback binary path */
-  FALLBACK_PATH: 'swift/bin',
-
-  /** Mock binary path for tests */
-  MOCK_PATH: '/mock/path/to/binary',
-} as const;
-
-/**
- * Environment variable names
- */
-export const ENVIRONMENT_VARS = {
-  /** Node.js environment */
-  NODE_ENV: 'NODE_ENV',
-
-  /** Debug flag */
-  DEBUG: 'DEBUG',
-} as const;
-
-/**
- * Environment values
- */
-export const ENVIRONMENTS = {
-  /** Test environment */
-  TEST: 'test',
-
-  /** Development environment */
-  DEVELOPMENT: 'development',
-
-  /** Production environment */
-  PRODUCTION: 'production',
-} as const;
-
-/**
  * Validation and security constants
  */
 export const VALIDATION = {
@@ -111,35 +50,9 @@ export const VALIDATION = {
 } as const;
 
 /**
- * JSON formatting constants
- */
-export const JSON_FORMATTING = {
-  /** Indentation spaces for JSON.stringify */
-  INDENT_SPACES: 2,
-} as const;
-
-/**
- * Success and error message templates
+ * Error message templates
  */
 export const MESSAGES = {
-  /** Success messages */
-  SUCCESS: {
-    REMINDER_CREATED: (title: string, hasNotes: boolean) =>
-      `Successfully created reminder: ${title}${hasNotes ? ' with notes' : ''}`,
-
-    REMINDER_UPDATED: (title: string) =>
-      `Successfully updated reminder "${title}"`,
-
-    REMINDER_DELETED: (title: string) =>
-      `Successfully deleted reminder: ${title}`,
-
-    REMINDER_MOVED: (title: string, fromList: string, toList: string) =>
-      `Successfully moved reminder "${title}" from ${fromList} to ${toList}`,
-
-    LIST_CREATED: (name: string) =>
-      `Successfully created reminder list: ${name}`,
-  },
-
   /** Error messages */
   ERROR: {
     INPUT_VALIDATION_FAILED: (details: string) =>
