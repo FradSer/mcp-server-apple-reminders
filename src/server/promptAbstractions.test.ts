@@ -242,14 +242,12 @@ describe('Constraint Consistency', () => {
       require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
     expect(
       DEEP_WORK_CONSTRAINTS.some((c: string) =>
-        c.includes('If the work fits inside a 15-30 minute burst'),
+        c.includes('Tasks <60 minutes use Focus Sprint'),
       ),
     ).toBe(true);
     expect(
       DEEP_WORK_CONSTRAINTS.some((c: string) =>
-        c.includes(
-          'Always anchor start times by subtracting the planned deep work duration',
-        ),
+        c.includes('Anchor to due times: Start time = due time - duration'),
       ),
     ).toBe(true);
   });

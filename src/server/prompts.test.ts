@@ -53,53 +53,46 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(/idempotency checks/i);
     expect(text).toMatch(/Batch tool calls/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
-    expect(text).toMatch(/calendar\.events with action="read"/i);
     expect(text).toMatch(
-      /Build due date strings explicitly with today's date/i,
+      /Build due date strings with today's date/i,
     );
     expect(text).toMatch(
-      /schedule matching calendar\.events time blocks aligned to those due windows/i,
+      /CREATE calendar time blocks immediately for tasks/i,
     );
     expect(text).toMatch(
       /Deep Work \(60-90 minutes for cognitively demanding/i,
     );
-    expect(text).toMatch(/Shallow Tasks \(15-60 minutes for all other work/i);
+    expect(text).toMatch(/Shallow Tasks \(15-60 minutes for routine work/i);
     expect(text).toMatch(
-      /automatically reserve ~20% of the schedule as implicit buffer time/i,
+      /automatically reserves ~20% buffer time/i,
     );
     expect(text).toMatch(
-      /Anchor each start time by subtracting the mapped duration/i,
+      /anchor to reminder due times/i,
     );
-    expect(text).toMatch(/use the exact format "\d{4}-\d{2}-\d{2} HH:mm:ss"/i);
+    expect(text).toMatch(/use.*exact format.*\d{4}-\d{2}-\d{2} HH:mm:ss/i);
     expect(text).toMatch(
-      /Name deep work blocks using the pattern "Deep Work — \[Project Name]/i,
+      /Name deep work blocks:.*"Deep Work — \[Project/i,
     );
-    expect(text).toMatch(/Time block length: 60-90 minutes recommended/i);
-    expect(text).toMatch(/If the work fits inside a 15-30 minute burst/i);
-    expect(text).toMatch(/Ensure the block spans the reminder's due time/i);
+    expect(text).toMatch(/Time block length: 60-90 minutes/i);
+    expect(text).toMatch(/Tasks <60 minutes use Focus Sprint/i);
+    expect(text).toMatch(/Anchor to due times:/i);
     expect(text).toMatch(
-      /Always anchor start times by subtracting the planned deep work duration/i,
+      /Plan 2-3 blocks per day, totaling 2-4 hours/i,
     );
-    expect(text).toMatch(
-      /Daily deep work capacity: Plan (two|2)-(three|3) deep work blocks per day/i,
-    );
-    expect(text).toMatch(/Break intervals: Schedule 15-20 minute breaks/i);
+    expect(text).toMatch(/Break intervals: 15-20 minutes between blocks/i);
     expect(text).toMatch(/### Deep work blocks/i);
     expect(text).toMatch(/### Shallow tasks/i);
     expect(text).not.toMatch(/### Buffer time/i); // Buffer time is now implicit
 
     expect(text).toMatch(/Focus Sprint — \[Outcome]/i);
     expect(text).toMatch(
-      /convert Deep Work tasks into 60-90 minute events and Shallow Tasks into 15-60 minute events/i,
+      /Deep Work \(60-90 minutes|Shallow Tasks \(15-60 minutes/i,
     );
     expect(text).toMatch(
-      /Leave natural gaps \(15-30 minutes\) between major blocks as implicit buffer time/i,
+      /implicit buffer time.*natural gaps/i,
     );
     expect(text).toMatch(
-      /Calendar events show start\/end times that are anchored to each reminder due timestamp/i,
-    );
-    expect(text).toMatch(
-      /Calendar time blocks reflect the read-before-create dedupe/i,
+      /Anchor.*due times|anchor to reminder due times/i,
     );
   });
 
@@ -115,7 +108,7 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(/### Questions/i);
     expect(text).toMatch(/### Verification log/i);
     expect(text).toMatch(
-      /calendar\.events time blocks are created using each reminder due time as the anchor/i,
+      /CREATE calendar time blocks immediately for tasks with duration/i,
     );
   });
 

@@ -223,13 +223,11 @@ export const DEEP_WORK_CONSTRAINTS = [
   '    - Task title suggests cognitively demanding work (开发, 设计, 分析, 规划, 重构, 架构) with duration ≥60min → Medium-High confidence (75-85%)',
   '    - Multiple related tasks (same project/list) with explicit times due today, totaling ≥60min → High confidence (90%) to batch into single block',
   '    - Task notes mention "deep work", "focused time", "uninterrupted" → High confidence (85-90%)',
-  '  - Time block length: 60-90 minutes recommended (avoid sessions shorter than 60 minutes as they are too brief to enter deep focus state; avoid sessions longer than 90 minutes to prevent fatigue). If the work fits inside a 15-30 minute burst, use the focus sprint guidance in TIME_BLOCK_CREATION_CONSTRAINTS instead of labeling it deep work.',
-  '  - Scheduling priority: Place time blocks during peak energy hours (typically morning, 9am-12pm). Schedule 2-4 hours of deep work time total per day across multiple blocks (typically 2-3 blocks)',
-  '  - Daily deep work capacity: Plan 2-3 deep work blocks per day, totaling 2-4 hours of deep work time (e.g., two 90-minute blocks = 3 hours, or three 60-minute blocks = 3 hours)',
-  '  - Break intervals: Schedule 15-20 minute breaks between time blocks (these breaks are NOT calendar events—plan the pause without creating events). Do NOT create calendar events for breaks',
-  '  - Distraction reduction: Include in notes: "Close notifications, inform others you are focusing, avoid email and social media"',
-  '  - Clear objectives: Each time block should have a specific, clear goal stated in the notes. Include the specific objective or deliverable for that session',
-  "  - Ensure the block spans the reminder's due time: start early enough that the session finishes exactly at or slightly before the due timestamp, or extend the block when the due time sits mid-session. Always anchor start times by subtracting the planned deep work duration from the due timestamp and move the window forward if that start would occur in the past.",
+  '  - Time block length: 60-90 minutes. Tasks <60 minutes use Focus Sprint (15-30 min) instead.',
+  '  - Scheduling: Peak energy hours (9am-12pm). Plan 2-3 blocks per day, totaling 2-4 hours.',
+  '  - Break intervals: 15-20 minutes between blocks (NOT calendar events—implicit gaps only).',
+  '  - Clear objectives: Each block has specific goal in notes.',
+  '  - Anchor to due times: Start time = due time - duration. If past, move forward.',
 ];
 
 /**
@@ -276,24 +274,17 @@ export const CALENDAR_PERMISSION_CONSTRAINTS = [
  * Time block creation strict rules
  */
 export const TIME_BLOCK_CREATION_CONSTRAINTS = [
-  '**Time block creation (CLEAR TRIGGERS)**: Use the calendar.events tool when tasks meet ANY of these criteria:',
+  '**Time block creation (CLEAR TRIGGERS)**: CREATE calendar.events time blocks immediately when tasks meet ANY of these criteria:',
   '  - Task has duration estimate ≥60 minutes (Deep Work category) with due date today',
   '  - Multiple related tasks with explicit times due today, totaling ≥60 minutes, that can be batched',
   '  - Task explicitly marked as requiring focused/uninterrupted time',
   '  - Task benefits from calendar visibility to prevent double-booking',
-  '  - Before creating anything, CALL calendar.events with action="read" for the intended time window to inventory existing events and prevent duplicate blocks for the same reminder cluster.',
-  '  - You have determined a specific start and end time that should be blocked',
-  '  - You have stated in your output that you are creating a time block for this task',
-  '  - **CRITICAL**: If you include "Time block:" or similar time block references in a reminder note, you MUST also create a calendar event for that time block. Do NOT mention time blocks in notes without creating the corresponding calendar event.',
-  '  - For HIGH CONFIDENCE (>80%) time blocks: Actually call the calendar.events tool with action="create". Format: "HIGH CONFIDENCE (90%): Creating time block\\nTool: calendar.events\\nArgs: {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work on Project Phoenix\\"}"',
-  '  - For MEDIUM CONFIDENCE (60-80%) time blocks: Provide recommendation in tool call format. Format: "MEDIUM CONFIDENCE (70%): RECOMMENDATION - Create time block\\nSuggested tool call: calendar.events with {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work on Project Phoenix\\"}\\nRationale: [brief explanation]"',
-  '  - Always use local time format "YYYY-MM-DD HH:mm:ss" for startDate and endDate (e.g., "2025-11-04 14:00:00" for today 2PM)',
-  '  - Anchor calendar events to reminder due timestamps whenever they exist by subtracting the scheduled duration to determine the startDate. If that start would be in the past, move the window forward but preserve the duration.',
-  '  - CRITICAL: If you mention "Time block:" in a reminder note, you MUST create the calendar event. If you are NOT creating a time block (neither in note nor calendar), use reminders.tasks tool only.',
-  '  - For short-focus protection (15-30 minutes), create "Focus Sprint — [Outcome]" events sized to 15 or 30 minutes that finish at or just before the linked reminder due timestamp. Do not describe these shorter holds as deep work.',
-  '  - Name deep work blocks using the pattern "Deep Work — [Project Name]" so the calendar highlights the project while allowing multiple related tasks within a single block.',
-  '  - Clarify in notes when a deep work block spans multiple tasks for the same project; highlight the shared objective instead of individual task names.',
-  '  - When adjusting or creating multiple reminders due today with explicit due times, convert the cluster into calendar.events blocks aligned to those due windows to prevent overcommitment—ONLY after confirming via calendar.events read that no equivalent block already exists.',
+  '  - For HIGH CONFIDENCE (>80%): Execute calendar.events tool call immediately. Format: "HIGH CONFIDENCE (90%): Creating time block\\nTool: calendar.events\\nArgs: {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\", targetCalendar: \\"Work\\", note: \\"Focused time for uninterrupted work\\"}"',
+  '  - For MEDIUM CONFIDENCE (60-80%): Provide recommendation in tool call format. Format: "MEDIUM CONFIDENCE (70%): RECOMMENDATION - Create time block\\nSuggested tool call: calendar.events with {action: \\"create\\", title: \\"Deep Work — Project Phoenix\\", startDate: \\"2025-11-04 14:00:00\\", endDate: \\"2025-11-04 16:00:00\\"}\\nRationale: [brief explanation]"',
+  '  - Always use local time format "YYYY-MM-DD HH:mm:ss" for startDate and endDate (e.g., "2025-11-04 14:00:00" for 2PM)',
+  '  - Anchor calendar events to reminder due timestamps by subtracting duration to determine startDate. If start would be in the past, move forward but preserve duration.',
+  '  - Name deep work blocks: "Deep Work — [Project Name]". Name focus sprints (15-30 min): "Focus Sprint — [Outcome]".',
+  '  - When multiple tasks share a project, use single block with shared objective in notes.',
 ];
 
 /**
