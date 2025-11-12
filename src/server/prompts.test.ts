@@ -50,7 +50,7 @@ describe('prompt time horizons', () => {
     const response = buildPromptResponse(template, null);
     const text = getPromptText(response);
 
-    expect(text).toMatch(/Avoid duplicate reminders/i);
+    expect(text).toMatch(/idempotency checks/i);
     expect(text).toMatch(/Batch tool calls/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
     expect(text).toMatch(/calendar\.events with action="read"/i);
@@ -61,9 +61,12 @@ describe('prompt time horizons', () => {
       /schedule matching calendar\.events time blocks aligned to those due windows/i,
     );
     expect(text).toMatch(
-      /schedule as 15-minute calendar holds when time blocking is required/i,
+      /Deep Work \(60-90 minutes for cognitively demanding/i,
     );
-    expect(text).toMatch(/schedule as 30-, 45-, or 60-minute holds/i);
+    expect(text).toMatch(/Shallow Tasks \(15-60 minutes for all other work/i);
+    expect(text).toMatch(
+      /automatically reserve ~20% of the schedule as implicit buffer time/i,
+    );
     expect(text).toMatch(
       /Anchor each start time by subtracting the mapped duration/i,
     );
@@ -81,16 +84,20 @@ describe('prompt time horizons', () => {
       /Daily deep work capacity: Plan (two|2)-(three|3) deep work blocks per day/i,
     );
     expect(text).toMatch(/Break intervals: Schedule 15-20 minute breaks/i);
-    expect(text).toMatch(
-      /Standard tasks — highlight 30-60 minute commitments/i,
-    );
+    expect(text).toMatch(/### Deep work blocks/i);
+    expect(text).toMatch(/### Shallow tasks/i);
+    expect(text).not.toMatch(/### Buffer time/i); // Buffer time is now implicit
 
     expect(text).toMatch(/Focus Sprint — \[Outcome]/i);
     expect(text).toMatch(
-      /convert Quick Win clusters into 15-minute events and Standard Task clusters into 30-, 45-, or 60-minute events/i,
+      /convert Deep Work tasks into 60-90 minute events and Shallow Tasks into 15-60 minute events/i,
+    );
+    expect(text).toMatch(
+      /Leave natural gaps \(15-30 minutes\) between major blocks as implicit buffer time/i,
     );
     expect(text).toMatch(
       /Calendar events show start\/end times that are anchored to each reminder due timestamp/i,
+    );
     expect(text).toMatch(
       /Calendar time blocks reflect the read-before-create dedupe/i,
     );
@@ -110,5 +117,33 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /calendar\.events time blocks are created using each reminder due time as the anchor/i,
     );
+  });
+
+  it('daily organizer includes work category constraints and daily capacity limits', () => {
+    const template = getPromptDefinition('daily-task-organizer');
+    if (!template) {
+      throw new Error('daily-task-organizer prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, null);
+    const text = getPromptText(response);
+
+    // Verify Deep Work constraints
+    expect(text).toMatch(/Deep Work maximum: 4 hours per day/i);
+    expect(text).toMatch(/60-90 minutes for cognitively demanding/i);
+
+    // Verify Shallow Tasks constraints
+    expect(text).toMatch(/15-60 minutes for all non-deep-work activities/i);
+    expect(text).toMatch(/Shallow Task — \[Task Description\]/i);
+
+    // Verify implicit buffer time handling
+    expect(text).toMatch(/Implicit buffer allocation/i);
+    expect(text).toMatch(/~20% of working hours unscheduled/i);
+    expect(text).toMatch(
+      /Do not create explicit "Buffer Time" calendar events/i,
+    );
+
+    // Verify daily capacity balancing
+    expect(text).toMatch(/Daily capacity limits and workload balancing/i);
   });
 });
