@@ -221,4 +221,36 @@ describe('Constraint Consistency', () => {
       ),
     ).toBe(true);
   });
+
+  it('should describe focus sprint time blocks and anchoring', () => {
+    const { TIME_BLOCK_CREATION_CONSTRAINTS } =
+      require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
+    expect(
+      TIME_BLOCK_CREATION_CONSTRAINTS.some((c: string) =>
+        c.includes('Focus Sprint — [Outcome]'),
+      ),
+    ).toBe(true);
+    expect(
+      TIME_BLOCK_CREATION_CONSTRAINTS.some((c: string) =>
+        c.includes('Anchor calendar events to reminder due timestamps'),
+      ),
+    ).toBe(true);
+  });
+
+  it('should keep deep work anchoring guidance with short-burst carve out', () => {
+    const { DEEP_WORK_CONSTRAINTS } =
+      require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
+    expect(
+      DEEP_WORK_CONSTRAINTS.some((c: string) =>
+        c.includes('If the work fits inside a 15-30 minute burst'),
+      ),
+    ).toBe(true);
+    expect(
+      DEEP_WORK_CONSTRAINTS.some((c: string) =>
+        c.includes(
+          'Always anchor start times by subtracting the planned deep work duration',
+        ),
+      ),
+    ).toBe(true);
+  });
 });

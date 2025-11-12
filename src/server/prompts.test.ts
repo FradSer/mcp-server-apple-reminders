@@ -60,12 +60,23 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /schedule matching calendar\.events time blocks aligned to those due windows/i,
     );
+    expect(text).toMatch(
+      /schedule as 15-minute calendar holds when time blocking is required/i,
+    );
+    expect(text).toMatch(/schedule as 30-, 45-, or 60-minute holds/i);
+    expect(text).toMatch(
+      /Anchor each start time by subtracting the mapped duration/i,
+    );
     expect(text).toMatch(/use the exact format "\d{4}-\d{2}-\d{2} HH:mm:ss"/i);
     expect(text).toMatch(
       /Name deep work blocks using the pattern "Deep Work — \[Project Name]/i,
     );
     expect(text).toMatch(/Time block length: 60-90 minutes recommended/i);
+    expect(text).toMatch(/If the work fits inside a 15-30 minute burst/i);
     expect(text).toMatch(/Ensure the block spans the reminder's due time/i);
+    expect(text).toMatch(
+      /Always anchor start times by subtracting the planned deep work duration/i,
+    );
     expect(text).toMatch(
       /Daily deep work capacity: Plan (two|2)-(three|3) deep work blocks per day/i,
     );
@@ -73,6 +84,13 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /Standard tasks — highlight 30-60 minute commitments/i,
     );
+
+    expect(text).toMatch(/Focus Sprint — \[Outcome]/i);
+    expect(text).toMatch(
+      /convert Quick Win clusters into 15-minute events and Standard Task clusters into 30-, 45-, or 60-minute events/i,
+    );
+    expect(text).toMatch(
+      /Calendar events show start\/end times that are anchored to each reminder due timestamp/i,
     expect(text).toMatch(
       /Calendar time blocks reflect the read-before-create dedupe/i,
     );
