@@ -53,6 +53,7 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(/Avoid duplicate reminders/i);
     expect(text).toMatch(/Batch tool calls/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
+    expect(text).toMatch(/calendar\.events with action="read"/i);
     expect(text).toMatch(
       /Build due date strings explicitly with today's date/i,
     );
@@ -83,12 +84,15 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(
       /Standard tasks — highlight 30-60 minute commitments/i,
     );
+
     expect(text).toMatch(/Focus Sprint — \[Outcome]/i);
     expect(text).toMatch(
       /convert Quick Win clusters into 15-minute events and Standard Task clusters into 30-, 45-, or 60-minute events/i,
     );
     expect(text).toMatch(
       /Calendar events show start\/end times that are anchored to each reminder due timestamp/i,
+    expect(text).toMatch(
+      /Calendar time blocks reflect the read-before-create dedupe/i,
     );
   });
 
