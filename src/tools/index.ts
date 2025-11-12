@@ -34,6 +34,17 @@ import {
  * @param args - Arguments for the tool
  * @returns Result of the tool call
  */
+const TOOL_ALIASES: Record<string, string> = {
+  reminders_tasks: 'reminders.tasks',
+  reminders_lists: 'reminders.lists',
+  calendar_events: 'calendar.events',
+  calendar_calendars: 'calendar.calendars',
+};
+
+function normalizeToolName(name: string): string {
+  return TOOL_ALIASES[name] ?? name;
+}
+
 export async function handleToolCall(
   name: string,
   args?:
@@ -42,7 +53,9 @@ export async function handleToolCall(
     | CalendarToolArgs
     | CalendarsToolArgs,
 ): Promise<CallToolResult> {
-  switch (name) {
+  const normalizedName = normalizeToolName(name);
+
+  switch (normalizedName) {
     case 'reminders.tasks': {
       const action = args?.action;
       if (!args) {
