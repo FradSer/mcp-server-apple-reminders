@@ -218,6 +218,11 @@ export const APPLE_REMINDERS_LIMITATIONS = [
  */
 export const DEEP_WORK_CONSTRAINTS = [
   '**Deep work time block guidelines**:',
+  '  - **When to create deep work blocks (trigger examples)**:',
+  '    - Task note includes "Duration: 60分钟" or longer AND task has due date today → High confidence (90%) to create block',
+  '    - Task title suggests cognitively demanding work (开发, 设计, 分析, 规划, 重构, 架构) with duration ≥60min → Medium-High confidence (75-85%)',
+  '    - Multiple related tasks (same project/list) with explicit times due today, totaling ≥60min → High confidence (90%) to batch into single block',
+  '    - Task notes mention "deep work", "focused time", "uninterrupted" → High confidence (85-90%)',
   '  - Time block length: 60-90 minutes recommended (avoid sessions shorter than 60 minutes as they are too brief to enter deep focus state; avoid sessions longer than 90 minutes to prevent fatigue). If the work fits inside a 15-30 minute burst, use the focus sprint guidance in TIME_BLOCK_CREATION_CONSTRAINTS instead of labeling it deep work.',
   '  - Scheduling priority: Place time blocks during peak energy hours (typically morning, 9am-12pm). Schedule 2-4 hours of deep work time total per day across multiple blocks (typically 2-3 blocks)',
   '  - Daily deep work capacity: Plan 2-3 deep work blocks per day, totaling 2-4 hours of deep work time (e.g., two 90-minute blocks = 3 hours, or three 60-minute blocks = 3 hours)',
@@ -271,9 +276,11 @@ export const CALENDAR_PERMISSION_CONSTRAINTS = [
  * Time block creation strict rules
  */
 export const TIME_BLOCK_CREATION_CONSTRAINTS = [
-  '**Time block creation (STRICT RULES)**: ONLY use the calendar.events tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar.events tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
-  '  - You have explicitly identified in your analysis that a task needs a fixed time slot (e.g., "2-hour deep work session", "Scheduled code review block")',
-  '  - The task benefits from calendar integration (visible in calendar apps, prevents double-booking)',
+  '**Time block creation (CLEAR TRIGGERS)**: Use the calendar.events tool when tasks meet ANY of these criteria:',
+  '  - Task has duration estimate ≥60 minutes (Deep Work category) with due date today',
+  '  - Multiple related tasks with explicit times due today, totaling ≥60 minutes, that can be batched',
+  '  - Task explicitly marked as requiring focused/uninterrupted time',
+  '  - Task benefits from calendar visibility to prevent double-booking',
   '  - Before creating anything, CALL calendar.events with action="read" for the intended time window to inventory existing events and prevent duplicate blocks for the same reminder cluster.',
   '  - You have determined a specific start and end time that should be blocked',
   '  - You have stated in your output that you are creating a time block for this task',
