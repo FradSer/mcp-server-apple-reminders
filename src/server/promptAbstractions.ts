@@ -184,59 +184,12 @@ export const NOTE_FORMATTING_CONSTRAINTS = [
 ];
 
 /**
- * Standard calendar integration constraints
- */
-export const CALENDAR_INTEGRATION_CONSTRAINTS = [
-  '**Time block creation (STRICT RULES)**: ONLY use the calendar.events tool when you have explicitly identified that a task requires a dedicated time block in your output. Do NOT use calendar.events tool for regular reminders or tasks that can be completed flexibly. Use calendar events ONLY when:',
-  '  - You have explicitly identified in your analysis that a task needs a fixed time slot (e.g., "2-hour deep work session", "Scheduled code review block")',
-  '  - The task benefits from calendar integration (visible in calendar apps, prevents double-booking)',
-  '  - You have determined a specific start and end time that should be blocked',
-  '  - You have stated in your output that you are creating a time block for this task',
-  '  - **CRITICAL**: If you include "Time block:" or similar time block references in a reminder note, you MUST also create a calendar event for that time block. Do NOT mention time blocks in notes without creating the corresponding calendar event.',
-  '  - When adjusting or creating multiple reminders due today with explicit due times, convert the cluster into calendar.events blocks aligned to those due windows to prevent overcommitment.',
-];
-
-/**
  * Standard batching and idempotency constraints
  */
 export const BATCHING_CONSTRAINTS = [
   'Run idempotency checks before creating anything: search for likely duplicates by normalized title (lowercase, trimmed, punctuation removed). Prefer updating an existing reminder over creating a duplicate.',
-  'Group actions for efficiency: Batch tool calls (creates/updates) in logical chunks to minimize the number of calls.',
   'Batch tool calls when executing multiple changes to reduce overhead and keep actions atomic by concern (e.g., all creates, then updates).',
-  'Avoid duplicate reminders: perform a similarity check on titles before creating; if a near-duplicate exists, update or annotate instead of creating a new one.',
-  'No duplicate reminders are created; similar items are merged or updated.',
-  'Tool calls are batched sensibly; the number of calls is minimized while keeping actions atomic.',
 ];
-
-/**
- * Time windows and task duration constants
- */
-export const TIME_WINDOWS = {
-  IMMEDIATE_HOURS: 2,
-  QUICK_WIN_MINUTES: 15,
-  QUICK_WIN_MAX_HOURS: 4,
-  STANDARD_TASK_MIN_MINUTES: 30,
-  STANDARD_TASK_MAX_MINUTES: 60,
-  EOD_HOUR: 18,
-  WORK_START_HOUR: 9,
-  WORK_END_HOUR: 18,
-} as const;
-
-/**
- * Deep work configuration constants
- */
-export const DEEP_WORK_CONFIG = {
-  MIN_DURATION_MINUTES: 60,
-  MAX_DURATION_MINUTES: 90,
-  BREAK_MINUTES: 15,
-  BREAK_MAX_MINUTES: 20,
-  DAILY_BLOCKS_MIN: 2,
-  DAILY_BLOCKS_MAX: 3,
-  DAILY_TOTAL_HOURS_MIN: 2,
-  DAILY_TOTAL_HOURS_MAX: 4,
-  PEAK_START_HOUR: 9,
-  PEAK_END_HOUR: 12,
-} as const;
 
 /**
  * Standard calibration guidance for overwhelming workloads
@@ -272,6 +225,35 @@ export const DEEP_WORK_CONSTRAINTS = [
   '  - Distraction reduction: Include in notes: "Close notifications, inform others you are focusing, avoid email and social media"',
   '  - Clear objectives: Each time block should have a specific, clear goal stated in the notes. Include the specific objective or deliverable for that session',
   "  - Ensure the block spans the reminder's due time: start early enough that the session finishes exactly at or slightly before the due timestamp, or extend the block when the due time sits mid-session. Always anchor start times by subtracting the planned deep work duration from the due timestamp and move the window forward if that start would occur in the past.",
+];
+
+/**
+ * Shallow tasks time block creation guidelines
+ * Encompasses all non-deep-work activities: quick wins, routine tasks, administrative work
+ */
+export const SHALLOW_TASKS_CONSTRAINTS = [
+  '**Shallow tasks time block guidelines**:',
+  '  - Time block length: 15-60 minutes for all non-deep-work activities including quick wins, routine tasks, and administrative work',
+  '  - Task examples: Email processing, status updates, meeting preparation, quick code reviews, administrative paperwork, scheduling, light coordination, quick fixes',
+  '  - Scheduling strategy: Fill gaps between deep work blocks, schedule during lower energy periods (typically 2-4pm), batch similar tasks together',
+  '  - Batching encouraged: Group similar shallow tasks into single blocks when possible (e.g., "Email & Admin" combining multiple small tasks)',
+  '  - Calendar naming pattern: "Shallow Task — [Task Description]" or batch as "Shallow Tasks — [Category]" (e.g., "Shallow Tasks — Admin & Email")',
+  '  - Energy awareness: Schedule during post-lunch dip, end-of-day, or gaps between meetings when cognitive capacity is lower',
+];
+
+/**
+ * Daily capacity and workload balancing constraints
+ * Includes implicit 20% buffer time allocation
+ */
+export const DAILY_CAPACITY_CONSTRAINTS = [
+  '**Daily capacity limits and workload balancing**:',
+  '  - Deep Work maximum: 4 hours per day (typically 2-3 blocks of 60-90 minutes). Research shows this is the sustainable maximum for focused cognitive work',
+  '  - Implicit buffer allocation: When scheduling, automatically leave ~20% of working hours unscheduled (approximately 1.5-2 hours in 8-hour workday) as gaps between blocks and at day end',
+  '  - Shallow Tasks fill remaining time after deep work allocation and implicit buffer time',
+  '  - Total validation: Deep Work + Shallow Tasks + implicit buffer (~20%) should equal working hours (typically 8 hours)',
+  '  - Energy alignment: Schedule deep work during peak energy (9am-12pm), shallow tasks during lower energy periods (2-4pm), with natural transition gaps',
+  '  - Warn when overcommitted: If total scheduled work exceeds available hours or deep work exceeds 4 hours, flag the issue and suggest prioritization',
+  '  - Buffer time handling: Do not create explicit "Buffer Time" calendar events. Instead, leave natural gaps (15-30 minutes) between major blocks for transitions, unexpected work, and flexibility',
 ];
 
 /**
@@ -312,11 +294,9 @@ export const TIME_BLOCK_CREATION_CONSTRAINTS = [
  */
 export const getActionQueueFormat = (_currentDate: string): string[] => [
   '### Action queue — prioritized list of actions organized by confidence level (high/medium/low) and impact. IMPORTANT: High-confidence actions (>80%) should be EXECUTED immediately using MCP tool calls, not just described. Each action should specify:',
-  '  - For HIGH CONFIDENCE (>80%): Actually call the tool with action="create" or action="update". Format: "HIGH CONFIDENCE (95%): Creating reminder\\nTool: reminders.tasks\\nArgs: {action: \\"create\\", title: \\"Submit report\\", targetList: \\"Work\\", dueDate: \\"2025-01-15 18:00:00\\", note: \\"CRITICAL: Blocked by - Need approval from manager first\\"}"',
-  '  - For MEDIUM CONFIDENCE (60-80%): Provide recommendation in tool call format, marked as "RECOMMENDATION". Format: "MEDIUM CONFIDENCE (75%): RECOMMENDATION - Create reminder\\nSuggested tool call: reminders.tasks with {action: \\"create\\", title: \\"...\\", targetList: \\"...\\", dueDate: \\"YYYY-MM-DD HH:mm:ss\\"}\\nRationale: [brief explanation]"',
-  '  - For LOW CONFIDENCE (<60%): Text description only, ask for confirmation. Format: "LOW CONFIDENCE (50%): Consider creating reminder for [task]. Should I proceed?"',
-  '  - Each action must include: confidence level, action type (create/update/recommendation), exact properties (title, list, dueDate in format "YYYY-MM-DD HH:mm:ss" for local time, note if applicable, url if applicable), and brief rationale',
-  '  - IMPORTANT: Use local time format "YYYY-MM-DD HH:mm:ss" for dueDate (e.g., "2025-11-04 18:00:00" for today 6PM). Do NOT use UTC format with "Z" suffix unless explicitly needed - this prevents timezone conversion errors.',
+  '  - HIGH CONFIDENCE (>80%): Execute using tool calls. MEDIUM CONFIDENCE (60-80%): Provide recommendations in tool call format. LOW CONFIDENCE (<60%): Text description only, ask for confirmation.',
+  '  - Each action must include: confidence level, action type (create/update/recommendation), exact properties (title, list, dueDate, note, url if applicable), and brief rationale',
+  '  - Use local time format "YYYY-MM-DD HH:mm:ss" for dueDate (e.g., "2025-11-04 18:00:00"). Do NOT use UTC format with "Z" suffix.',
 ];
 
 /**
@@ -343,7 +323,6 @@ export const buildStandardConstraints = (): string[] => [
   ...CONFIDENCE_CONSTRAINTS,
   ...TIME_CONSISTENCY_CONSTRAINTS,
   ...NOTE_FORMATTING_CONSTRAINTS,
-  ...CALENDAR_INTEGRATION_CONSTRAINTS,
   ...BATCHING_CONSTRAINTS,
 ];
 
