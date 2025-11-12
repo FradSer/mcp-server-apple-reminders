@@ -149,9 +149,16 @@ describe('timeHelpers', () => {
     it('should provide consistent date information across all fields', () => {
       const context = getTimeContext();
 
-      // All date fields should refer to the same date
-      const dateFromDateTime = context.currentDateTime.split('T')[0];
-      expect(dateFromDateTime).toBe(context.currentDate);
+      // currentDate should be in YYYY-MM-DD format (local timezone)
+      expect(context.currentDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+      // Verify currentDate uses local timezone (may differ from UTC date)
+      const now = new Date();
+      const expectedLocalDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      expect(context.currentDate).toBe(expectedLocalDate);
+
+      // currentDateTime should be in ISO format (UTC)
+      expect(context.currentDateTime).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
 
       // Current time should be in valid 24-hour format
       expect(context.currentTime).toMatch(/^\d{2}:\d{2}$/);

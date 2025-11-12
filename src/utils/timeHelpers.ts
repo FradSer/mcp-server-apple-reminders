@@ -7,11 +7,11 @@
  * Time context information for prompts
  */
 export interface TimeContext {
-  /** Current date and time in ISO format */
+  /** Current date and time in ISO format (UTC) */
   currentDateTime: string;
-  /** Current date in YYYY-MM-DD format */
+  /** Current date in YYYY-MM-DD format (local timezone) */
   currentDate: string;
-  /** Current time in HH:MM format */
+  /** Current time in HH:MM format (local timezone) */
   currentTime: string;
   /** Day of the week (Monday, Tuesday, etc.) */
   dayOfWeek: string;
@@ -29,9 +29,17 @@ export interface TimeContext {
 export function getTimeContext(): TimeContext {
   const now = new Date();
 
-  // Date and time formatting
+  // Use system local timezone for date formatting
+  // Format: YYYY-MM-DD in local timezone (not UTC)
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const currentDate = `${year}-${month}-${day}`;
+
+  // Keep ISO format for full datetime
   const currentDateTime = now.toISOString();
-  const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+
+  // Local time in HH:MM format
   const currentTime = now.toTimeString().slice(0, 5); // HH:MM
 
   // Day of week
