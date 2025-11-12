@@ -53,6 +53,7 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(/Avoid duplicate reminders/i);
     expect(text).toMatch(/Batch tool calls/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
+    expect(text).toMatch(/calendar\.events with action="read"/i);
     expect(text).toMatch(
       /Build due date strings explicitly with today's date/i,
     );
@@ -71,6 +72,9 @@ describe('prompt time horizons', () => {
     expect(text).toMatch(/Break intervals: Schedule 15-20 minute breaks/i);
     expect(text).toMatch(
       /Standard tasks — highlight 30-60 minute commitments/i,
+    );
+    expect(text).toMatch(
+      /Calendar time blocks reflect the read-before-create dedupe/i,
     );
   });
 
