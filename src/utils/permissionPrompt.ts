@@ -24,8 +24,9 @@ const inFlight = new Map<PermissionDomain, Promise<void>>();
 export async function triggerPermissionPrompt(
   domain: PermissionDomain,
 ): Promise<void> {
-  if (inFlight.has(domain)) {
-    return inFlight.get(domain)!;
+  const existingPrompt = inFlight.get(domain);
+  if (existingPrompt) {
+    return existingPrompt;
   }
 
   const script = APPLESCRIPT_SNIPPETS[domain];
