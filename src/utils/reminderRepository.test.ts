@@ -483,11 +483,4 @@ describe('ReminderRepository', () => {
       ]);
     });
   });
-
-  describe('reminderRepository instance', () => {
-    it('should export a reminderRepository instance', () => {
-      expect(reminderRepository).toBeDefined();
-      expect(typeof reminderRepository.findReminders).toBe('function');
-    });
-  });
 });

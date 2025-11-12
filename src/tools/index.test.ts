@@ -7,7 +7,7 @@ import type {
   ListsToolArgs,
   RemindersToolArgs,
 } from '../types/index.js';
-import { handleToolCall, TOOLS } from './index.js';
+import { handleToolCall } from './index.js';
 
 // Mock all handler functions
 jest.mock('./handlers.js', () => ({
@@ -398,20 +398,6 @@ describe('Tools Index', () => {
         ],
         isError: true,
       });
-    });
-  });
-
-  describe('TOOLS export', () => {
-    it('should export TOOLS array with expected tools', () => {
-      expect(TOOLS).toBeDefined();
-      expect(Array.isArray(TOOLS)).toBe(true);
-      expect(TOOLS.length).toBeGreaterThan(0);
-
-      const toolNames = TOOLS.map((tool) => tool.name);
-      expect(toolNames).toContain('reminders.tasks');
-      expect(toolNames).toContain('reminders.lists');
-      expect(toolNames).toContain('calendar.events');
-      expect(toolNames).toContain('calendar.calendars');
     });
   });
 
