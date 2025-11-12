@@ -61,6 +61,7 @@ export interface ServerConfig {
 export type ReminderAction = 'read' | 'create' | 'update' | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
 export type CalendarAction = 'read' | 'create' | 'update' | 'delete';
+export type CalendarsAction = 'read';
 export type DueWithinOption =
   | 'today'
   | 'tomorrow'
@@ -121,6 +122,10 @@ export interface CalendarToolArgs extends BaseToolArgs {
   isAllDay?: boolean;
   // Target calendar for create/update operations
   targetCalendar?: string;
+}
+
+export interface CalendarsToolArgs extends BaseToolArgs {
+  action: CalendarsAction;
 }
 
 /**

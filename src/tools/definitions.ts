@@ -18,9 +18,9 @@ const DUE_WITHIN_OPTIONS = [
 
 export const TOOLS: Tool[] = [
   {
-    name: 'reminders',
+    name: 'reminders.tasks',
     description:
-      'Manages reminders. Supports reading, creating, updating, and deleting reminders.',
+      'Manages reminder tasks. Supports reading, creating, updating, and deleting reminders.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -100,9 +100,9 @@ export const TOOLS: Tool[] = [
     },
   },
   {
-    name: 'lists',
+    name: 'reminders.lists',
     description:
-      'Manages reminder lists. Supports reading, creating, updating, and deleting lists.',
+      'Manages reminder lists. Supports reading, creating, updating, and deleting reminder lists.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -138,7 +138,7 @@ export const TOOLS: Tool[] = [
     },
   },
   {
-    name: 'calendar',
+    name: 'calendar.events',
     description:
       'Manages calendar events (time blocks). Supports reading, creating, updating, and deleting calendar events.',
     inputSchema: {
@@ -216,6 +216,27 @@ export const TOOLS: Tool[] = [
             { properties: { action: { const: 'update' } }, required: ['id'] },
             { properties: { action: { const: 'delete' } }, required: ['id'] },
           ],
+        },
+      },
+    },
+  },
+  {
+    name: 'calendar.calendars',
+    description:
+      'Reads calendar collections. Use to inspect available calendars before creating or updating events.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['read'],
+          description: 'The operation to perform on calendars.',
+        },
+      },
+      required: ['action'],
+      dependentSchemas: {
+        action: {
+          oneOf: [{ properties: { action: { const: 'read' } } }],
         },
       },
     },

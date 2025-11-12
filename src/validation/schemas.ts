@@ -188,6 +188,8 @@ export const DeleteCalendarEventSchema = z.object({
   id: SafeIdSchema,
 });
 
+export const ReadCalendarsSchema = z.object({});
+
 export const CreateReminderListSchema = z.object({
   name: RequiredListNameSchema,
 });

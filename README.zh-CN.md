@@ -205,19 +205,19 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ## 可用的 MCP 工具
 
-此服务器提供两个统一的 MCP 工具用于全面的 Apple Reminders 管理：
+服务器现在按照服务域暴露 MCP 工具，对应提醒事项与日历的不同资源：
 
-### 提醒事项工具
+### 提醒事项任务工具
 
-**工具名称**：`reminders`
+**工具名称**：`reminders.tasks`
 
-一个支持基于操作的 Apple Reminders 管理的综合工具。通过单个统一接口支持所有提醒事项操作。
+用于管理单个提醒事项任务，支持完整的 CRUD 操作。
 
-**操作**：`read`, `create`, `update`, `delete`
+**操作**：`read`、`create`、`update`、`delete`
 
 **主要处理函数**：
-- `handleReadReminders()` - 使用过滤选项读取提醒事项
-- `handleCreateReminder()` - 创建新提醒事项
+- `handleReadReminders()` - 带筛选选项读取提醒事项
+- `handleCreateReminder()` - 创建新的提醒事项
 - `handleUpdateReminder()` - 更新现有提醒事项
 - `handleDeleteReminder()` - 删除提醒事项
 
@@ -225,36 +225,36 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 **读取操作**（`action: "read"`）：
 - `id` *(可选)*：要读取的特定提醒事项的唯一标识符
-- `filterList` *(可选)*：要显示的提醒事项列表名称
-- `showCompleted` *(可选)*：包含已完成的提醒事项（默认：false）
-- `search` *(可选)*：按标题或内容搜索提醒事项
-- `dueWithin` *(可选)*：按截止日期范围筛选（"today"、"tomorrow"、"this-week"、"overdue"、"no-date"）
+- `filterList` *(可选)*：要展示的提醒事项列表名称
+- `showCompleted` *(可选)*：是否包含已完成的提醒事项（默认：false）
+- `search` *(可选)*：根据标题或内容筛选提醒事项的搜索词
+- `dueWithin` *(可选)*：按到期范围筛选（"today"、"tomorrow"、"this-week"、"overdue"、"no-date"）
 
 **创建操作**（`action: "create"`）：
-- `title` *(必需)*：提醒事项标题
-- `dueDate` *(可选)*：截止日期，格式为 'YYYY-MM-DD' 或 'YYYY-MM-DD HH:mm:ss'
+- `title` *(必填)*：提醒事项标题
+- `dueDate` *(可选)*：到期时间，格式为 `YYYY-MM-DD` 或 `YYYY-MM-DD HH:mm:ss`
 - `targetList` *(可选)*：要添加到的提醒事项列表名称
-- `note` *(可选)*：要附加到提醒事项的备注文本
-- `url` *(可选)*：要与提醒事项关联的 URL
+- `note` *(可选)*：提醒事项备注内容
+- `url` *(可选)*：与提醒事项关联的 URL
 
 **更新操作**（`action: "update"`）：
-- `id` *(必需)*：要更新的提醒事项的唯一标识符
-- `title` *(可选)*：提醒事项的新标题
-- `dueDate` *(可选)*：新的截止日期，格式为 'YYYY-MM-DD' 或 'YYYY-MM-DD HH:mm:ss'
-- `note` *(可选)*：新的备注文本
-- `url` *(可选)*：要附加到提醒事项的新 URL
-- `completed` *(可选)*：将提醒事项标记为已完成/未完成
-- `targetList` *(可选)*：包含提醒事项的列表名称
+- `id` *(必填)*：要更新的提醒事项唯一标识符
+- `title` *(可选)*：提醒事项新标题
+- `dueDate` *(可选)*：新的到期时间，格式为 `YYYY-MM-DD` 或 `YYYY-MM-DD HH:mm:ss`
+- `note` *(可选)*：新的备注内容
+- `url` *(可选)*：新的 URL
+- `completed` *(可选)*：设置提醒事项完成状态
+- `targetList` *(可选)*：提醒事项所在列表
 
 **删除操作**（`action: "delete"`）：
-- `id` *(必需)*：要删除的提醒事项的唯一标识符
+- `id` *(必填)*：要删除的提醒事项唯一标识符
 
 #### 使用示例
 
 ```json
 {
   "action": "create",
-  "title": "购买杂货",
+  "title": "购买食材",
   "dueDate": "2024-03-25 18:00:00",
   "targetList": "购物",
   "note": "别忘了牛奶和鸡蛋",
@@ -278,17 +278,17 @@ code %APPDATA%\Claude\claude_desktop_config.json
 }
 ```
 
-### 列表工具
+### 提醒事项列表工具
 
-**工具名称**：`lists`
+**工具名称**：`reminders.lists`
 
-管理提醒事项列表 - 查看现有列表或创建新列表用于组织提醒事项。
+用于管理提醒事项列表 —— 查看现有列表或创建新的列表来组织提醒事项。
 
-**操作**：`read`, `create`, `update`, `delete`
+**操作**：`read`、`create`、`update`、`delete`
 
 **主要处理函数**：
 - `handleReadReminderLists()` - 读取所有提醒事项列表
-- `handleCreateReminderList()` - 创建新提醒事项列表
+- `handleCreateReminderList()` - 创建新的提醒事项列表
 - `handleUpdateReminderList()` - 更新现有提醒事项列表
 - `handleDeleteReminderList()` - 删除提醒事项列表
 
@@ -298,25 +298,95 @@ code %APPDATA%\Claude\claude_desktop_config.json
 - 无需额外参数
 
 **创建操作**（`action: "create"`）：
-- `name` *(必需)*：新提醒事项列表的名称
+- `name` *(必填)*：新列表的名称
 
 **更新操作**（`action: "update"`）：
-- `name` *(必需)*：要更新的列表的当前名称
-- `newName` *(必需)*：提醒事项列表的新名称
+- `name` *(必填)*：要更新的列表当前名称
+- `newName` *(必填)*：列表的新名称
 
 **删除操作**（`action: "delete"`）：
-- `name` *(必需)*：要删除的列表名称
+- `name` *(必填)*：要删除的列表名称
 
 #### 使用示例
 
 ```json
 {
   "action": "create",
-  "name": "项目阿尔法"
+  "name": "项目 Alpha"
 }
 ```
 
-#### 响应格式
+### 日历事件工具
+
+**工具名称**：`calendar.events`
+
+用于处理 EventKit 日历事件（时间块），提供 CRUD 能力。
+
+**操作**：`read`、`create`、`update`、`delete`
+
+**主要处理函数**：
+- `handleReadCalendarEvents()` - 带可选筛选读取事件
+- `handleCreateCalendarEvent()` - 创建日历事件
+- `handleUpdateCalendarEvent()` - 更新现有事件
+- `handleDeleteCalendarEvent()` - 删除日历事件
+
+#### 按操作的参数
+
+**读取操作**（`action: "read"`）：
+- `id` *(可选)*：要读取的事件唯一标识符
+- `filterCalendar` *(可选)*：按日历名称筛选
+- `search` *(可选)*：在标题、备注或地点中搜索关键字
+- `startDate` *(可选)*：筛选在此日期之后开始的事件
+- `endDate` *(可选)*：筛选在此日期之前结束的事件
+
+**创建操作**（`action: "create"`）：
+- `title` *(必填)*：事件标题
+- `startDate` *(必填)*：开始时间
+- `endDate` *(必填)*：结束时间
+- `targetCalendar` *(可选)*：要创建到的日历名称
+- `note`、`location`、`url`、`isAllDay` *(可选)*：附加元数据
+
+**更新操作**（`action: "update"`）：
+- `id` *(必填)*：事件标识符
+- 其余字段与创建参数一致，用于选择性更新
+
+**删除操作**（`action: "delete"`）：
+- `id` *(必填)*：要删除的事件标识符
+
+### 日历集合工具
+
+**工具名称**：`calendar.calendars`
+
+用于返回 EventKit 中可用的日历集合。在创建或更新事件前可先确认日历标识。
+
+**操作**：`read`
+
+**主要处理函数**：
+- `handleReadCalendars()` - 列出所有日历的 ID 与名称
+
+**使用示例**
+
+```json
+{
+  "action": "read"
+}
+```
+
+**示例响应**
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "### Calendars (Total: 3)\n- Work (ID: cal-1)\n- Personal (ID: cal-2)\n- Shared (ID: cal-3)"
+    }
+  ],
+  "isError": false
+}
+```
+
+#### 返回格式
 
 **成功响应**：
 ```json
@@ -324,74 +394,12 @@ code %APPDATA%\Claude\claude_desktop_config.json
   "content": [
     {
       "type": "text",
-      "text": "Successfully created reminder: Buy groceries"
+      "text": "Successfully created reminder: 购买食材"
     }
   ],
   "isError": false
 }
 ```
-
-**URL 字段说明**：`url` 字段完全支持 EventKit API。当您创建或更新带有 URL 参数的提醒事项时，URL 会存储在两个位置以实现最大兼容性：
-
-1. **EventKit URL 字段**：URL 存储在原生 `url` 属性中（在 Reminders 应用详细视图中通过 "i" 图标可见）
-2. **备注字段**：URL 也以结构化格式附加到备注中，便于解析和多个 URL 支持
-
-**双重存储方法**：
-- **URL 字段**：为 Reminders 应用 UI 显示存储单个 URL
-- **备注字段**：以结构化格式存储 URL，支持多个 URL
-
-```
-Reminder note content here...
-
-URLs:
-- https://example.com
-- https://another-url.com
-```
-
-这确保了 URL 在 Reminders 应用 UI 和通过 API/备注解析中都可访问。
-
-**URL 提取**：你可以使用结构化格式或正则表达式回退从提醒事项备注中提取 URL：
-```typescript
-// 使用结构化格式（推荐）
-import { extractUrlsFromNotes, parseReminderNote } from './urlHelpers';
-
-// 仅提取 URL
-const urls = extractUrlsFromNotes(reminder.notes);
-
-// 解析为单独的备注内容和 URL
-const { note, urls } = parseReminderNote(reminder.notes);
-
-// 传统正则表达式方法（回退用于非结构化内容）
-const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
-```
-
-**结构化格式的优势**：
-- **一致解析**：URL 始终位于可预测的位置
-- **多 URL 支持**：可靠地处理每个提醒事项的多个 URL
-- **清晰分离**：备注内容和 URL 明确分离
-- **向后兼容**：非结构化 URL 仍作为回退检测
-
-**列表响应**：
-```json
-{
-  "reminders": [
-    {
-      "title": "购买杂货",
-      "list": "购物",
-      "isCompleted": false,
-      "dueDate": "2024-03-25 18:00:00",
-      "notes": "别忘了牛奶\n\nURLs:\n- https://grocery-store.com\n- https://shopping-list.com",
-      "url": null
-    }
-  ],
-  "total": 1,
-  "filter": {
-    "list": "购物",
-    "showCompleted": false
-  }
-}
-```
-
 ## URL 实用工具
 
 服务器包含用于处理结构化 URL 格式的内置 URL 实用工具。这些工具从 `src/utils/urlHelpers.js` 导出：

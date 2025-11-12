@@ -205,13 +205,13 @@ The server ships with a consolidated prompt registry exposed via the MCP `ListPr
 
 ## Available MCP Tools
 
-This server provides two unified MCP tools for comprehensive Apple Reminders management:
+This server now exposes service-scoped MCP tools that mirror Apple Reminders and Calendar domains. Use the identifier that matches the resource you want to manipulate:
 
-### Reminders Tool
+### Reminder Tasks Tool
 
-**Tool Name**: `reminders`
+**Tool Name**: `reminders.tasks`
 
-A comprehensive tool for managing Apple Reminders with action-based operations. Supports all reminder operations through a single unified interface.
+Manages individual reminder tasks with full CRUD support.
 
 **Actions**: `read`, `create`, `update`, `delete`
 
@@ -278,11 +278,11 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 }
 ```
 
-### Lists Tool
+### Reminder Lists Tool
 
-**Tool Name**: `lists`
+**Tool Name**: `reminders.lists`
 
-Manage reminder lists - view existing lists or create new ones for organizing reminders.
+Manages reminder lists - view existing lists or create new ones for organizing reminders.
 
 **Actions**: `read`, `create`, `update`, `delete`
 
@@ -313,6 +313,76 @@ Manage reminder lists - view existing lists or create new ones for organizing re
 {
   "action": "create",
   "name": "Project Alpha"
+}
+```
+
+### Calendar Events Tool
+
+**Tool Name**: `calendar.events`
+
+Handles EventKit calendar events (time blocks) with CRUD capabilities.
+
+**Actions**: `read`, `create`, `update`, `delete`
+
+**Main Handler Functions**:
+- `handleReadCalendarEvents()` - Read events with optional filters
+- `handleCreateCalendarEvent()` - Create calendar events
+- `handleUpdateCalendarEvent()` - Update existing events
+- `handleDeleteCalendarEvent()` - Delete calendar events
+
+#### Parameters by Action
+
+**Read Action** (`action: "read"`):
+- `id` *(optional)*: Unique identifier of an event to read
+- `filterCalendar` *(optional)*: Calendar name filter
+- `search` *(optional)*: Keyword match against title, notes, or location
+- `startDate` *(optional)*: Filter events starting on/after this date
+- `endDate` *(optional)*: Filter events ending on/before this date
+
+**Create Action** (`action: "create"`):
+- `title` *(required)*: Event title
+- `startDate` *(required)*: Start date/time
+- `endDate` *(required)*: End date/time
+- `targetCalendar` *(optional)*: Calendar name to create in
+- `note`, `location`, `url`, `isAllDay` *(optional)*: Additional metadata
+
+**Update Action** (`action: "update"`):
+- `id` *(required)*: Event identifier
+- Other fields align with create parameters and are optional updates
+
+**Delete Action** (`action: "delete"`):
+- `id` *(required)*: Event identifier to remove
+
+### Calendar Collections Tool
+
+**Tool Name**: `calendar.calendars`
+
+Returns the available calendars from EventKit. This is useful before creating or updating events to confirm calendar identifiers.
+
+**Actions**: `read`
+
+**Main Handler Function**:
+- `handleReadCalendars()` - List all calendars with IDs and titles
+
+**Example Usage**
+
+```json
+{
+  "action": "read"
+}
+```
+
+**Example Response**
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "### Calendars (Total: 3)\n- Work (ID: cal-1)\n- Personal (ID: cal-2)\n- Shared (ID: cal-3)"
+    }
+  ],
+  "isError": false
 }
 ```
 
