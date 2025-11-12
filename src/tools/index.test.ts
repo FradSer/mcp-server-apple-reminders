@@ -149,6 +149,38 @@ describe('Tools Index', () => {
       );
     });
 
+    describe('legacy tool alias routing', () => {
+      it('should route reminders_tasks alias to reminders.tasks handlers', async () => {
+        const args = { action: 'read' as const, id: 'legacy-id' };
+        const expectedResult: CallToolResult = {
+          content: [{ type: 'text', text: 'Aliased reminders read' }],
+          isError: false,
+        };
+
+        mockHandleReadReminders.mockResolvedValue(expectedResult);
+
+        const result = await handleToolCall('reminders_tasks', args);
+
+        expect(mockHandleReadReminders).toHaveBeenCalledWith(args);
+        expect(result).toEqual(expectedResult);
+      });
+
+      it('should route calendar_events alias to calendar.events handlers', async () => {
+        const args = { action: 'delete' as const, id: 'event-id' };
+        const expectedResult: CallToolResult = {
+          content: [{ type: 'text', text: 'Aliased calendar delete' }],
+          isError: false,
+        };
+
+        mockHandleDeleteCalendarEvent.mockResolvedValue(expectedResult);
+
+        const result = await handleToolCall('calendar_events', args);
+
+        expect(mockHandleDeleteCalendarEvent).toHaveBeenCalledWith(args);
+        expect(result).toEqual(expectedResult);
+      });
+    });
+
     describe('error handling', () => {
       it('should return error for unknown tool and not call handlers', async () => {
         const result = await handleToolCall('unknown_tool', {
