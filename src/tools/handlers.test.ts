@@ -17,7 +17,7 @@ import {
   handleUpdateCalendarEvent,
   handleUpdateReminder,
   handleUpdateReminderList,
-} from '../tools/handlers.js';
+} from '../tools/handlers/index.js';
 import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { reminderRepository } from '../utils/reminderRepository.js';

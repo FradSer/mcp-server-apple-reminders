@@ -4,11 +4,11 @@
  * and correct format for related reminder references.
  */
 
+import { escapeRegex } from './helpers.js';
 import {
   formatRelatedReminders,
   type RelatedReminder,
 } from './reminderLinks.js';
-import { escapeRegex } from './stringUtils.js';
 
 /**
  * Standardized note structure components
@@ -161,16 +161,6 @@ function parseRelatedRemindersFromText(text: string): RelatedReminder[] {
   }
 
   return reminders;
-}
-
-/**
- * Extract reminder IDs from text references
- * Format: [Title] (ID: {id})
- */
-export function extractReminderIdsFromText(text: string): string[] {
-  const regex = /\[[^\]]+\]\s*\(ID:\s*([^)]+)\)/g;
-  const matches = [...text.matchAll(regex)];
-  return matches.map((match) => match[1].trim());
 }
 
 /**

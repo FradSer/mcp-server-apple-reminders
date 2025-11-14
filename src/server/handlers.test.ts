@@ -209,9 +209,10 @@ describe('Server Handlers', () => {
           'daily-task-organizer',
           {},
           [
-            'Organization focus: comprehensive task organization including urgency-based organization, gap filling, and reminder setup',
-            "Time horizon: today's schedule only",
-            "Action scope: existing reminders and potential gaps tied to today's calendar commitments",
+            'Focus: same-day organizing',
+            'Time horizon: ',
+            'only — never plan beyond today',
+            'Action scope: existing reminders',
           ],
         ],
         ['smart-reminder-creator', {}, ['Task idea:']],

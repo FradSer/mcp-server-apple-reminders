@@ -49,7 +49,10 @@ interface CliErrorResponse {
 
 type CliResponse<T> = CliSuccessResponse<T> | CliErrorResponse;
 
-const CALENDAR_ACTIONS = new Set([
+/**
+ * Calendar action strings used in Swift CLI (different from MCP tool action names)
+ */
+const CALENDAR_ACTION_SET = new Set<string>([
   'read-events',
   'read-calendars',
   'create-event',
@@ -86,7 +89,7 @@ const extractAction = (args: string[]): string | undefined => {
 
 const inferDomainFromArgs = (args: string[]): PermissionDomain => {
   const action = extractAction(args);
-  if (action && CALENDAR_ACTIONS.has(action)) {
+  if (action && CALENDAR_ACTION_SET.has(action)) {
     return 'calendars';
   }
   return 'reminders';

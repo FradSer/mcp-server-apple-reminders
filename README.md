@@ -420,18 +420,9 @@ URLs:
 
 This ensures URLs are accessible both in the Reminders app UI and through the API/notes for parsing.
 
-**URL Extraction**: You can extract URLs from reminder notes using the structured format or regex fallback:
+**URL Extraction**: You can extract URLs from reminder notes using regex:
 ```typescript
-// Using the structured format (recommended)
-import { extractUrlsFromNotes, parseReminderNote } from './urlHelpers';
-
-// Extract just URLs
-const urls = extractUrlsFromNotes(reminder.notes);
-
-// Parse into separate note content and URLs
-const { note, urls } = parseReminderNote(reminder.notes);
-
-// Legacy regex method (fallback for unstructured content)
+// Extract URLs from notes using regex
 const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
 ```
 
@@ -460,41 +451,6 @@ const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
     "showCompleted": false
   }
 }
-```
-
-## URL Utilities
-
-The server includes built-in URL utilities for working with the structured URL format. These utilities are exported from `src/utils/urlHelpers.js`:
-
-### Key Functions
-
-- `extractUrlsFromNotes(notes)` - Extract URLs from structured or unstructured notes
-- `parseReminderNote(notes)` - Parse notes into separate content and URL array  
-- `formatNoteWithUrls(note, urls)` - Format note content with structured URLs
-- `removeUrlSections(notes)` - Remove URL sections to get clean note content
-- `combineNoteWithUrl(note, url)` - Combine note with single URL in structured format
-
-### Usage Examples
-
-```typescript
-import { 
-  extractUrlsFromNotes, 
-  parseReminderNote,
-  formatNoteWithUrls 
-} from 'mcp-server-apple-reminders/src/utils/urlHelpers.js';
-
-// Extract URLs from any reminder note
-const urls = extractUrlsFromNotes(reminder.notes);
-console.log(urls); // ['https://example.com', 'https://test.com']
-
-// Parse note into content and URLs
-const { note, urls } = parseReminderNote(reminder.notes);
-console.log(note); // "Task description" 
-console.log(urls); // ['https://example.com']
-
-// Create structured note content
-const structured = formatNoteWithUrls("New task", ['https://link1.com', 'https://link2.com']);
-// Result: "New task\n\nURLs:\n- https://link1.com\n- https://link2.com"
 ```
 
 ## Organization Strategies

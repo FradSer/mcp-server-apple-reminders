@@ -4,26 +4,6 @@
  */
 
 /**
- * Date calculation constants
- */
-export const DATE_CONSTANTS = {
-  /** Milliseconds in one day */
-  MILLISECONDS_PER_DAY: 24 * 60 * 60 * 1000,
-
-  /** Days in a week for filtering */
-  DAYS_PER_WEEK: 7,
-
-  /** Hours in a day */
-  HOURS_PER_DAY: 24,
-
-  /** Minutes in an hour */
-  MINUTES_PER_HOUR: 60,
-
-  /** Seconds in a minute */
-  SECONDS_PER_MINUTE: 60,
-} as const;
-
-/**
  * File system and path constants
  */
 export const FILE_SYSTEM = {
@@ -47,6 +27,7 @@ export const VALIDATION = {
   MAX_LIST_NAME_LENGTH: 100,
   MAX_SEARCH_LENGTH: 100,
   MAX_URL_LENGTH: 500,
+  MAX_LOCATION_LENGTH: 200,
 } as const;
 
 /**

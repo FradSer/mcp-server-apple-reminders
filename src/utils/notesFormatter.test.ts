@@ -4,7 +4,6 @@
  */
 
 import {
-  extractReminderIdsFromText,
   formatStandardizedNotes,
   mergeNoteComponents,
   type NoteComponents,
@@ -138,28 +137,6 @@ Dependencies:
     it('should handle empty notes', () => {
       const parsed = parseNoteComponents(undefined);
       expect(parsed).toEqual({});
-    });
-  });
-
-  describe('extractReminderIdsFromText', () => {
-    it('should extract reminder IDs from reference format', () => {
-      const text =
-        'Related reminders:\n- [Task 1] (ID: rem-123)\n- [Task 2] (ID: rem-456)';
-      const ids = extractReminderIdsFromText(text);
-      expect(ids).toHaveLength(2);
-      expect(ids).toContain('rem-123');
-      expect(ids).toContain('rem-456');
-    });
-
-    it('should handle IDs with spaces', () => {
-      const text = '[Task] (ID: task with spaces)';
-      const ids = extractReminderIdsFromText(text);
-      expect(ids).toContain('task with spaces');
-    });
-
-    it('should return empty array for text without references', () => {
-      const ids = extractReminderIdsFromText('Just regular text');
-      expect(ids).toEqual([]);
     });
   });
 

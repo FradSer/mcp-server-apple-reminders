@@ -35,7 +35,6 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2",
     "exit-on-epipe": "^1.0.1",
-    "moment": "^2.30.1",
     "tsx": "^4.20.6",
     "zod": "^4.1.12"
   },

@@ -125,7 +125,6 @@ User Request → MCP Protocol → tools/index.ts (routing)
 **URL Storage Strategy:**
 - Dual storage: EventKit `url` field (single URL) + structured format in `notes` field
 - Notes format: `"Original note\n\nURLs:\n- https://url1.com\n- https://url2.com"`
-- TypeScript utilities in `src/utils/urlHelpers.ts`: `extractUrlsFromNotes`, `parseReminderNote`, `formatNoteWithUrls`
 
 **Permission Handling:**
 - macOS 14+: `requestFullAccessToReminders()` and `requestFullAccessToEvents()`
@@ -299,8 +298,6 @@ Shared abstractions for consistent behavior across all prompt templates:
 - `formatConfidenceAction()`: Format actions for output display
 - `getActionQueueFormat()`: Standard action queue with confidence levels
 - `getVerificationLogFormat()`: Standard verification output
-- `buildStandardConstraints()`: Reusable constraint blocks
-
 **Shared Constraint Patterns:**
 - `CONFIDENCE_CONSTRAINTS`: Standard confidence thresholds and execution rules
 - `TIME_CONSISTENCY_CONSTRAINTS`: Due date alignment with urgency (immediate → 2hrs, quick wins → same day)

@@ -7,6 +7,7 @@ import {
   formatRelativeTime,
   getFuzzyTimeSuggestions,
   getTimeContext,
+  normalizeDueDateString,
 } from './timeHelpers.js';
 
 describe('timeHelpers', () => {
@@ -172,6 +173,28 @@ describe('timeHelpers', () => {
         parseInt(context.currentTime.split(':')[1], 10),
       ).toBeGreaterThanOrEqual(0);
       expect(parseInt(context.currentTime.split(':')[1], 10)).toBeLessThan(60);
+    });
+  });
+
+  describe('normalizeDueDateString', () => {
+    it('should convert ISO timestamps with timezone to local format', () => {
+      const result = normalizeDueDateString('2025-11-15T08:30:00Z', {
+        timeZone: 'Asia/Shanghai',
+      });
+
+      expect(result).toBe('2025-11-15 16:30:00');
+    });
+
+    it('should return original string when already in local format', () => {
+      const original = '2025-11-14 16:30:00';
+      const result = normalizeDueDateString(original);
+
+      expect(result).toBe(original);
+    });
+
+    it('should handle undefined values gracefully', () => {
+      expect(normalizeDueDateString(undefined)).toBeUndefined();
+      expect(normalizeDueDateString(null)).toBeUndefined();
     });
   });
 });

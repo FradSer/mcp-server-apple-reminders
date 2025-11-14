@@ -10,7 +10,7 @@ import type {
 import { handleToolCall } from './index.js';
 
 // Mock all handler functions
-jest.mock('./handlers.js', () => ({
+jest.mock('./handlers/index.js', () => ({
   handleCreateReminder: jest.fn(),
   handleReadReminderLists: jest.fn(),
   handleReadReminders: jest.fn(),
@@ -49,7 +49,7 @@ import {
   handleUpdateCalendarEvent,
   handleUpdateReminder,
   handleUpdateReminderList,
-} from './handlers.js';
+} from './handlers/index.js';
 
 const mockHandleCreateReminder = handleCreateReminder as jest.MockedFunction<
   typeof handleCreateReminder
@@ -382,22 +382,6 @@ describe('Tools Index', () => {
           expect(String(result.content[0]?.text)).toContain(missingField);
         },
       );
-    });
-
-    test('should return error for unknown reminders.lists action', async () => {
-      const result = await handleToolCall('reminders.lists', {
-        action: 'unknown',
-      } as unknown as ListsToolArgs);
-
-      expect(result).toEqual({
-        content: [
-          {
-            type: 'text',
-            text: 'Unknown reminders.lists action: unknown',
-          },
-        ],
-        isError: true,
-      });
     });
   });
 

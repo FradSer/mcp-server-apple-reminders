@@ -4,17 +4,12 @@
  */
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-
-const REMINDER_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
-const LIST_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
-const CALENDAR_ACTIONS = ['read', 'create', 'update', 'delete'] as const;
-const DUE_WITHIN_OPTIONS = [
-  'today',
-  'tomorrow',
-  'this-week',
-  'overdue',
-  'no-date',
-] as const;
+import {
+  CALENDAR_ACTIONS,
+  DUE_WITHIN_OPTIONS,
+  LIST_ACTIONS,
+  REMINDER_ACTIONS,
+} from '../types/index.js';
 
 export const TOOLS: Tool[] = [
   {

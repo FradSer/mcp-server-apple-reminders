@@ -156,18 +156,6 @@ export const CONFIDENCE_CONSTRAINTS = [
 ];
 
 /**
- * Standard time consistency constraints
- */
-export const TIME_CONSISTENCY_CONSTRAINTS = [
-  'CRITICAL time consistency rules: ALWAYS align due dates with action urgency and list importance:',
-  '- "RIGHT NOW", "IMMEDIATE", or "CRITICAL BLOCKER" actions → due within 2 hours of current time, assign to important/urgent list',
-  '- "Quick Wins" (15-minute tasks) → due same day, ideally within 4 hours or end of work day (6PM)',
-  '- "Today" actions → due before 6PM same day',
-  '- "Critical blocker" tasks → urgent due dates (same day), assign to important list',
-  '- NEVER set distant due dates (tomorrow or later) for time-sensitive actions described as immediate',
-];
-
-/**
  * Standard note formatting constraints
  */
 export const NOTE_FORMATTING_CONSTRAINTS = [
@@ -214,17 +202,6 @@ export const APPLE_REMINDERS_LIMITATIONS = [
 ];
 
 /**
- * Context switching cost warnings and mitigation strategies
- */
-export const CONTEXT_SWITCHING_CONSTRAINTS = [
-  '**Context switching costs**: Switching between unrelated tasks wastes 40% of productive time and requires average 23 minutes to refocus.',
-  '  - Avoid switching between different types of work within same time block',
-  '  - Cost example: Switching from coding to email to design = 46+ minutes lost refocusing',
-  '  - Mitigation: Use task batching to group similar tasks together',
-  '  - Financial impact: Context switching costs global economy $450B annually',
-];
-
-/**
  * Task batching strategy for reducing context switches
  */
 export const TASK_BATCHING_CONSTRAINTS = [
@@ -234,18 +211,6 @@ export const TASK_BATCHING_CONSTRAINTS = [
   '  - Reduces context switching by 60-80% compared to handling tasks individually',
   '  - Schedule batches: Similar cognitive requirements, tools, or workflows = good batch candidates',
   '  - Avoid: Batching unrelated tasks that require different mental modes',
-];
-
-/**
- * Time defense strategy for protecting deep work from interruptions
- */
-export const TIME_DEFENSE_CONSTRAINTS = [
-  '**Defend deep work time**: Proactively protect focus time from meetings and interruptions.',
-  '  - Mark deep work blocks as "Busy" in calendar to block meeting requests',
-  '  - Context: Meetings increased 69.7% since 2020, must actively defend focus time',
-  '  - Block meeting-free zones: 9am-12pm for deep work (peak energy hours)',
-  '  - Communication: Add note "Deep work time - Please schedule around" to calendar blocks',
-  '  - Emergency availability: Set clear rules for when interruptions are acceptable',
 ];
 
 /**
@@ -297,17 +262,6 @@ export const DAILY_CAPACITY_CONSTRAINTS = [
 ];
 
 /**
- * Calendar permission troubleshooting guidelines
- */
-export const CALENDAR_PERMISSION_CONSTRAINTS = [
-  '**Calendar permission troubleshooting**: If calendar event creation fails, it may be due to insufficient permissions. macOS 14+ supports two permission levels: "Write-only" (can only create events) and "Full Access" (can create, read, and modify events). If creation fails, guide the user to:',
-  '  - Open System Settings > Privacy & Security > Calendars',
-  '  - Find and select the application (Terminal, Cursor, or the terminal app being used)',
-  '  - Ensure "Full Access" is selected instead of "Write-only"',
-  '  - Full Access permission is required for complete calendar functionality including reading existing events and modifying calendar properties',
-];
-
-/**
  * Time block creation strict rules
  */
 export const TIME_BLOCK_CREATION_CONSTRAINTS = [
@@ -339,27 +293,6 @@ export const getActionQueueFormat = (_currentDate: string): string[] => [
  */
 export const getVerificationLogFormat = (currentDate: string): string =>
   `### Verification log — bullet list confirming that each executed due date marked "today" uses ${currentDate} in the tool call output and persisted value (include reminder title + due date).`;
-
-/**
- * Standard quality criteria for action execution
- */
-export const ACTION_EXECUTION_QUALITY = [
-  'Action queue prioritizes actions by confidence level and impact.',
-  'High-confidence actions (>80%) are ACTUALLY EXECUTED using MCP tool calls, not just described. Medium-confidence actions are provided as recommendations in tool call format.',
-  'Actions are clearly labeled with confidence levels (high >80%, medium 60-80%, low <60%) and include brief rationale.',
-  'Time consistency is enforced: immediate actions have urgent due dates, quick wins have same-day due dates.',
-  'Due dates and list assignments align with action urgency: critical blockers = urgent due dates + important list, quick wins = same-day due dates.',
-];
-
-/**
- * Build standard constraints block
- */
-export const buildStandardConstraints = (): string[] => [
-  ...CONFIDENCE_CONSTRAINTS,
-  ...TIME_CONSISTENCY_CONSTRAINTS,
-  ...NOTE_FORMATTING_CONSTRAINTS,
-  ...BATCHING_CONSTRAINTS,
-];
 
 /**
  * Build standard output format sections

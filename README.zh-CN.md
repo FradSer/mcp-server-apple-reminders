@@ -400,40 +400,6 @@ code %APPDATA%\Claude\claude_desktop_config.json
   "isError": false
 }
 ```
-## URL 实用工具
-
-服务器包含用于处理结构化 URL 格式的内置 URL 实用工具。这些工具从 `src/utils/urlHelpers.js` 导出：
-
-### 主要函数
-
-- `extractUrlsFromNotes(notes)` - 从结构化或非结构化备注中提取 URL
-- `parseReminderNote(notes)` - 将备注解析为单独的内容和 URL 数组
-- `formatNoteWithUrls(note, urls)` - 使用结构化 URL 格式化备注内容
-- `removeUrlSections(notes)` - 删除 URL 部分以获取干净的备注内容
-- `combineNoteWithUrl(note, url)` - 以结构化格式组合备注与单个 URL
-
-### 使用示例
-
-```typescript
-import {
-  extractUrlsFromNotes,
-  parseReminderNote,
-  formatNoteWithUrls
-} from 'mcp-server-apple-reminders/src/utils/urlHelpers.js';
-
-// 从任何提醒事项备注中提取 URL
-const urls = extractUrlsFromNotes(reminder.notes);
-console.log(urls); // ['https://example.com', 'https://test.com']
-
-// 将备注解析为内容和 URL
-const { note, urls } = parseReminderNote(reminder.notes);
-console.log(note); // "任务描述"
-console.log(urls); // ['https://example.com']
-
-// 创建结构化备注内容
-const structured = formatNoteWithUrls("新任务", ['https://link1.com', 'https://link2.com']);
-// 结果: "新任务\n\nURLs:\n- https://link1.com\n- https://link2.com"
-```
 
 ## 组织策略
 

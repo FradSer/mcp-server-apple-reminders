@@ -4,54 +4,19 @@
  */
 
 import type { Calendar, CalendarEvent } from '../types/index.js';
+import type {
+  CalendarJSON,
+  CreateEventData,
+  EventJSON,
+  EventsReadResult,
+  UpdateEventData,
+} from '../types/repository.js';
 import { executeCli } from './cliExecutor.js';
-
-// Types matching the JSON output from EventKitCLI
-interface EventJSON {
-  id: string;
-  title: string;
-  calendar: string;
-  startDate: string;
-  endDate: string;
-  notes: string | null;
-  location: string | null;
-  url: string | null;
-  isAllDay: boolean;
-}
-
-interface CalendarJSON {
-  id: string;
-  title: string;
-}
-
-interface EventsReadResult {
-  calendars: CalendarJSON[];
-  events: EventJSON[];
-}
-
-// Data interfaces for repository methods
-interface CreateEventData {
-  title: string;
-  startDate: string;
-  endDate: string;
-  calendar?: string;
-  notes?: string;
-  location?: string;
-  url?: string;
-  isAllDay?: boolean;
-}
-
-interface UpdateEventData {
-  id: string;
-  title?: string;
-  startDate?: string;
-  endDate?: string;
-  calendar?: string;
-  notes?: string;
-  location?: string;
-  url?: string;
-  isAllDay?: boolean;
-}
+import {
+  addOptionalArg,
+  addOptionalBooleanArg,
+  nullToUndefined,
+} from './helpers.js';
 
 class CalendarRepository {
   private async readEvents(
@@ -61,10 +26,10 @@ class CalendarRepository {
     search?: string,
   ): Promise<EventsReadResult> {
     const args = ['--action', 'read-events'];
-    if (startDate) args.push('--startDate', startDate);
-    if (endDate) args.push('--endDate', endDate);
-    if (calendarName) args.push('--filterCalendar', calendarName);
-    if (search) args.push('--search', search);
+    addOptionalArg(args, '--startDate', startDate);
+    addOptionalArg(args, '--endDate', endDate);
+    addOptionalArg(args, '--filterCalendar', calendarName);
+    addOptionalArg(args, '--search', search);
 
     return executeCli<EventsReadResult>(args);
   }
@@ -75,12 +40,11 @@ class CalendarRepository {
     if (!event) {
       throw new Error(`Event with ID '${id}' not found.`);
     }
-    return {
-      ...event,
-      notes: event.notes ?? undefined,
-      location: event.location ?? undefined,
-      url: event.url ?? undefined,
-    };
+    return nullToUndefined(event, [
+      'notes',
+      'location',
+      'url',
+    ]) as CalendarEvent;
   }
 
   async findEvents(
@@ -97,12 +61,9 @@ class CalendarRepository {
       filters.calendarName,
       filters.search,
     );
-    return events.map((e) => ({
-      ...e,
-      notes: e.notes ?? undefined,
-      location: e.location ?? undefined,
-      url: e.url ?? undefined,
-    }));
+    return events.map((e) =>
+      nullToUndefined(e, ['notes', 'location', 'url']),
+    ) as CalendarEvent[];
   }
 
   async findAllCalendars(): Promise<Calendar[]> {
@@ -120,29 +81,25 @@ class CalendarRepository {
       '--endDate',
       data.endDate,
     ];
-    if (data.calendar) args.push('--targetCalendar', data.calendar);
-    if (data.notes) args.push('--note', data.notes);
-    if (data.location) args.push('--location', data.location);
-    if (data.url) args.push('--url', data.url);
-    if (data.isAllDay !== undefined) {
-      args.push('--isAllDay', String(data.isAllDay));
-    }
+    addOptionalArg(args, '--targetCalendar', data.calendar);
+    addOptionalArg(args, '--note', data.notes);
+    addOptionalArg(args, '--location', data.location);
+    addOptionalArg(args, '--url', data.url);
+    addOptionalBooleanArg(args, '--isAllDay', data.isAllDay);
 
     return executeCli<EventJSON>(args);
   }
 
   async updateEvent(data: UpdateEventData): Promise<EventJSON> {
     const args = ['--action', 'update-event', '--id', data.id];
-    if (data.title) args.push('--title', data.title);
-    if (data.calendar) args.push('--targetCalendar', data.calendar);
-    if (data.startDate) args.push('--startDate', data.startDate);
-    if (data.endDate) args.push('--endDate', data.endDate);
-    if (data.notes) args.push('--note', data.notes);
-    if (data.location) args.push('--location', data.location);
-    if (data.url) args.push('--url', data.url);
-    if (data.isAllDay !== undefined) {
-      args.push('--isAllDay', String(data.isAllDay));
-    }
+    addOptionalArg(args, '--title', data.title);
+    addOptionalArg(args, '--targetCalendar', data.calendar);
+    addOptionalArg(args, '--startDate', data.startDate);
+    addOptionalArg(args, '--endDate', data.endDate);
+    addOptionalArg(args, '--note', data.notes);
+    addOptionalArg(args, '--location', data.location);
+    addOptionalArg(args, '--url', data.url);
+    addOptionalBooleanArg(args, '--isAllDay', data.isAllDay);
 
     return executeCli<EventJSON>(args);
   }

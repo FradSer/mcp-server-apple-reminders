@@ -97,6 +97,38 @@ export type DueWithinOption =
   | 'no-date';
 
 /**
+ * Action constant arrays for enum validation
+ */
+export const REMINDER_ACTIONS: readonly ReminderAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
+
+export const LIST_ACTIONS: readonly ListAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
+
+export const CALENDAR_ACTIONS: readonly CalendarAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
+
+export const DUE_WITHIN_OPTIONS: readonly DueWithinOption[] = [
+  'today',
+  'tomorrow',
+  'this-week',
+  'overdue',
+  'no-date',
+] as const;
+
+/**
  * Base tool arguments interface
  */
 interface BaseToolArgs {

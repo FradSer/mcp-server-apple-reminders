@@ -191,17 +191,6 @@ describe('Constraint Consistency', () => {
     );
   });
 
-  it('should provide time consistency constraints', () => {
-    const { TIME_CONSISTENCY_CONSTRAINTS } =
-      require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
-    expect(TIME_CONSISTENCY_CONSTRAINTS.length).toBeGreaterThan(0);
-    expect(
-      TIME_CONSISTENCY_CONSTRAINTS.some((c: string) =>
-        c.includes('CRITICAL time consistency'),
-      ),
-    ).toBe(true);
-  });
-
   it('should provide note formatting constraints', () => {
     const { NOTE_FORMATTING_CONSTRAINTS } =
       require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');

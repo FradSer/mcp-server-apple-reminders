@@ -24,8 +24,8 @@ describe('prompt time horizons', () => {
     const response = buildPromptResponse(template, null);
     const text = getPromptText(response);
 
-    expect(text).toContain("Time horizon: today's schedule only");
-    expect(text).toMatch(/Keep all scheduling decisions within today/i);
+    expect(text).toMatch(/Time horizon: .*only — never plan beyond today/i);
+    expect(text).toMatch(/strict today-only policy/i);
   });
 
   it('keeps the weekly workflow focused on the current week', () => {
@@ -50,17 +50,15 @@ describe('prompt time horizons', () => {
     const response = buildPromptResponse(template, null);
     const text = getPromptText(response);
 
-    expect(text).toMatch(/Search for duplicates by normalized title/i);
-    expect(text).toMatch(/Batch tool calls by action type/i);
+    expect(text).toMatch(/search for likely duplicates by normalized title/i);
+    expect(text).toMatch(/Batch tool calls when executing multiple changes/i);
     expect(text).toMatch(/Do not modify recurrence rules/i);
-    expect(text).toMatch(/Build due date strings with today's date/i);
-    expect(text).toMatch(/CREATE calendar time blocks immediately for tasks/i);
-    expect(text).toMatch(
-      /Deep Work \(60-90 minutes for cognitively demanding/i,
-    );
-    expect(text).toMatch(/Shallow Tasks \(15-60 minutes for routine work/i);
-    expect(text).toMatch(/automatically reserves ~20% buffer time/i);
-    expect(text).toMatch(/anchor to reminder due times/i);
+    expect(text).toMatch(/Generate due date strings as/i);
+    expect(text).toMatch(/Create calendar blocks for in-scope tasks lasting/i);
+    expect(text).toMatch(/Deep Work blocks run 90-120 minutes/i);
+    expect(text).toMatch(/Shallow tasks stay 15-60 minutes/i);
+    expect(text).toMatch(/automatic ~20% buffer/i);
+    expect(text).toMatch(/anchor to due times/i);
     expect(text).toMatch(/use.*exact format.*\d{4}-\d{2}-\d{2} HH:mm:ss/i);
     expect(text).toMatch(/Name deep work blocks:.*"Deep Work — \[Project/i);
     expect(text).toMatch(/Time block length: 90-120 minutes recommended/i);
@@ -74,10 +72,10 @@ describe('prompt time horizons', () => {
 
     expect(text).toMatch(/Focus Sprint — \[Outcome]/i);
     expect(text).toMatch(
-      /Deep Work \(60-90 minutes|Shallow Tasks \(15-60 minutes/i,
+      /Deep Work blocks run 90-120 minutes|Shallow Tasks \(15-60 minutes/i,
     );
-    expect(text).toMatch(/implicit buffer time.*natural gaps/i);
-    expect(text).toMatch(/Anchor.*due times|anchor to reminder due times/i);
+    expect(text).toMatch(/natural gaps/i);
+    expect(text).toMatch(/Anchor to due times/i);
   });
 
   it('daily organizer provides a questions section for missing info', () => {
@@ -91,9 +89,7 @@ describe('prompt time horizons', () => {
 
     expect(text).toMatch(/### Questions/i);
     expect(text).toMatch(/### Verification log/i);
-    expect(text).toMatch(
-      /CREATE calendar time blocks immediately for tasks with duration/i,
-    );
+    expect(text).toMatch(/CREATE calendar\.events time blocks immediately/i);
   });
 
   it('daily organizer includes work category constraints and daily capacity limits', () => {
@@ -107,7 +103,7 @@ describe('prompt time horizons', () => {
 
     // Verify Deep Work constraints
     expect(text).toMatch(/Deep Work maximum: 4 hours per day/i);
-    expect(text).toMatch(/60-90 minutes for cognitively demanding/i);
+    expect(text).toMatch(/Time block length: 90-120 minutes recommended/i);
 
     // Verify Shallow Tasks constraints
     expect(text).toMatch(/15-60 minutes for all non-deep-work activities/i);
@@ -122,5 +118,37 @@ describe('prompt time horizons', () => {
 
     // Verify daily capacity balancing
     expect(text).toMatch(/Daily capacity limits and workload balancing/i);
+  });
+
+  it('daily organizer clarifies concept vs action ownership', () => {
+    const template = getPromptDefinition('daily-task-organizer');
+    if (!template) {
+      throw new Error('daily-task-organizer prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, null);
+    const text = getPromptText(response);
+
+    expect(text).toMatch(
+      /Do not place concept-only analysis or planning notes inside the action queue/i,
+    );
+    expect(text).toMatch(
+      /Action queue is exclusively for executable reminder or calendar changes/i,
+    );
+  });
+
+  it('daily organizer resolves deep vs shallow duration conflict', () => {
+    const template = getPromptDefinition('daily-task-organizer');
+    if (!template) {
+      throw new Error('daily-task-organizer prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, null);
+    const text = getPromptText(response);
+
+    expect(text).toMatch(/minimum 60 minutes but recommended 90-120/i);
+    expect(text).toMatch(
+      /Split anything longer than 120 minutes into multiple blocks or reminders/i,
+    );
   });
 });

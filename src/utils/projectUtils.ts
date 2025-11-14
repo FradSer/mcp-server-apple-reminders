@@ -6,6 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { FILE_SYSTEM } from './constants.js';
 
 /**
  * Finds the project root directory by looking for package.json
@@ -13,7 +14,9 @@ import { fileURLToPath } from 'node:url';
  * @returns Project root directory path
  * @throws Error if project root cannot be found
  */
-export function findProjectRoot(maxDepth = 10): string {
+export function findProjectRoot(
+  maxDepth = FILE_SYSTEM.MAX_DIRECTORY_SEARCH_DEPTH,
+): string {
   // Derive the starting directory from the current module's location for robustness.
   const currentDir = getCurrentModuleDir();
   const root = locateProjectRoot(currentDir, maxDepth);
@@ -33,7 +36,7 @@ export function findProjectRoot(maxDepth = 10): string {
  */
 function locateProjectRoot(
   startDir: string,
-  maxDepth = 10,
+  maxDepth = FILE_SYSTEM.MAX_DIRECTORY_SEARCH_DEPTH,
 ): string | undefined {
   let currentDir = startDir;
   let depth = 0;
@@ -59,7 +62,7 @@ function locateProjectRoot(
  * Checks if a directory contains the correct package.json for this project
  */
 function isCorrectProjectRoot(dir: string): boolean {
-  const packageJsonPath = path.join(dir, 'package.json');
+  const packageJsonPath = path.join(dir, FILE_SYSTEM.PACKAGE_JSON_FILENAME);
   if (!fs.existsSync(packageJsonPath)) {
     return false;
   }
