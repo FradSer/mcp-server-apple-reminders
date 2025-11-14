@@ -29,7 +29,7 @@
     "build:ts": "tsc -p tsconfig.json",
     "build:swift": "node scripts/build-swift.mjs",
     "build": "pnpm run clean && pnpm run build:ts && pnpm run build:swift",
-    "test": "jest",
+    "test": "NODE_NO_WARNINGS=1 jest",
     "lint": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
