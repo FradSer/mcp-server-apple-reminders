@@ -144,7 +144,9 @@ describe('prompt time horizons', () => {
     const response = buildPromptResponse(template, null);
     const text = getPromptText(response);
 
-    expect(text).toMatch(/minimum 60 minutes.*90-120|90-120 minutes recommended/i); // Updated: More flexible pattern
+    expect(text).toMatch(
+      /minimum 60 minutes.*90-120|90-120 minutes recommended/i,
+    ); // Updated: More flexible pattern
     expect(text).toMatch(
       /Split anything.*120 minutes/i, // Updated: More flexible pattern
     );

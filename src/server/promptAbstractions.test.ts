@@ -40,14 +40,14 @@ describe('Confidence Level System', () => {
 
 describe('Tool Call Formatting', () => {
   it('should build tool call with proper structure', () => {
-    const toolCall = buildToolCall('reminders.tasks', {
+    const toolCall = buildToolCall('reminders_tasks', {
       action: 'create',
       title: 'Test Reminder',
       targetList: 'Work',
     });
 
     expect(toolCall).toEqual({
-      tool: 'reminders.tasks',
+      tool: 'reminders_tasks',
       args: {
         action: 'create',
         title: 'Test Reminder',
@@ -57,14 +57,14 @@ describe('Tool Call Formatting', () => {
   });
 
   it('should support calendar tool calls', () => {
-    const toolCall = buildToolCall('calendar.events', {
+    const toolCall = buildToolCall('calendar_events', {
       action: 'create',
       title: 'Deep Work Block',
       startDate: '2025-11-04 14:00:00',
       endDate: '2025-11-04 16:00:00',
     });
 
-    expect(toolCall.tool).toBe('calendar.events');
+    expect(toolCall.tool).toBe('calendar_events');
     expect(toolCall.args.action).toBe('create');
   });
 });
@@ -88,7 +88,7 @@ describe('Confidence Action Building', () => {
     const action = buildConfidenceAction({
       percentage: 95,
       action: 'Creating reminder for critical task',
-      toolCall: buildToolCall('reminders.tasks', {
+      toolCall: buildToolCall('reminders_tasks', {
         action: 'create',
         title: 'Critical Task',
         targetList: 'Work',
@@ -107,7 +107,7 @@ describe('Confidence Action Building', () => {
     const action = buildConfidenceAction({
       percentage: 70,
       action: 'Creating reminder for potential task',
-      toolCall: buildToolCall('reminders.tasks', {
+      toolCall: buildToolCall('reminders_tasks', {
         action: 'create',
         title: 'Potential Task',
         targetList: 'Inbox',
@@ -139,7 +139,7 @@ describe('Confidence Action Formatting', () => {
     const action = buildConfidenceAction({
       percentage: 95,
       action: 'Creating reminder',
-      toolCall: buildToolCall('reminders.tasks', {
+      toolCall: buildToolCall('reminders_tasks', {
         action: 'create',
         title: 'Test Task',
       }),
@@ -148,7 +148,7 @@ describe('Confidence Action Formatting', () => {
 
     const formatted = formatConfidenceAction(action);
     expect(formatted).toContain('HIGH CONFIDENCE (95%)');
-    expect(formatted).toContain('Tool: reminders.tasks');
+    expect(formatted).toContain('Tool: reminders_tasks');
     expect(formatted).toContain('Args:');
     expect(formatted).toContain('Rationale: Clear and actionable');
   });
@@ -157,7 +157,7 @@ describe('Confidence Action Formatting', () => {
     const action = buildConfidenceAction({
       percentage: 70,
       action: 'Create reminder',
-      toolCall: buildToolCall('reminders.tasks', { action: 'create' }),
+      toolCall: buildToolCall('reminders_tasks', { action: 'create' }),
       rationale: 'Needs verification',
       isRecommendation: true,
     });
@@ -195,8 +195,8 @@ describe('Constraint Consistency', () => {
     const { NOTE_FORMATTING_CONSTRAINTS } =
       require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
     expect(
-      NOTE_FORMATTING_CONSTRAINTS.some((c: string) =>
-        c.includes('plain text') || c.includes('bullets'),
+      NOTE_FORMATTING_CONSTRAINTS.some(
+        (c: string) => c.includes('plain text') || c.includes('bullets'),
       ),
     ).toBe(true);
   });

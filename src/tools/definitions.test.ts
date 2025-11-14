@@ -8,22 +8,22 @@ describe('Tools Definitions', () => {
   describe('TOOLS export', () => {
     it.each([
       {
-        name: 'reminders.tasks',
+        name: 'reminders_tasks',
         description: 'Manages reminder tasks',
         actions: ['read', 'create', 'update', 'delete'],
       },
       {
-        name: 'reminders.lists',
+        name: 'reminders_lists',
         description: 'Manages reminder lists',
         actions: ['read', 'create', 'update', 'delete'],
       },
       {
-        name: 'calendar.events',
+        name: 'calendar_events',
         description: 'Manages calendar events',
         actions: ['read', 'create', 'update', 'delete'],
       },
       {
-        name: 'calendar.calendars',
+        name: 'calendar_calendars',
         description: 'Reads calendar collections',
         actions: ['read'],
       },
@@ -47,7 +47,7 @@ describe('Tools Definitions', () => {
 
     it('should have correct dueWithin options enum', () => {
       const remindersTool = TOOLS.find(
-        (tool) => tool.name === 'reminders.tasks',
+        (tool) => tool.name === 'reminders_tasks',
       );
       const dueWithinEnum = (
         remindersTool?.inputSchema.properties?.dueWithin as
@@ -61,6 +61,12 @@ describe('Tools Definitions', () => {
         'overdue',
         'no-date',
       ]);
+    });
+
+    it('should enforce tool name pattern compliance', () => {
+      const pattern = /^[a-zA-Z0-9_-]+$/;
+      const invalidTool = TOOLS.find((tool) => !pattern.test(tool.name));
+      expect(invalidTool).toBeUndefined();
     });
   });
 });

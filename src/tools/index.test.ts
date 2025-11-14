@@ -28,10 +28,10 @@ jest.mock('./handlers/index.js', () => ({
 
 jest.mock('./definitions.js', () => ({
   TOOLS: [
-    { name: 'reminders.tasks', description: 'Reminder tasks tool' },
-    { name: 'reminders.lists', description: 'Reminder lists tool' },
-    { name: 'calendar.events', description: 'Calendar events tool' },
-    { name: 'calendar.calendars', description: 'Calendar collections tool' },
+    { name: 'reminders_tasks', description: 'Reminder tasks tool' },
+    { name: 'reminders_lists', description: 'Reminder lists tool' },
+    { name: 'calendar_events', description: 'Calendar events tool' },
+    { name: 'calendar_calendars', description: 'Calendar collections tool' },
   ],
 }));
 
@@ -105,7 +105,7 @@ describe('Tools Index', () => {
   });
 
   describe('handleToolCall', () => {
-    describe('reminders.tasks tool routing', () => {
+    describe('reminders_tasks tool routing', () => {
       it.each([
         [
           'read',
@@ -132,7 +132,7 @@ describe('Tools Index', () => {
           { action: 'delete' as const, title: 'Delete me' },
         ],
       ])(
-        'should route reminders.tasks action=%s correctly',
+        'should route reminders_tasks action=%s correctly',
         async (_action, mockHandler, args) => {
           const expectedResult: CallToolResult = {
             content: [{ type: 'text', text: 'Success' }],
@@ -141,7 +141,7 @@ describe('Tools Index', () => {
 
           mockHandler.mockResolvedValue(expectedResult);
 
-          const result = await handleToolCall('reminders.tasks', args);
+          const result = await handleToolCall('reminders_tasks', args);
 
           expect(mockHandler).toHaveBeenCalledWith(args);
           expect(result).toEqual(expectedResult);
@@ -150,7 +150,7 @@ describe('Tools Index', () => {
     });
 
     describe('legacy tool alias routing', () => {
-      it('should route reminders_tasks alias to reminders.tasks handlers', async () => {
+      it('should route reminders.tasks alias to reminders_tasks handlers', async () => {
         const args = { action: 'read' as const, id: 'legacy-id' };
         const expectedResult: CallToolResult = {
           content: [{ type: 'text', text: 'Aliased reminders read' }],
@@ -159,13 +159,13 @@ describe('Tools Index', () => {
 
         mockHandleReadReminders.mockResolvedValue(expectedResult);
 
-        const result = await handleToolCall('reminders_tasks', args);
+        const result = await handleToolCall('reminders.tasks', args);
 
         expect(mockHandleReadReminders).toHaveBeenCalledWith(args);
         expect(result).toEqual(expectedResult);
       });
 
-      it('should route calendar_events alias to calendar.events handlers', async () => {
+      it('should route calendar.events alias to calendar_events handlers', async () => {
         const args = { action: 'delete' as const, id: 'event-id' };
         const expectedResult: CallToolResult = {
           content: [{ type: 'text', text: 'Aliased calendar delete' }],
@@ -174,7 +174,7 @@ describe('Tools Index', () => {
 
         mockHandleDeleteCalendarEvent.mockResolvedValue(expectedResult);
 
-        const result = await handleToolCall('calendar_events', args);
+        const result = await handleToolCall('calendar.events', args);
 
         expect(mockHandleDeleteCalendarEvent).toHaveBeenCalledWith(args);
         expect(result).toEqual(expectedResult);
@@ -209,8 +209,8 @@ describe('Tools Index', () => {
         });
       });
 
-      it('should return error for unknown reminders.lists action', async () => {
-        const result = await handleToolCall('reminders.lists', {
+      it('should return error for unknown reminders_lists action', async () => {
+        const result = await handleToolCall('reminders_lists', {
           action: 'unknown',
         } as unknown as ListsToolArgs);
 
@@ -218,7 +218,7 @@ describe('Tools Index', () => {
           content: [
             {
               type: 'text',
-              text: 'Unknown reminders.lists action: unknown',
+              text: 'Unknown reminders_lists action: unknown',
             },
           ],
           isError: true,
@@ -230,7 +230,7 @@ describe('Tools Index', () => {
         mockHandleCreateReminder.mockRejectedValue(error);
 
         await expect(
-          handleToolCall('reminders.tasks', { action: 'create' as const }),
+          handleToolCall('reminders_tasks', { action: 'create' as const }),
         ).rejects.toThrow('Handler failed');
       });
 
@@ -251,23 +251,23 @@ describe('Tools Index', () => {
 
         mockHandleCreateReminder.mockResolvedValue(expectedResult);
 
-        const result = await handleToolCall('reminders.tasks', complexArgs);
+        const result = await handleToolCall('reminders_tasks', complexArgs);
 
         expect(mockHandleCreateReminder).toHaveBeenCalledWith(complexArgs);
         expect(result).toEqual(expectedResult);
       });
     });
 
-    describe('reminders.tasks tool error handling', () => {
+    describe('reminders_tasks tool error handling', () => {
       it.each([
         [undefined, 'No arguments provided'],
-        [{ action: undefined }, 'Unknown reminders.tasks action: undefined'],
-        [{ action: 'unknown' }, 'Unknown reminders.tasks action: unknown'],
+        [{ action: undefined }, 'Unknown reminders_tasks action: undefined'],
+        [{ action: 'unknown' }, 'Unknown reminders_tasks action: unknown'],
       ])(
-        'should return error for invalid reminders.tasks args',
+        'should return error for invalid reminders_tasks args',
         async (args, expectedText) => {
           const result = await handleToolCall(
-            'reminders.tasks',
+            'reminders_tasks',
             args as unknown as RemindersToolArgs,
           );
 
@@ -279,7 +279,7 @@ describe('Tools Index', () => {
       );
     });
 
-    describe('reminders.lists tool routing', () => {
+    describe('reminders_lists tool routing', () => {
       it.each([
         [
           'read',
@@ -306,7 +306,7 @@ describe('Tools Index', () => {
           { action: 'delete', name: 'List Name' },
         ],
       ])(
-        'should route reminders.lists action=%s correctly',
+        'should route reminders_lists action=%s correctly',
         async (_action, mockHandler, args, expectedCallArgs) => {
           const expectedResult: CallToolResult = {
             content: [{ type: 'text', text: 'Success' }],
@@ -316,7 +316,7 @@ describe('Tools Index', () => {
           mockHandler.mockResolvedValue(expectedResult);
 
           const result = await handleToolCall(
-            'reminders.lists',
+            'reminders_lists',
             args as ListsToolArgs,
           );
 
@@ -330,7 +330,7 @@ describe('Tools Index', () => {
       );
     });
 
-    describe('reminders.lists tool validation errors', () => {
+    describe('reminders_lists tool validation errors', () => {
       it.each([
         [
           'create',
@@ -357,7 +357,7 @@ describe('Tools Index', () => {
           'name',
         ],
       ])(
-        'should return validation error when reminders.lists %s field is missing',
+        'should return validation error when reminders_lists %s field is missing',
         async (_action, mockHandler, args, missingField) => {
           mockHandler.mockResolvedValue({
             content: [
@@ -370,7 +370,7 @@ describe('Tools Index', () => {
           });
 
           const result = await handleToolCall(
-            'reminders.lists',
+            'reminders_lists',
             args as ListsToolArgs,
           );
 
@@ -386,7 +386,7 @@ describe('Tools Index', () => {
     });
   });
 
-  describe('calendar.events tool routing', () => {
+  describe('calendar_events tool routing', () => {
     it.each([
       ['read', mockHandleReadCalendarEvents, { action: 'read' as const }],
       [
@@ -414,7 +414,7 @@ describe('Tools Index', () => {
         { action: 'delete' as const, id: 'event-123' },
       ],
     ])(
-      'should route calendar.events action=%s correctly',
+      'should route calendar_events action=%s correctly',
       async (_action, mockHandler, args) => {
         const expectedResult: CallToolResult = {
           content: [{ type: 'text', text: 'Success' }],
@@ -424,7 +424,7 @@ describe('Tools Index', () => {
         mockHandler.mockResolvedValue(expectedResult);
 
         const result = await handleToolCall(
-          'calendar.events',
+          'calendar_events',
           args as CalendarToolArgs,
         );
 
@@ -433,8 +433,8 @@ describe('Tools Index', () => {
       },
     );
 
-    it('should return error for unknown calendar.events action', async () => {
-      const result = await handleToolCall('calendar.events', {
+    it('should return error for unknown calendar_events action', async () => {
+      const result = await handleToolCall('calendar_events', {
         action: 'unknown',
       } as unknown as CalendarToolArgs);
 
@@ -442,7 +442,7 @@ describe('Tools Index', () => {
         content: [
           {
             type: 'text',
-            text: 'Unknown calendar.events action: unknown',
+            text: 'Unknown calendar_events action: unknown',
           },
         ],
         isError: true,
@@ -450,7 +450,7 @@ describe('Tools Index', () => {
     });
 
     it('should return error when calendar events args are missing', async () => {
-      const result = await handleToolCall('calendar.events', undefined);
+      const result = await handleToolCall('calendar_events', undefined);
 
       expect(result).toEqual({
         content: [{ type: 'text', text: 'No arguments provided' }],
@@ -459,7 +459,7 @@ describe('Tools Index', () => {
     });
   });
 
-  describe('calendar.calendars tool routing', () => {
+  describe('calendar_calendars tool routing', () => {
     it('should route read action to handleReadCalendars', async () => {
       const expectedResult: CallToolResult = {
         content: [{ type: 'text', text: 'Calendars listed' }],
@@ -468,7 +468,7 @@ describe('Tools Index', () => {
 
       mockHandleReadCalendars.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('calendar.calendars', {
+      const result = await handleToolCall('calendar_calendars', {
         action: 'read',
       } as CalendarsToolArgs);
 
@@ -486,7 +486,7 @@ describe('Tools Index', () => {
 
       mockHandleReadCalendars.mockResolvedValue(expectedResult);
 
-      const result = await handleToolCall('calendar.calendars');
+      const result = await handleToolCall('calendar_calendars');
 
       expect(mockHandleReadCalendars).toHaveBeenCalledWith(undefined);
       expect(result).toEqual(expectedResult);
