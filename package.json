@@ -33,15 +33,15 @@
     "lint": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.2",
+    "@modelcontextprotocol/sdk": "^1.22.0",
     "exit-on-epipe": "^1.0.1",
     "tsx": "^4.20.6",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.2",
+    "@biomejs/biome": "2.3.5",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.1",
     "babel-jest": "^30.2.0",
     "babel-plugin-transform-import-meta": "^2.3.3",
     "jest": "^30.2.0",
