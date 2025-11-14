@@ -1,51 +1,49 @@
 {
-  "name": "mcp-server-apple-reminders",
-  "version": "1.1.0",
-  "description": "MCP server that provides native integration with Apple Reminders on macOS.",
+  "name": "mcp-server-apple-events",
+  "version": "1.2.0",
+  "description": "MCP server that provides native integration with Apple Reminders and Calendar on macOS.",
   "author": "Frad Lee <https://frad.me>",
   "license": "MIT",
   "homepage": "https://frad.me",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fradser/mcp-server-apple-reminders.git"
+    "url": "git+https://github.com/fradser/mcp-server-apple-events.git"
   },
   "bugs": {
-    "url": "https://github.com/fradser/mcp-server-apple-reminders/issues"
+    "url": "https://github.com/fradser/mcp-server-apple-events/issues"
   },
   "keywords": [
     "mcp",
     "apple",
     "reminders",
+    "calendar",
+    "events",
     "automation"
   ],
   "type": "module",
   "main": "dist/index.js",
-  "module": "src/index.js",
+  "module": "dist/index.js",
   "bin": {
-    "mcp-server-apple-reminders": "./bin/run.cjs"
+    "mcp-server-apple-events": "./bin/run.cjs"
   },
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "build:ts": "tsc -p tsconfig.json",
-    "build": "pnpm run clean && pnpm run build:ts && pnpm run build:swift",
     "build:swift": "node scripts/build-swift.mjs",
-    "dev": "node ./bin/run-dev.cjs",
-    "start": "node ./bin/run.cjs",
-    "test": "jest",
-    "check": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json",
-    "prepublishOnly": "pnpm run build"
+    "build": "pnpm run clean && pnpm run build:ts && pnpm run build:swift",
+    "test": "NODE_NO_WARNINGS=1 jest",
+    "lint": "pnpm exec biome check --write --unsafe && pnpm exec tsc --noEmit --project tsconfig.json"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.20.2",
+    "@modelcontextprotocol/sdk": "^1.22.0",
     "exit-on-epipe": "^1.0.1",
-    "moment": "^2.30.1",
     "tsx": "^4.20.6",
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.2",
+    "@biomejs/biome": "2.3.5",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.1",
     "babel-jest": "^30.2.0",
     "babel-plugin-transform-import-meta": "^2.3.3",
     "jest": "^30.2.0",
@@ -54,5 +52,6 @@
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd"
 }

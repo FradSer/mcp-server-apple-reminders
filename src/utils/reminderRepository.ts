@@ -1,56 +1,51 @@
 /**
  * reminderRepository.ts
- * Repository pattern implementation for reminder data access operations using RemindersCLI.
+ * Repository pattern implementation for reminder data access operations using EventKitCLI.
  */
 
 import type { Reminder, ReminderList } from '../types/index.js';
+import type {
+  CreateReminderData,
+  ListJSON,
+  ReminderJSON,
+  ReminderReadResult,
+  UpdateReminderData,
+} from '../types/repository.js';
 import { executeCli } from './cliExecutor.js';
 import type { ReminderFilters } from './dateFiltering.js';
 import { applyReminderFilters } from './dateFiltering.js';
-
-// Types matching the JSON output from RemindersCLI
-interface ReminderJSON {
-  id: string;
-  title: string;
-  isCompleted: boolean;
-  list: string;
-  notes: string | null;
-  url: string | null;
-  dueDate: string | null;
-}
-
-interface ListJSON {
-  id: string;
-  title: string;
-}
-
-interface ReadResult {
-  lists: ListJSON[];
-  reminders: ReminderJSON[];
-}
-
-// Data interfaces for repository methods
-interface CreateReminderData {
-  title: string;
-  list?: string;
-  notes?: string;
-  url?: string;
-  dueDate?: string;
-}
-
-interface UpdateReminderData {
-  id: string;
-  newTitle?: string;
-  list?: string;
-  notes?: string;
-  url?: string;
-  isCompleted?: boolean;
-  dueDate?: string;
-}
+import {
+  addOptionalArg,
+  addOptionalBooleanArg,
+  nullToUndefined,
+} from './helpers.js';
 
 class ReminderRepository {
-  private async readAll(): Promise<ReadResult> {
-    return executeCli<ReadResult>([
+  private mapReminder(reminder: ReminderJSON): Reminder {
+    // Pass dueDate as-is from Swift CLI to avoid double timezone conversion
+    const formattedDueDate = reminder.dueDate ?? undefined;
+
+    const normalizedReminder = nullToUndefined(reminder, [
+      'notes',
+      'url',
+      'dueDate',
+    ]) as Reminder;
+
+    if (formattedDueDate) {
+      normalizedReminder.dueDate = formattedDueDate;
+    } else {
+      delete normalizedReminder.dueDate;
+    }
+
+    return normalizedReminder;
+  }
+
+  private mapReminders(reminders: ReminderJSON[]): Reminder[] {
+    return reminders.map((reminder) => this.mapReminder(reminder));
+  }
+
+  private async readAll(): Promise<ReminderReadResult> {
+    return executeCli<ReminderReadResult>([
       '--action',
       'read',
       '--showCompleted',
@@ -60,27 +55,17 @@ class ReminderRepository {
 
   async findReminderById(id: string): Promise<Reminder> {
     const { reminders } = await this.readAll();
-    const reminder = reminders.find((r) => r.id === id);
+    const reminder = this.mapReminders(reminders).find((r) => r.id === id);
     if (!reminder) {
       throw new Error(`Reminder with ID '${id}' not found.`);
     }
-    return {
-      ...reminder,
-      notes: reminder.notes ?? undefined,
-      url: reminder.url ?? undefined,
-      dueDate: reminder.dueDate ?? undefined,
-    };
+    return reminder;
   }
 
   async findReminders(filters: ReminderFilters = {}): Promise<Reminder[]> {
     const { reminders } = await this.readAll();
-    const mappedReminders: Reminder[] = reminders.map((r) => ({
-      ...r,
-      notes: r.notes ?? undefined,
-      url: r.url ?? undefined,
-      dueDate: r.dueDate ?? undefined,
-    }));
-    return applyReminderFilters(mappedReminders, filters);
+    const normalizedReminders = this.mapReminders(reminders);
+    return applyReminderFilters(normalizedReminders, filters);
   }
 
   async findAllLists(): Promise<ReminderList[]> {
@@ -90,24 +75,22 @@ class ReminderRepository {
 
   async createReminder(data: CreateReminderData): Promise<ReminderJSON> {
     const args = ['--action', 'create', '--title', data.title];
-    if (data.list) args.push('--targetList', data.list);
-    if (data.notes) args.push('--note', data.notes);
-    if (data.url) args.push('--url', data.url);
-    if (data.dueDate) args.push('--dueDate', data.dueDate);
+    addOptionalArg(args, '--targetList', data.list);
+    addOptionalArg(args, '--note', data.notes);
+    addOptionalArg(args, '--url', data.url);
+    addOptionalArg(args, '--dueDate', data.dueDate);
 
     return executeCli<ReminderJSON>(args);
   }
 
   async updateReminder(data: UpdateReminderData): Promise<ReminderJSON> {
     const args = ['--action', 'update', '--id', data.id];
-    if (data.newTitle) args.push('--title', data.newTitle);
-    if (data.list) args.push('--targetList', data.list);
-    if (data.notes) args.push('--note', data.notes);
-    if (data.url) args.push('--url', data.url);
-    if (data.dueDate) args.push('--dueDate', data.dueDate);
-    if (data.isCompleted !== undefined) {
-      args.push('--isCompleted', String(data.isCompleted));
-    }
+    addOptionalArg(args, '--title', data.newTitle);
+    addOptionalArg(args, '--targetList', data.list);
+    addOptionalArg(args, '--note', data.notes);
+    addOptionalArg(args, '--url', data.url);
+    addOptionalArg(args, '--dueDate', data.dueDate);
+    addOptionalBooleanArg(args, '--isCompleted', data.isCompleted);
 
     return executeCli<ReminderJSON>(args);
   }

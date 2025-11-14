@@ -11,7 +11,11 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { handleToolCall, TOOLS } from '../tools/index.js';
-import type { ListsToolArgs, RemindersToolArgs } from '../types/index.js';
+import type {
+  CalendarToolArgs,
+  ListsToolArgs,
+  RemindersToolArgs,
+} from '../types/index.js';
 import {
   buildPromptResponse,
   getPromptDefinition,
@@ -34,7 +38,8 @@ export function registerHandlers(server: Server): void {
       request.params.name,
       (request.params.arguments as unknown as
         | RemindersToolArgs
-        | ListsToolArgs) ?? {},
+        | ListsToolArgs
+        | CalendarToolArgs) ?? {},
     ),
   );
 

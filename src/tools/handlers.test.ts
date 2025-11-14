@@ -4,15 +4,21 @@
  */
 
 import {
+  handleCreateCalendarEvent,
   handleCreateReminder,
   handleCreateReminderList,
+  handleDeleteCalendarEvent,
   handleDeleteReminder,
   handleDeleteReminderList,
+  handleReadCalendarEvents,
+  handleReadCalendars,
   handleReadReminderLists,
   handleReadReminders,
+  handleUpdateCalendarEvent,
   handleUpdateReminder,
   handleUpdateReminderList,
-} from '../tools/handlers.js';
+} from '../tools/handlers/index.js';
+import { calendarRepository } from '../utils/calendarRepository.js';
 import { handleAsyncOperation } from '../utils/errorHandling.js';
 import { reminderRepository } from '../utils/reminderRepository.js';
 
@@ -23,12 +29,29 @@ jest.mock('../utils/cliExecutor.js', () => ({
 
 // Mock the repository and error handling
 jest.mock('../utils/reminderRepository.js');
+jest.mock('../utils/calendarRepository.js');
 jest.mock('../utils/errorHandling.js');
 
 const mockReminderRepository = reminderRepository as jest.Mocked<
   typeof reminderRepository
 >;
+const mockCalendarRepository = calendarRepository as jest.Mocked<
+  typeof calendarRepository
+>;
 const mockHandleAsyncOperation = handleAsyncOperation as jest.Mock;
+
+/**
+ * Type guard helper to extract text content from CallToolResult
+ */
+function _getTextContent(
+  content: Array<{ type: string; [key: string]: unknown }>,
+): string {
+  const firstContent = content[0];
+  if (firstContent && firstContent.type === 'text' && 'text' in firstContent) {
+    return firstContent.text as string;
+  }
+  throw new Error('Expected text content');
+}
 
 // Simplified wrapper mock for testing. It mimics the real implementation.
 mockHandleAsyncOperation.mockImplementation(async (operation) => {
@@ -62,7 +85,7 @@ describe('Tool Handlers', () => {
       ];
       mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
       const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('### Reminders (Total: 1)');
       expect(content).toContain('- [ ] Test');
     });
@@ -82,7 +105,7 @@ describe('Tool Handlers', () => {
         action: 'read',
         id: '123',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('### Reminder');
       expect(content).toContain('- [ ] Single Reminder');
       expect(content).toContain('- List: Work');
@@ -104,14 +127,14 @@ describe('Tool Handlers', () => {
         action: 'read',
         id: '456',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('- [x] Completed Task');
     });
 
     it('should return empty list message when no reminders found', async () => {
       mockReminderRepository.findReminders.mockResolvedValue([]);
       const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('### Reminders (Total: 0)');
       expect(content).toContain('No reminders found matching the criteria.');
     });
@@ -128,7 +151,7 @@ describe('Tool Handlers', () => {
       ];
       mockReminderRepository.findReminders.mockResolvedValue(mockReminders);
       const result = await handleReadReminders({ action: 'read' });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('Notes: Line 1\n    Line 2\n    Line 3');
     });
   });
@@ -149,7 +172,7 @@ describe('Tool Handlers', () => {
         action: 'create',
         title: 'New Task',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('Successfully created reminder "New Task"');
       expect(content).toContain('- ID: rem-123');
     });
@@ -172,7 +195,7 @@ describe('Tool Handlers', () => {
         id: 'rem-456',
         title: 'Updated Task',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('Successfully updated reminder "Updated Task"');
       expect(content).toContain('- ID: rem-456');
     });
@@ -185,7 +208,7 @@ describe('Tool Handlers', () => {
         action: 'delete',
         id: 'rem-789',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toBe('Successfully deleted reminder with ID: rem-789');
     });
   });
@@ -197,7 +220,7 @@ describe('Tool Handlers', () => {
       const mockLists = [{ id: 'list-1', title: 'Inbox' }];
       mockReminderRepository.findAllLists.mockResolvedValue(mockLists);
       const result = await handleReadReminderLists();
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('### Reminder Lists (Total: 1)');
       expect(content).toContain('- Inbox (ID: list-1)');
     });
@@ -205,7 +228,7 @@ describe('Tool Handlers', () => {
     it('should return empty list message when no lists found', async () => {
       mockReminderRepository.findAllLists.mockResolvedValue([]);
       const result = await handleReadReminderLists();
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('### Reminder Lists (Total: 0)');
       expect(content).toContain('No reminder lists found.');
     });
@@ -219,7 +242,7 @@ describe('Tool Handlers', () => {
         action: 'create',
         name: 'New List',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('Successfully created list "New List"');
       expect(content).toContain('- ID: list-abc');
     });
@@ -234,7 +257,7 @@ describe('Tool Handlers', () => {
         name: 'Old Name',
         newName: 'Updated Name',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toContain('Successfully updated list to "Updated Name"');
       expect(content).toContain('- ID: list-def');
     });
@@ -247,8 +270,153 @@ describe('Tool Handlers', () => {
         action: 'delete',
         name: 'Old List',
       });
-      const content = result.content[0].text as string;
+      const content = _getTextContent(result.content);
       expect(content).toBe('Successfully deleted list "Old List".');
+    });
+  });
+
+  // --- Calendar Event Handlers ---
+
+  describe('handleCreateCalendarEvent', () => {
+    it('should return a success message with event ID', async () => {
+      const mockEvent = {
+        id: 'event-123',
+        title: 'New Event',
+        startDate: '2025-11-04T14:00:00+08:00',
+        endDate: '2025-11-04T16:00:00+08:00',
+        calendar: 'Work',
+        notes: null,
+        location: null,
+        url: null,
+        isAllDay: false,
+      };
+      mockCalendarRepository.createEvent.mockResolvedValue(mockEvent);
+      const result = await handleCreateCalendarEvent({
+        action: 'create',
+        title: 'New Event',
+        startDate: '2025-11-04 14:00:00',
+        endDate: '2025-11-04 16:00:00',
+        targetCalendar: 'Work',
+      });
+      const content = _getTextContent(result.content);
+      expect(content).toContain('Successfully created event "New Event"');
+      expect(content).toContain('- ID: event-123');
+    });
+  });
+
+  describe('handleUpdateCalendarEvent', () => {
+    it('should return a success message with event ID', async () => {
+      const mockEvent = {
+        id: 'event-456',
+        title: 'Updated Event',
+        startDate: '2025-11-04T15:00:00+08:00',
+        endDate: '2025-11-04T17:00:00+08:00',
+        calendar: 'Work',
+        notes: null,
+        location: null,
+        url: null,
+        isAllDay: false,
+      };
+      mockCalendarRepository.updateEvent.mockResolvedValue(mockEvent);
+      const result = await handleUpdateCalendarEvent({
+        action: 'update',
+        id: 'event-456',
+        title: 'Updated Event',
+      });
+      const content = _getTextContent(result.content);
+      expect(content).toContain('Successfully updated event "Updated Event"');
+      expect(content).toContain('- ID: event-456');
+    });
+  });
+
+  describe('handleDeleteCalendarEvent', () => {
+    it('should return a success message', async () => {
+      mockCalendarRepository.deleteEvent.mockResolvedValue(undefined);
+      const result = await handleDeleteCalendarEvent({
+        action: 'delete',
+        id: 'event-789',
+      });
+      const content = _getTextContent(result.content);
+      expect(content).toBe('Successfully deleted event with ID "event-789".');
+    });
+  });
+
+  describe('handleReadCalendarEvents', () => {
+    it('should return events formatted as Markdown', async () => {
+      const mockEvents = [
+        {
+          id: 'event-1',
+          title: 'Meeting',
+          startDate: '2025-11-04T09:00:00+08:00',
+          endDate: '2025-11-04T10:00:00+08:00',
+          calendar: 'Work',
+          isAllDay: false,
+        },
+      ];
+      mockCalendarRepository.findEvents.mockResolvedValue(mockEvents);
+      const result = await handleReadCalendarEvents({ action: 'read' });
+      const content = _getTextContent(result.content);
+      expect(content).toContain('### Calendar Events (Total: 1)');
+      expect(content).toContain('- Meeting');
+      expect(mockCalendarRepository.findAllCalendars).not.toHaveBeenCalled();
+    });
+
+    it('should return single event when id is provided', async () => {
+      const mockEvent = {
+        id: 'event-123',
+        title: 'Single Event',
+        startDate: '2025-11-04T14:00:00+08:00',
+        endDate: '2025-11-04T16:00:00+08:00',
+        calendar: 'Work',
+        notes: 'Some notes',
+        location: 'Office',
+        url: 'https://example.com',
+        isAllDay: false,
+      };
+      mockCalendarRepository.findEventById.mockResolvedValue(mockEvent);
+      const result = await handleReadCalendarEvents({
+        action: 'read',
+        id: 'event-123',
+      });
+      const content = _getTextContent(result.content);
+      expect(content).toContain('- Single Event');
+      expect(content).toContain('- Calendar: Work');
+      expect(content).toContain('- ID: event-123');
+      expect(content).toContain('- Notes: Some notes');
+      expect(content).toContain('- Location: Office');
+      expect(content).toContain('- URL: https://example.com');
+    });
+
+    it('should return empty message when no events found', async () => {
+      mockCalendarRepository.findEvents.mockResolvedValue([]);
+      const result = await handleReadCalendarEvents({ action: 'read' });
+      const content = _getTextContent(result.content);
+      expect(content).toContain('### Calendar Events (Total: 0)');
+      expect(content).toContain('No calendar events found.');
+      expect(mockCalendarRepository.findAllCalendars).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleReadCalendars', () => {
+    it('should return calendars formatted as Markdown', async () => {
+      const mockCalendars = [
+        { id: 'cal-1', title: 'Work' },
+        { id: 'cal-2', title: 'Personal' },
+      ];
+      mockCalendarRepository.findAllCalendars.mockResolvedValue(mockCalendars);
+      const result = await handleReadCalendars({ action: 'read' });
+      const content = _getTextContent(result.content);
+      expect(content).toContain('### Calendars (Total: 2)');
+      expect(content).toContain('- Work (ID: cal-1)');
+      expect(content).toContain('- Personal (ID: cal-2)');
+    });
+
+    it('should support being called without args', async () => {
+      mockCalendarRepository.findAllCalendars.mockResolvedValue([]);
+      const result = await handleReadCalendars();
+      const content = _getTextContent(result.content);
+      expect(content).toContain('### Calendars (Total: 0)');
+      expect(content).toContain('No calendars found.');
     });
   });
 });

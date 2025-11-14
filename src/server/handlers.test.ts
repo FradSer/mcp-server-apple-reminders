@@ -176,7 +176,7 @@ describe('Server Handlers', () => {
         [
           'daily-task-organizer',
           { today_focus: 'finish quarterly report and prepare slides' },
-          'Comprehensive daily task organization',
+          'Proactive daily task organization with intelligent reminder creation and optimization',
           'finish quarterly report and prepare slides',
         ],
         [
@@ -208,13 +208,17 @@ describe('Server Handlers', () => {
         [
           'daily-task-organizer',
           {},
-          "Today's focus ideas: none provided",
-          'Planning horizon: today',
+          [
+            'Focus: same-day organizing',
+            'Time horizon: ',
+            'only — never plan beyond today',
+            'Action scope: existing reminders',
+          ],
         ],
-        ['smart-reminder-creator', {}, 'Task idea:', undefined],
+        ['smart-reminder-creator', {}, ['Task idea:']],
       ])(
         'should handle %s with empty arguments',
-        async (name, args, expectedText1, expectedText2) => {
+        async (name, args, expectedTexts) => {
           const request = {
             params: { name, arguments: args },
           };
@@ -224,9 +228,8 @@ describe('Server Handlers', () => {
           expect(result).toBeDefined();
           expect(result.messages[0].content.type).toBe('text');
           const text = (result.messages[0].content as MessageContent).text;
-          expect(text).toContain(expectedText1);
-          if (expectedText2) {
-            expect(text).toContain(expectedText2);
+          for (const snippet of expectedTexts as string[]) {
+            expect(text).toContain(snippet);
           }
         },
       );
@@ -289,7 +292,7 @@ describe('Server Handlers', () => {
     it('should handle null arguments', async () => {
       const request = {
         params: {
-          name: 'reminders',
+          name: 'reminders_tasks',
           arguments: null,
         },
       };

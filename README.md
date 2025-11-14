@@ -1,12 +1,12 @@
-# Apple Reminders MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Events MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
 English | [简体中文](README.zh-CN.md)
 
-A Model Context Protocol (MCP) server that provides native integration with Apple Reminders on macOS. This server allows you to interact with Apple Reminders through a standardized interface with comprehensive management capabilities.
+A Model Context Protocol (MCP) server that provides native integration with Apple Reminders and Calendar on macOS. This server allows you to interact with Apple Reminders and Calendar Events through a standardized interface with comprehensive management capabilities.
 
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/fradser-mcp-server-apple-reminders-badge.png)](https://mseep.ai/app/fradser-mcp-server-apple-reminders)
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/fradser-mcp-server-apple-events-badge.png)](https://mseep.ai/app/fradser-mcp-server-apple-events)
 
 ## Features
 
@@ -39,12 +39,35 @@ A Model Context Protocol (MCP) server that provides native integration with Appl
 - **Xcode Command Line Tools** (required for compiling Swift code)
 - **pnpm** (recommended for package management)
 
+## macOS Permission Requirements (Sonoma 14+ / Sequoia 15)
+
+Apple now separates Reminders and Calendar permissions into *write-only* and *full-access* scopes. The Swift bridge declares the following privacy keys so Claude can both read and write data when you approve access:
+
+- `NSRemindersUsageDescription`
+- `NSRemindersFullAccessUsageDescription`
+- `NSRemindersWriteOnlyAccessUsageDescription`
+- `NSCalendarsUsageDescription`
+- `NSCalendarsFullAccessUsageDescription`
+- `NSCalendarsWriteOnlyAccessUsageDescription`
+
+When the CLI detects a `notDetermined` authorization status it calls `requestFullAccessToReminders` / `requestFullAccessToEvents`, which in turn triggers macOS to show the correct prompt. If the OS ever loses track of permissions, rerun `./check-permissions.sh` to re-open the dialogs.
+
+If a Claude tool call still encounters a permission failure, the Node.js layer automatically runs a minimal AppleScript (`osascript -e 'tell application "Reminders" …'`) to surface the dialog and then retries the Swift CLI once.
+
+**Verification command**
+
+```bash
+pnpm test -- src/swift/Info.plist.test.ts
+```
+
+The test suite ensures all required usage-description strings are present before shipping the binary.
+
 ## Quick Start
 
 Install globally via npm:
 
 ```bash
-npm install -g mcp-server-apple-reminders
+npm install -g mcp-server-apple-events
 ```
 
 ## Configuration
@@ -60,7 +83,7 @@ npm install -g mcp-server-apple-reminders
     {
       "mcpServers": {
         "apple-reminders": {
-          "command": "mcp-server-apple-reminders",
+          "command": "mcp-server-apple-events",
           "args": []
         }
       }
@@ -76,12 +99,12 @@ npm install -g mcp-server-apple-reminders
 5. Configure the tool with the following settings:
    - Type: `stdio`
    - ID: `apple-reminders`
-   - Command: `mcp-server-apple-reminders`
+   - Command: `mcp-server-apple-events`
    - Args: (leave empty)
 
 ### Configure Claude Desktop
 
-You need to configure Claude Desktop to recognize the Apple Reminders MCP server. There are two ways to access the configuration:
+You need to configure Claude Desktop to recognize the Apple Events MCP server. There are two ways to access the configuration:
 
 #### Option 1: Through Claude Desktop UI
 
@@ -110,7 +133,7 @@ Add the following configuration to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "apple-reminders": {
-      "command": "mcp-server-apple-reminders",
+      "command": "mcp-server-apple-events",
       "args": []
     }
   }
@@ -123,7 +146,7 @@ For the changes to take effect:
 
 1. Completely quit Claude Desktop (not just close the window)
 2. Start Claude Desktop again
-3. Look for the tool icon to verify the Apple Reminders server is connected
+3. Look for the tool icon to verify the Apple Events server is connected
 
 ## Usage Examples
 
@@ -169,7 +192,7 @@ The server will:
 
 The server ships with a consolidated prompt registry exposed via the MCP `ListPrompts` and `GetPrompt` endpoints. Each template shares a mission, context inputs, numbered process, constraints, output format, and quality bar so downstream assistants receive predictable scaffolding instead of brittle free-form examples.
 
-- **daily-task-organizer** — optional `today_focus` (what you most want to accomplish today) input produces a same-day execution blueprint that keeps priority work balanced with recovery time. Supports intelligent task clustering, focus block scheduling, and automatic reminder list organization.
+- **daily-task-organizer** — optional `today_focus` (what you most want to accomplish today) input produces a same-day execution blueprint that keeps priority work balanced with recovery time. Supports intelligent task clustering, focus block scheduling, automatic reminder list organization, and auto-creates calendar time blocks when many due-today reminders need fixed slots. Quick Win clusters become 15-minute “Focus Sprint — [Outcome]” holds that finish at each reminder’s due timestamp, while Standard tasks map to 30-, 45-, or 60-minute events anchored to the same due-time window.
 - **smart-reminder-creator** — optional `task_idea` (a short description of what you want to do) generates an optimally scheduled reminder structure.
 - **reminder-review-assistant** — optional `review_focus` (e.g., overdue or a list name) to audit and optimize existing reminders.
 - **weekly-planning-workflow** — optional `user_ideas` (your thoughts and ideas for what you want to accomplish this week) guides a Monday-through-Sunday reset with time blocks tied to existing lists.
@@ -182,13 +205,13 @@ The server ships with a consolidated prompt registry exposed via the MCP `ListPr
 
 ## Available MCP Tools
 
-This server provides two unified MCP tools for comprehensive Apple Reminders management:
+This server now exposes service-scoped MCP tools that mirror Apple Reminders and Calendar domains. Use the identifier that matches the resource you want to manipulate:
 
-### Reminders Tool
+### Reminder Tasks Tool
 
-**Tool Name**: `reminders`
+**Tool Name**: `reminders_tasks`
 
-A comprehensive tool for managing Apple Reminders with action-based operations. Supports all reminder operations through a single unified interface.
+Manages individual reminder tasks with full CRUD support.
 
 **Actions**: `read`, `create`, `update`, `delete`
 
@@ -255,11 +278,11 @@ A comprehensive tool for managing Apple Reminders with action-based operations. 
 }
 ```
 
-### Lists Tool
+### Reminder Lists Tool
 
-**Tool Name**: `lists`
+**Tool Name**: `reminders_lists`
 
-Manage reminder lists - view existing lists or create new ones for organizing reminders.
+Manages reminder lists - view existing lists or create new ones for organizing reminders.
 
 **Actions**: `read`, `create`, `update`, `delete`
 
@@ -290,6 +313,76 @@ Manage reminder lists - view existing lists or create new ones for organizing re
 {
   "action": "create",
   "name": "Project Alpha"
+}
+```
+
+### Calendar Events Tool
+
+**Tool Name**: `calendar_events`
+
+Handles EventKit calendar events (time blocks) with CRUD capabilities.
+
+**Actions**: `read`, `create`, `update`, `delete`
+
+**Main Handler Functions**:
+- `handleReadCalendarEvents()` - Read events with optional filters
+- `handleCreateCalendarEvent()` - Create calendar events
+- `handleUpdateCalendarEvent()` - Update existing events
+- `handleDeleteCalendarEvent()` - Delete calendar events
+
+#### Parameters by Action
+
+**Read Action** (`action: "read"`):
+- `id` *(optional)*: Unique identifier of an event to read
+- `filterCalendar` *(optional)*: Calendar name filter
+- `search` *(optional)*: Keyword match against title, notes, or location
+- `startDate` *(optional)*: Filter events starting on/after this date
+- `endDate` *(optional)*: Filter events ending on/before this date
+
+**Create Action** (`action: "create"`):
+- `title` *(required)*: Event title
+- `startDate` *(required)*: Start date/time
+- `endDate` *(required)*: End date/time
+- `targetCalendar` *(optional)*: Calendar name to create in
+- `note`, `location`, `url`, `isAllDay` *(optional)*: Additional metadata
+
+**Update Action** (`action: "update"`):
+- `id` *(required)*: Event identifier
+- Other fields align with create parameters and are optional updates
+
+**Delete Action** (`action: "delete"`):
+- `id` *(required)*: Event identifier to remove
+
+### Calendar Collections Tool
+
+**Tool Name**: `calendar_calendars`
+
+Returns the available calendars from EventKit. This is useful before creating or updating events to confirm calendar identifiers.
+
+**Actions**: `read`
+
+**Main Handler Function**:
+- `handleReadCalendars()` - List all calendars with IDs and titles
+
+**Example Usage**
+
+```json
+{
+  "action": "read"
+}
+```
+
+**Example Response**
+
+```json
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "### Calendars (Total: 3)\n- Work (ID: cal-1)\n- Personal (ID: cal-2)\n- Shared (ID: cal-3)"
+    }
+  ],
+  "isError": false
 }
 ```
 
@@ -327,18 +420,9 @@ URLs:
 
 This ensures URLs are accessible both in the Reminders app UI and through the API/notes for parsing.
 
-**URL Extraction**: You can extract URLs from reminder notes using the structured format or regex fallback:
+**URL Extraction**: You can extract URLs from reminder notes using regex:
 ```typescript
-// Using the structured format (recommended)
-import { extractUrlsFromNotes, parseReminderNote } from './urlHelpers';
-
-// Extract just URLs
-const urls = extractUrlsFromNotes(reminder.notes);
-
-// Parse into separate note content and URLs
-const { note, urls } = parseReminderNote(reminder.notes);
-
-// Legacy regex method (fallback for unstructured content)
+// Extract URLs from notes using regex
 const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
 ```
 
@@ -367,41 +451,6 @@ const urlsRegex = reminder.notes?.match(/https?:\/\/[^\s]+/g) || [];
     "showCompleted": false
   }
 }
-```
-
-## URL Utilities
-
-The server includes built-in URL utilities for working with the structured URL format. These utilities are exported from `src/utils/urlHelpers.js`:
-
-### Key Functions
-
-- `extractUrlsFromNotes(notes)` - Extract URLs from structured or unstructured notes
-- `parseReminderNote(notes)` - Parse notes into separate content and URL array  
-- `formatNoteWithUrls(note, urls)` - Format note content with structured URLs
-- `removeUrlSections(notes)` - Remove URL sections to get clean note content
-- `combineNoteWithUrl(note, url)` - Combine note with single URL in structured format
-
-### Usage Examples
-
-```typescript
-import { 
-  extractUrlsFromNotes, 
-  parseReminderNote,
-  formatNoteWithUrls 
-} from 'mcp-server-apple-reminders/src/utils/urlHelpers.js';
-
-// Extract URLs from any reminder note
-const urls = extractUrlsFromNotes(reminder.notes);
-console.log(urls); // ['https://example.com', 'https://test.com']
-
-// Parse note into content and URLs
-const { note, urls } = parseReminderNote(reminder.notes);
-console.log(note); // "Task description" 
-console.log(urls); // ['https://example.com']
-
-// Create structured note content
-const structured = formatNoteWithUrls("New task", ['https://link1.com', 'https://link2.com']);
-// Result: "New task\n\nURLs:\n- https://link1.com\n- https://link2.com"
 ```
 
 ## Organization Strategies

@@ -25,6 +25,29 @@ export interface ReminderList {
 }
 
 /**
+ * Calendar event interface
+ */
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  calendar: string;
+  notes?: string;
+  location?: string;
+  url?: string;
+  isAllDay: boolean;
+}
+
+/**
+ * Calendar interface
+ */
+export interface Calendar {
+  id: string;
+  title: string;
+}
+
+/**
  * Server configuration
  */
 export interface ServerConfig {
@@ -33,16 +56,77 @@ export interface ServerConfig {
 }
 
 /**
+ * Work categorization for time blocking
+ */
+export type WorkCategory = 'deep-work' | 'shallow-work' | 'buffer-time';
+
+/**
+ * Work category configuration interface
+ */
+export interface WorkCategoryConfig {
+  category: WorkCategory;
+  minDurationMinutes: number;
+  maxDurationMinutes: number;
+  dailyMaxHours?: number;
+  dailyPercentage?: number;
+  calendarTitlePattern: string;
+}
+
+/**
+ * Daily capacity tracker for time block allocation
+ */
+export interface DailyCapacity {
+  deepWorkMinutes: number;
+  shallowWorkMinutes: number;
+  bufferTimeMinutes: number;
+  totalWorkMinutes: number;
+}
+
+/**
  * Shared type constants for better type safety and consistency
  */
 export type ReminderAction = 'read' | 'create' | 'update' | 'delete';
 export type ListAction = 'read' | 'create' | 'update' | 'delete';
+export type CalendarAction = 'read' | 'create' | 'update' | 'delete';
+export type CalendarsAction = 'read';
 export type DueWithinOption =
   | 'today'
   | 'tomorrow'
   | 'this-week'
   | 'overdue'
   | 'no-date';
+
+/**
+ * Action constant arrays for enum validation
+ */
+export const REMINDER_ACTIONS: readonly ReminderAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
+
+export const LIST_ACTIONS: readonly ListAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
+
+export const CALENDAR_ACTIONS: readonly CalendarAction[] = [
+  'read',
+  'create',
+  'update',
+  'delete',
+] as const;
+
+export const DUE_WITHIN_OPTIONS: readonly DueWithinOption[] = [
+  'today',
+  'tomorrow',
+  'this-week',
+  'overdue',
+  'no-date',
+] as const;
 
 /**
  * Base tool arguments interface
@@ -78,6 +162,29 @@ export interface ListsToolArgs extends BaseToolArgs {
   action: ListAction;
   name?: string;
   newName?: string;
+}
+
+export interface CalendarToolArgs extends BaseToolArgs {
+  action: CalendarAction;
+  // ID parameter
+  id?: string;
+  // Filtering parameters (for read action)
+  filterCalendar?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  // Single item parameters
+  title?: string;
+  note?: string;
+  location?: string;
+  url?: string;
+  isAllDay?: boolean;
+  // Target calendar for create/update operations
+  targetCalendar?: string;
+}
+
+export interface CalendarsToolArgs extends BaseToolArgs {
+  action: CalendarsAction;
 }
 
 /**
