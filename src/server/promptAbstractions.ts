@@ -159,9 +159,11 @@ export const CONFIDENCE_CONSTRAINTS = [
  * Standard note formatting constraints
  */
 export const NOTE_FORMATTING_CONSTRAINTS = [
-  'Strict note modification rules: ONLY modify reminder notes when ALL conditions are met: (a) adding CRITICAL completion information (missing resources, blocking issues, required coordination), (b) confidence >90%, (c) information is essential for task completion, (d) user has not explicitly requested to preserve notes.',
-  'Minimal intervention for creative workers: default to leaving notes untouched unless the added context clears a blocker or records a duration estimate required for planning.',
-  'When notes must be updated, use concise single-line keywords (Blocked:, Depends:, Next:, See:, Note:, Duration:) followed by plain text. Preserve the original user note on its own line after any new annotations.',
+  'Strict note modification rules for existing reminders: ONLY edit user notes when ALL conditions are met: (a) adding essential completion information (duration estimates or reference links), (b) confidence >90%, (c) information is essential for task completion, (d) user has not explicitly requested to preserve notes.',
+  'Reminder creation exception: When crafting a brand-new reminder, include whatever factual context is required for execution as long as the formatting rules below are followed.',
+  'Minimal intervention principle: Outside of the creation moment, default to leaving notes untouched unless duration tracking or reference links are absolutely necessary for planning.',
+  'When notes must be updated, use ONLY these three keywords: (1) See: [reference/URL], (2) Note: [brief context], (3) Duration: [time estimate]. Preserve the original user note on its own line after any new annotations.',
+  'Keyword usage guidelines: "See:" for URLs and references, "Note:" for essential context only, "Duration:" for time estimates needed for scheduling. Use one keyword per line followed by plain text.',
   'Do NOT include reminder IDs, list names, or bracketed titles in notes. Keep references human-friendly (e.g., "See: Manager approval reminder" instead of listing IDs).',
   '**Note formatting rules**: Apple Reminders does NOT render markdown. When creating reminder notes:',
   '  - Use plain text bullet points with "-" (hyphen), NOT markdown checkbox format "- [ ]"',
@@ -177,6 +179,15 @@ export const NOTE_FORMATTING_CONSTRAINTS = [
 export const BATCHING_CONSTRAINTS = [
   'Run idempotency checks before creating anything: search for likely duplicates by normalized title (lowercase, trimmed, punctuation removed). Prefer updating an existing reminder over creating a duplicate.',
   'Batch tool calls when executing multiple changes to reduce overhead and keep actions atomic by concern (e.g., all creates, then updates).',
+];
+
+export const TASK_BATCHING_CONSTRAINTS = [
+  '**Task batching strategy**: Group similar tasks together and complete in dedicated time blocks to minimize context switching.',
+  '  - Examples: Batch all code reviews together, all emails together, all meetings together',
+  '  - Naming pattern: "Code Review Batch — 3 PRs", "Email Processing — Inbox Zero", "Admin Batch — 5 tasks"',
+  '  - Reduces context switching by 60-80% compared to handling tasks individually',
+  '  - Schedule batches: Similar cognitive requirements, tools, or workflows = good batch candidates',
+  '  - Avoid: Batching unrelated tasks that require different mental modes',
 ];
 
 /**
@@ -202,16 +213,15 @@ export const APPLE_REMINDERS_LIMITATIONS = [
 ];
 
 /**
- * Task batching strategy for reducing context switches
+ * Core constraints applied to all prompts
  */
-export const TASK_BATCHING_CONSTRAINTS = [
-  '**Task batching strategy**: Group similar tasks together and complete in dedicated time blocks to minimize context switching.',
-  '  - Examples: Batch all code reviews together, all emails together, all meetings together',
-  '  - Naming pattern: "Code Review Batch — 3 PRs", "Email Processing — Inbox Zero", "Admin Batch — 5 tasks"',
-  '  - Reduces context switching by 60-80% compared to handling tasks individually',
-  '  - Schedule batches: Similar cognitive requirements, tools, or workflows = good batch candidates',
-  '  - Avoid: Batching unrelated tasks that require different mental modes',
+export const CORE_CONSTRAINTS = [
+  ...CONFIDENCE_CONSTRAINTS,
+  ...NOTE_FORMATTING_CONSTRAINTS,
+  ...BATCHING_CONSTRAINTS,
 ];
+
+
 
 /**
  * Deep work time block creation guidelines
@@ -223,13 +233,12 @@ export const DEEP_WORK_CONSTRAINTS = [
   '    - Task title suggests cognitively demanding work (开发, 设计, 分析, 规划, 重构, 架构) with duration ≥60min → Medium-High confidence (75-85%)',
   '    - Multiple related tasks (same project/list) with explicit times due today, totaling ≥60min → High confidence (90%) to batch into single block',
   '    - Task notes mention "deep work", "focused time", "uninterrupted" → High confidence (85-90%)',
-  '  - Time block length: 90-120 minutes recommended (optimal for flow state). Minimum 60 minutes. Tasks <60 minutes use Focus Sprint (15-30 min) instead.',
+  '  - Time block length: Minimum 60 minutes, with 90-120 minutes recommended to sustain flow. Split anything beyond 120 minutes into multiple sessions.',
   '  - Flow state entry: Takes ~20 minutes to enter deep focus. Longer blocks (2 hours) maximize productive time in flow state.',
   '  - Scheduling: Peak energy hours (9am-12pm). Plan 2 blocks per day (e.g., two 2-hour sessions = 4 hours total).',
   '  - Break intervals: 15-30 minutes between blocks. Longer breaks (60+ minutes) after 4 hours of deep work.',
   '  - Clear objectives: Each block has specific goal in notes.',
   '  - Anchor to due times: Start time = due time - duration. If past, move forward.',
-  '  - Beginner path: Start with 45-minute sessions, increase to 60 minutes after 2 weeks, advance to 90+ minutes once comfortable.',
 ];
 
 /**
