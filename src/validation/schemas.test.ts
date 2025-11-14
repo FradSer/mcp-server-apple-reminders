@@ -3,6 +3,8 @@
  * Tests for validation schemas
  */
 
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 import { z } from 'zod/v3';
 import {
   CreateReminderListSchema,
@@ -20,6 +22,38 @@ import {
   ValidationError,
   validateInput,
 } from './schemas.js';
+
+const TZ_FIXTURE_PATH = path.resolve(
+  process.cwd(),
+  'src/validation/__fixtures__/todayOnlySchemaRunner.ts',
+);
+
+const runTimezoneFixture = (params: {
+  tz: string;
+  dateString: string;
+  nowString: string;
+  expectThrow: boolean;
+}) => {
+  const { tz, dateString, nowString, expectThrow } = params;
+  execFileSync(
+    process.execPath,
+    [
+      '--import',
+      'tsx',
+      TZ_FIXTURE_PATH,
+      dateString,
+      nowString,
+      expectThrow ? 'expect-throw' : 'expect-ok',
+    ],
+    {
+      env: {
+        ...process.env,
+        TZ: tz,
+      },
+      stdio: 'pipe',
+    },
+  );
+};
 
 describe('ValidationSchemas', () => {
   beforeEach(() => {
@@ -379,6 +413,28 @@ describe('ValidationSchemas', () => {
       expect(() => TodayOnlyDateSchema.parse('2024-11-15 00:00:00')).toThrow(
         'Date must be today',
       );
+    });
+
+    it('should treat bare dates as local time in western timezones', () => {
+      expect(() =>
+        runTimezoneFixture({
+          tz: 'America/Los_Angeles',
+          dateString: '2024-11-14',
+          nowString: '2024-11-14T12:00:00-08:00',
+          expectThrow: false,
+        }),
+      ).not.toThrow();
+    });
+
+    it('should reject tomorrow bare dates in eastern timezones', () => {
+      expect(() =>
+        runTimezoneFixture({
+          tz: 'Asia/Tokyo',
+          dateString: '2024-11-15',
+          nowString: '2024-11-14T12:00:00+09:00',
+          expectThrow: true,
+        }),
+      ).not.toThrow();
     });
   });
 

@@ -15,6 +15,7 @@ const SAFE_TEXT_PATTERN = /^[\u0020-\u007E\u00A0-\uFFFF\n\r\t]*$/u;
 // Support multiple date formats: YYYY-MM-DD, YYYY-MM-DD HH:mm:ss, or ISO 8601
 // Basic validation - detailed parsing handled by Swift
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}.*$/;
+const BARE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 // URL validation that blocks internal/private network addresses and localhost
 // Prevents SSRF attacks while allowing legitimate external URLs
 const URL_PATTERN =
@@ -82,10 +83,31 @@ export const SafeDateSchema = z
 /**
  * Checks if a date string represents today in local timezone
  */
+// Bare YYYY-MM-DD strings parse in UTC in JS engines, so normalize them to local midnight.
+function parseDateRespectingLocalTimezone(dateString: string): Date | null {
+  if (BARE_DATE_PATTERN.test(dateString)) {
+    const [yearString, monthString, dayString] = dateString.split('-');
+    const year = Number(yearString);
+    const monthIndex = Number(monthString) - 1;
+    const day = Number(dayString);
+    if ([year, monthIndex, day].some(Number.isNaN)) {
+      return null;
+    }
+    return new Date(year, monthIndex, day);
+  }
+
+  const parsedDate = new Date(dateString);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate;
+}
+
 function isTodayDateString(dateString: string): boolean {
   try {
-    const inputDate = new Date(dateString);
-    if (Number.isNaN(inputDate.getTime())) {
+    const inputDate = parseDateRespectingLocalTimezone(dateString);
+    if (!inputDate) {
       return false;
     }
     const today = getTodayStart();
