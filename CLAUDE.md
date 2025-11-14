@@ -122,6 +122,28 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - Output: ISO 8601 format via `ISO8601DateFormatter().string(from:)`
 - **Critical**: All date parsing uses `en_US_POSIX` locale to avoid user locale issues
 
+**Timezone Handling Architecture:**
+- **Single Source of Truth**: Swift CLI handles ALL timezone conversions and date formatting
+- **TypeScript Layer Contract**: Passes date strings as-is without modification
+  - `reminderRepository.ts`: Removed `normalizeDueDateString()` call to avoid double conversion
+  - Date strings flow unchanged from Swift → TypeScript → MCP client
+- **Supported Formats**:
+  - ISO 8601 with timezone: `2025-11-15T08:30:00Z` (UTC), `2025-11-15T16:30:00+08:00` (Asia/Shanghai)
+  - Local format: `2025-11-15 16:30:00` (system timezone)
+  - Date only: `2025-11-15` (assumes start of day in system timezone)
+- **DST Handling**: Swift correctly handles DST transitions using EventKit's calendar system
+  - Spring forward: 2:00 AM → 3:00 AM (1-hour gap)
+  - Fall back: 2:00 AM occurs twice (with different offsets)
+- **Design Decision**: Eliminating TypeScript-layer timezone conversion prevents:
+  - Double conversion errors (Swift converts → TypeScript converts again)
+  - Timezone mismatch between server and client
+  - DST edge case bugs in JavaScript Date parsing
+- **Schema Validation**: `TodayOnlyDateSchema` in `schemas.ts` enforces today-only policy at validation layer
+  - Uses `getTodayStart()` and `getTomorrowStart()` from `dateUtils.ts` for local timezone comparison
+  - Optional constraint for specific use cases (e.g., daily-task-organizer prompt)
+- **Testing**: Comprehensive timezone integration tests in `timezoneIntegration.test.ts`
+  - 14 test cases covering UTC, Asia/Shanghai, America/New_York, DST transitions, edge cases
+
 **URL Storage Strategy:**
 - Dual storage: EventKit `url` field (single URL) + structured format in `notes` field
 - Notes format: `"Original note\n\nURLs:\n- https://url1.com\n- https://url2.com"`
