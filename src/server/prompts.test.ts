@@ -87,7 +87,7 @@ describe('prompt time horizons', () => {
 
     expect(text).toMatch(/### Questions/i);
     expect(text).toMatch(/### Verification log/i);
-    expect(text).toMatch(/CREATE calendar\.events time blocks/i); // Updated: removed "immediately"
+    expect(text).toMatch(/Create calendar blocks/i);
   });
 
   it('daily organizer includes work category constraints and daily capacity limits', () => {
