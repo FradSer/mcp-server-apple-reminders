@@ -41,7 +41,10 @@ describe('ErrorHandling', () => {
 
       expect(mockOperation).toHaveBeenCalled();
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain('Failed to test operation');
+      expect(result.content[0]).toHaveProperty('type', 'text');
+      expect(
+        (result.content[0] as { type: 'text'; text: string }).text,
+      ).toContain('Failed to test operation');
     });
 
     it('should handle ValidationError specially', async () => {
@@ -54,7 +57,10 @@ describe('ErrorHandling', () => {
       const result = await handleAsyncOperation(mockOperation, 'validate');
 
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toBe('Validation failed');
+      expect(result.content[0]).toHaveProperty('type', 'text');
+      expect((result.content[0] as { type: 'text'; text: string }).text).toBe(
+        'Validation failed',
+      );
     });
 
     it.each([
@@ -68,7 +74,10 @@ describe('ErrorHandling', () => {
 
         const result = await handleAsyncOperation(mockOperation, operationName);
 
-        expect(result.content[0].text).toContain(expectedText);
+        expect(result.content[0]).toHaveProperty('type', 'text');
+        expect(
+          (result.content[0] as { type: 'text'; text: string }).text,
+        ).toContain(expectedText);
       },
     );
 
@@ -84,7 +93,8 @@ describe('ErrorHandling', () => {
         'test operation',
       );
 
-      expect(result.content[0].text).toBe(
+      expect(result.content[0]).toHaveProperty('type', 'text');
+      expect((result.content[0] as { type: 'text'; text: string }).text).toBe(
         'Failed to test operation: Detailed error',
       );
 
@@ -106,7 +116,8 @@ describe('ErrorHandling', () => {
         'test operation',
       );
 
-      expect(result.content[0].text).toBe(
+      expect(result.content[0]).toHaveProperty('type', 'text');
+      expect((result.content[0] as { type: 'text'; text: string }).text).toBe(
         'Failed to test operation: System error occurred',
       );
 
@@ -128,7 +139,8 @@ describe('ErrorHandling', () => {
         );
 
         expect(result.isError).toBe(true);
-        expect(result.content[0].text).toBe(
+        expect(result.content[0]).toHaveProperty('type', 'text');
+        expect((result.content[0] as { type: 'text'; text: string }).text).toBe(
           'Failed to test operation: System error occurred',
         );
       },
@@ -147,7 +159,8 @@ describe('ErrorHandling', () => {
         'test operation',
       );
 
-      expect(result.content[0].text).toBe(
+      expect(result.content[0]).toHaveProperty('type', 'text');
+      expect((result.content[0] as { type: 'text'; text: string }).text).toBe(
         'Failed to test operation: Debug error',
       );
 

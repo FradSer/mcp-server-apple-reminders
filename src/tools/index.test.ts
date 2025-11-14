@@ -376,10 +376,11 @@ describe('Tools Index', () => {
 
           expect(result.isError).toBe(true);
           expect(result.content[0]?.type).toBe('text');
-          expect(String(result.content[0]?.text)).toContain(
-            'Input validation failed',
-          );
-          expect(String(result.content[0]?.text)).toContain(missingField);
+          const textContent = result.content[0] as
+            | { type: 'text'; text: string }
+            | undefined;
+          expect(textContent?.text).toContain('Input validation failed');
+          expect(textContent?.text).toContain(missingField);
         },
       );
     });

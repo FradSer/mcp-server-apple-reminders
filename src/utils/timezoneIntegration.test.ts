@@ -111,8 +111,10 @@ describe('Timezone Integration Tests', () => {
       expect(result1.dueDate).toBe('2025-11-15T08:30:00Z');
       expect(result2.dueDate).toBe('2025-11-15T16:30:00+08:00');
 
-      const date1 = new Date(result1.dueDate!);
-      const date2 = new Date(result2.dueDate!);
+      expect(result1.dueDate).toBeDefined();
+      expect(result2.dueDate).toBeDefined();
+      const date1 = new Date(result1.dueDate as string);
+      const date2 = new Date(result2.dueDate as string);
       expect(date1.getTime()).toBe(date2.getTime());
     });
   });
@@ -156,7 +158,8 @@ describe('Timezone Integration Tests', () => {
       });
 
       const result = await reminderRepository.findReminderById('est-1');
-      const date = new Date(result.dueDate!);
+      expect(result.dueDate).toBeDefined();
+      const date = new Date(result.dueDate as string);
 
       expect(date.toISOString()).toBe('2025-11-15T08:30:00.000Z');
     });
@@ -194,8 +197,10 @@ describe('Timezone Integration Tests', () => {
       expect(before.dueDate).toBe('2025-03-09T01:59:00-05:00');
       expect(after.dueDate).toBe('2025-03-09T03:00:00-04:00');
 
-      const beforeDate = new Date(before.dueDate!);
-      const afterDate = new Date(after.dueDate!);
+      expect(before.dueDate).toBeDefined();
+      expect(after.dueDate).toBeDefined();
+      const beforeDate = new Date(before.dueDate as string);
+      const afterDate = new Date(after.dueDate as string);
       const diffMinutes = (afterDate.getTime() - beforeDate.getTime()) / 60000;
 
       expect(diffMinutes).toBe(1);
@@ -231,8 +236,10 @@ describe('Timezone Integration Tests', () => {
       expect(first.dueDate).toBe('2025-11-02T02:00:00-04:00');
       expect(second.dueDate).toBe('2025-11-02T02:00:00-05:00');
 
-      const firstDate = new Date(first.dueDate!);
-      const secondDate = new Date(second.dueDate!);
+      expect(first.dueDate).toBeDefined();
+      expect(second.dueDate).toBeDefined();
+      const firstDate = new Date(first.dueDate as string);
+      const secondDate = new Date(second.dueDate as string);
       const diffHours = (secondDate.getTime() - firstDate.getTime()) / 3600000;
 
       expect(diffHours).toBe(1);
@@ -313,8 +320,10 @@ describe('Timezone Integration Tests', () => {
       expect(result1.dueDate).toBe('2025-11-15T23:59:59Z');
       expect(result2.dueDate).toBe('2025-11-16T00:00:00Z');
 
-      const date1 = new Date(result1.dueDate!);
-      const date2 = new Date(result2.dueDate!);
+      expect(result1.dueDate).toBeDefined();
+      expect(result2.dueDate).toBeDefined();
+      const date1 = new Date(result1.dueDate as string);
+      const date2 = new Date(result2.dueDate as string);
       expect(date2.getTime() - date1.getTime()).toBe(1000);
     });
 
