@@ -186,12 +186,10 @@ describe('Timezone Integration Tests', () => {
         lists: [],
       });
 
-      const before = await reminderRepository.findReminderById(
-        'dst-spring-before',
-      );
-      const after = await reminderRepository.findReminderById(
-        'dst-spring-after',
-      );
+      const before =
+        await reminderRepository.findReminderById('dst-spring-before');
+      const after =
+        await reminderRepository.findReminderById('dst-spring-after');
 
       expect(before.dueDate).toBe('2025-03-09T01:59:00-05:00');
       expect(after.dueDate).toBe('2025-03-09T03:00:00-04:00');
@@ -227,9 +225,8 @@ describe('Timezone Integration Tests', () => {
       });
 
       const first = await reminderRepository.findReminderById('dst-fall-first');
-      const second = await reminderRepository.findReminderById(
-        'dst-fall-second',
-      );
+      const second =
+        await reminderRepository.findReminderById('dst-fall-second');
 
       expect(first.dueDate).toBe('2025-11-02T02:00:00-04:00');
       expect(second.dueDate).toBe('2025-11-02T02:00:00-05:00');

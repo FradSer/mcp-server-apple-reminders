@@ -361,7 +361,9 @@ describe('ValidationSchemas', () => {
       const midnight = new Date('2024-11-14T00:00:00');
       jest.setSystemTime(midnight);
 
-      expect(() => TodayOnlyDateSchema.parse('2024-11-14 00:00:00')).not.toThrow();
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14 00:00:00'),
+      ).not.toThrow();
       expect(() => TodayOnlyDateSchema.parse('2024-11-13 23:59:59')).toThrow(
         'Date must be today',
       );
@@ -371,7 +373,9 @@ describe('ValidationSchemas', () => {
       const beforeMidnight = new Date('2024-11-14T23:59:59');
       jest.setSystemTime(beforeMidnight);
 
-      expect(() => TodayOnlyDateSchema.parse('2024-11-14 23:59:59')).not.toThrow();
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14 23:59:59'),
+      ).not.toThrow();
       expect(() => TodayOnlyDateSchema.parse('2024-11-15 00:00:00')).toThrow(
         'Date must be today',
       );
