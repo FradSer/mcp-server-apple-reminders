@@ -209,7 +209,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ### 提醒事项任务工具
 
-**工具名称**：`reminders.tasks`
+**工具名称**：`reminders_tasks`
 
 用于管理单个提醒事项任务，支持完整的 CRUD 操作。
 
@@ -280,7 +280,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ### 提醒事项列表工具
 
-**工具名称**：`reminders.lists`
+**工具名称**：`reminders_lists`
 
 用于管理提醒事项列表 —— 查看现有列表或创建新的列表来组织提醒事项。
 
@@ -318,7 +318,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ### 日历事件工具
 
-**工具名称**：`calendar.events`
+**工具名称**：`calendar_events`
 
 用于处理 EventKit 日历事件（时间块），提供 CRUD 能力。
 
@@ -355,7 +355,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 ### 日历集合工具
 
-**工具名称**：`calendar.calendars`
+**工具名称**：`calendar_calendars`
 
 用于返回 EventKit 中可用的日历集合。在创建或更新事件前可先确认日历标识。
 

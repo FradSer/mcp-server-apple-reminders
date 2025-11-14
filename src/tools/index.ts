@@ -35,10 +35,10 @@ import {
  * @returns Result of the tool call
  */
 const TOOL_ALIASES: Record<string, string> = {
-  reminders_tasks: 'reminders.tasks',
-  reminders_lists: 'reminders.lists',
-  calendar_events: 'calendar.events',
-  calendar_calendars: 'calendar.calendars',
+  'reminders.tasks': 'reminders_tasks',
+  'reminders.lists': 'reminders_lists',
+  'calendar.events': 'calendar_events',
+  'calendar.calendars': 'calendar_calendars',
 };
 
 function normalizeToolName(name: string): string {
@@ -66,7 +66,7 @@ export async function handleToolCall(
   const normalizedName = normalizeToolName(name);
 
   switch (normalizedName) {
-    case 'reminders.tasks': {
+    case 'reminders_tasks': {
       const action = args?.action;
       if (!args) {
         return createErrorResponse('No arguments provided');
@@ -82,11 +82,11 @@ export async function handleToolCall(
           return handleDeleteReminder(args);
         default:
           return createErrorResponse(
-            MESSAGES.ERROR.UNKNOWN_ACTION('reminders.tasks', String(action)),
+            MESSAGES.ERROR.UNKNOWN_ACTION('reminders_tasks', String(action)),
           );
       }
     }
-    case 'reminders.lists': {
+    case 'reminders_lists': {
       if (!args) {
         return createErrorResponse('No arguments provided');
       }
@@ -104,11 +104,11 @@ export async function handleToolCall(
           return handleDeleteReminderList(listsArgs);
         default:
           return createErrorResponse(
-            MESSAGES.ERROR.UNKNOWN_ACTION('reminders.lists', String(action)),
+            MESSAGES.ERROR.UNKNOWN_ACTION('reminders_lists', String(action)),
           );
       }
     }
-    case 'calendar.events': {
+    case 'calendar_events': {
       if (!args) {
         return createErrorResponse('No arguments provided');
       }
@@ -126,11 +126,11 @@ export async function handleToolCall(
           return handleDeleteCalendarEvent(calendarArgs);
         default:
           return createErrorResponse(
-            MESSAGES.ERROR.UNKNOWN_ACTION('calendar.events', String(action)),
+            MESSAGES.ERROR.UNKNOWN_ACTION('calendar_events', String(action)),
           );
       }
     }
-    case 'calendar.calendars': {
+    case 'calendar_calendars': {
       // Type narrowing: at this point args must be CalendarsToolArgs or undefined
       const calendarsArgs = args as CalendarsToolArgs | undefined;
       return handleReadCalendars(calendarsArgs);

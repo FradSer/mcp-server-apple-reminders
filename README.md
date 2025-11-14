@@ -209,7 +209,7 @@ This server now exposes service-scoped MCP tools that mirror Apple Reminders and
 
 ### Reminder Tasks Tool
 
-**Tool Name**: `reminders.tasks`
+**Tool Name**: `reminders_tasks`
 
 Manages individual reminder tasks with full CRUD support.
 
@@ -280,7 +280,7 @@ Manages individual reminder tasks with full CRUD support.
 
 ### Reminder Lists Tool
 
-**Tool Name**: `reminders.lists`
+**Tool Name**: `reminders_lists`
 
 Manages reminder lists - view existing lists or create new ones for organizing reminders.
 
@@ -318,7 +318,7 @@ Manages reminder lists - view existing lists or create new ones for organizing r
 
 ### Calendar Events Tool
 
-**Tool Name**: `calendar.events`
+**Tool Name**: `calendar_events`
 
 Handles EventKit calendar events (time blocks) with CRUD capabilities.
 
@@ -355,7 +355,7 @@ Handles EventKit calendar events (time blocks) with CRUD capabilities.
 
 ### Calendar Collections Tool
 
-**Tool Name**: `calendar.calendars`
+**Tool Name**: `calendar_calendars`
 
 Returns the available calendars from EventKit. This is useful before creating or updating events to confirm calendar identifiers.
 

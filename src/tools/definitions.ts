@@ -37,7 +37,7 @@ interface ExtendedTool {
 
 const _EXTENDED_TOOLS: ExtendedTool[] = [
   {
-    name: 'reminders.tasks',
+    name: 'reminders_tasks',
     description:
       'Manages reminder tasks. Supports reading, creating, updating, and deleting reminders.',
     inputSchema: {
@@ -119,7 +119,7 @@ const _EXTENDED_TOOLS: ExtendedTool[] = [
     },
   },
   {
-    name: 'reminders.lists',
+    name: 'reminders_lists',
     description:
       'Manages reminder lists. Supports reading, creating, updating, and deleting reminder lists.',
     inputSchema: {
@@ -157,7 +157,7 @@ const _EXTENDED_TOOLS: ExtendedTool[] = [
     },
   },
   {
-    name: 'calendar.events',
+    name: 'calendar_events',
     description:
       'Manages calendar events (time blocks). Supports reading, creating, updating, and deleting calendar events.',
     inputSchema: {
@@ -240,7 +240,7 @@ const _EXTENDED_TOOLS: ExtendedTool[] = [
     },
   },
   {
-    name: 'calendar.calendars',
+    name: 'calendar_calendars',
     description:
       'Reads calendar collections. Use to inspect available calendars before creating or updating events.',
     inputSchema: {

@@ -28,10 +28,10 @@ export const getConfidenceLevel = (percentage: number): ConfidenceLevel => {
  */
 export interface ToolCall {
   tool:
-    | 'reminders.tasks'
-    | 'reminders.lists'
-    | 'calendar.events'
-    | 'calendar.calendars';
+    | 'reminders_tasks'
+    | 'reminders_lists'
+    | 'calendar_events'
+    | 'calendar_calendars';
   args: Record<string, unknown>;
 }
 
@@ -215,8 +215,6 @@ export const CORE_CONSTRAINTS = [
   ...BATCHING_CONSTRAINTS,
 ];
 
-
-
 /**
  * Deep work time block execution details (trigger rules moved to TIME_BLOCK_CREATION_CONSTRAINTS)
  */
@@ -263,13 +261,14 @@ export const DAILY_CAPACITY_CONSTRAINTS = [
 /**
  * Time format specification (single source of truth)
  */
-export const TIME_FORMAT_SPEC = 'YYYY-MM-DD HH:mm:ss (local time, no timezone suffix like "Z" or "+08:00")';
+export const TIME_FORMAT_SPEC =
+  'YYYY-MM-DD HH:mm:ss (local time, no timezone suffix like "Z" or "+08:00")';
 
 /**
  * Time block creation strict rules (includes trigger conditions from former DEEP_WORK_CONSTRAINTS)
  */
 export const TIME_BLOCK_CREATION_CONSTRAINTS = [
-  '**Time block creation triggers**: CREATE calendar.events time blocks when tasks meet ANY criteria:',
+  '**Time block creation triggers**: CREATE calendar_events time blocks when tasks meet ANY criteria:',
   '  - Task has duration estimate ≥60 minutes with due date today (applies DEEP_WORK_CONSTRAINTS for execution details)',
   '  - Task title suggests cognitively demanding work (开发, 设计, 分析, 规划, 重构, 架构) with duration ≥60min',
   '  - Multiple related tasks with explicit times due today, totaling ≥60 minutes, that can be batched',
