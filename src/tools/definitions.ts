@@ -11,7 +11,31 @@ import {
   REMINDER_ACTIONS,
 } from '../types/index.js';
 
-export const TOOLS: Tool[] = [
+/**
+ * Extended JSON Schema with dependentSchemas support
+ * This extends the base schema type to include the JSON Schema Draft 2019-09 dependentSchemas keyword
+ */
+interface ExtendedJSONSchema {
+  type?: string;
+  properties?: Record<string, unknown>;
+  required?: string[];
+  dependentSchemas?: Record<string, unknown>;
+  enum?: unknown[];
+  description?: string;
+  default?: unknown;
+  format?: string;
+}
+
+/**
+ * Extended Tool type that supports dependentSchemas in inputSchema
+ */
+interface ExtendedTool {
+  name: string;
+  description?: string;
+  inputSchema: ExtendedJSONSchema;
+}
+
+const _EXTENDED_TOOLS: ExtendedTool[] = [
   {
     name: 'reminders.tasks',
     description:
@@ -237,3 +261,9 @@ export const TOOLS: Tool[] = [
     },
   },
 ];
+
+/**
+ * Export TOOLS as Tool[] for MCP server compatibility
+ * The dependentSchemas are preserved at runtime even though TypeScript doesn't type-check them
+ */
+export const TOOLS = _EXTENDED_TOOLS as unknown as Tool[];
