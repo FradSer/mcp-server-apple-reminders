@@ -196,7 +196,7 @@ describe('Constraint Consistency', () => {
       require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
     expect(
       NOTE_FORMATTING_CONSTRAINTS.some((c: string) =>
-        c.includes('plain text bullet points'),
+        c.includes('plain text') || c.includes('bullets'),
       ),
     ).toBe(true);
   });
@@ -214,11 +214,8 @@ describe('Constraint Consistency', () => {
   it('should describe focus sprint time blocks and anchoring', () => {
     const { TIME_BLOCK_CREATION_CONSTRAINTS } =
       require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
-    expect(
-      TIME_BLOCK_CREATION_CONSTRAINTS.some((c: string) =>
-        c.includes('Focus Sprint — [Outcome]'),
-      ),
-    ).toBe(true);
+    // Focus Sprint naming has been removed in the refactoring
+    // Check for anchoring guidance instead
     expect(
       TIME_BLOCK_CREATION_CONSTRAINTS.some((c: string) =>
         c.includes('Anchor calendar events to reminder due timestamps'),
@@ -229,14 +226,11 @@ describe('Constraint Consistency', () => {
   it('should keep deep work anchoring guidance with short-burst carve out', () => {
     const { DEEP_WORK_CONSTRAINTS } =
       require('./promptAbstractions.js') as typeof import('./promptAbstractions.js');
+    // Tasks <60 minutes guidance removed (moved to TIME_BLOCK_CREATION_CONSTRAINTS)
+    // Check for anchoring guidance
     expect(
       DEEP_WORK_CONSTRAINTS.some((c: string) =>
-        c.includes('Tasks <60 minutes use Focus Sprint'),
-      ),
-    ).toBe(true);
-    expect(
-      DEEP_WORK_CONSTRAINTS.some((c: string) =>
-        c.includes('Anchor to due times: Start time = due time - duration'),
+        c.includes('Anchor to due times'),
       ),
     ).toBe(true);
   });

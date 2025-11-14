@@ -27,6 +27,7 @@ import {
   SHALLOW_TASKS_CONSTRAINTS,
   TASK_BATCHING_CONSTRAINTS,
   TIME_BLOCK_CREATION_CONSTRAINTS,
+  TIME_FORMAT_SPEC,
   WORKLOAD_CALIBRATION,
 } from './promptAbstractions.js';
 
@@ -142,7 +143,7 @@ const buildDailyTaskOrganizerPrompt = (
             'Classify in-scope tasks: Deep Work blocks follow the shared guidelines (minimum 60 minutes, aim for 90-120) while Shallow tasks stay 15-60 minutes with automatic ~20% buffer; split anything longer than 120 minutes into multiple blocks or reminders.',
             'Create calendar blocks for in-scope tasks lasting ≥60 minutes (title format "Deep Work — [Project]") and align them to today’s due windows.',
             'Create missing gap reminders or optimize existing ones only when the due date stays today and duplicates are avoided.',
-            `Generate due date strings as "${timeContext.currentDate} HH:mm:ss". Push overdue times into the next viable slot.`,
+            `Generate due date strings in format "YYYY-MM-DD HH:mm:ss" (e.g., "${timeContext.currentDate} HH:mm:ss"). Push overdue times into the next viable slot.`,
             'Batch actions by type while applying the confidence-gating policy from the core constraints.',
           ],
           constraints: [
@@ -150,7 +151,7 @@ const buildDailyTaskOrganizerPrompt = (
             'Take initiative based on urgency signals but stay within today unless the user explicitly approves deferring.',
             `Operate under a strict today-only policy: mention non-today reminders in "Out-of-scope items" and leave them untouched.`,
             'Ask before creating any reminder or calendar block that would land after today.',
-            `Use exact format "${timeContext.currentDate} HH:mm:ss" for every due date you set.`,
+            `Use format "YYYY-MM-DD HH:mm:ss" for every due date (e.g., "${timeContext.currentDate} HH:mm:ss").`,
             'Do not modify recurrence rules, attachments, or sub-tasks unless explicitly requested.',
             'Assume standard working hours (9am-6pm) and reasonable task durations unless context suggests otherwise.',
             'Do not place concept-only analysis or planning notes inside the action queue; keep them under Current state, Gaps found, Questions, or Out-of-scope.',
@@ -178,7 +179,7 @@ const buildDailyTaskOrganizerPrompt = (
             'Actions respect the confidence-gating policy and each entry states its confidence and rationale.',
             'Calendar tool is used for every ≥60-minute task confirmed for today (no placeholders).',
             'Deep work blocks follow the shared deep-work guidelines (≥60 minutes, ideal 90-120, max 4 hours total) and shallow tasks stay 15-60 minutes with batching hints.',
-            `All due dates labeled "today" use ${timeContext.currentDate} HH:mm:ss.`,
+            `All due dates labeled "today" use format "YYYY-MM-DD HH:mm:ss" (e.g., ${timeContext.currentDate} HH:mm:ss).`,
             'Out-of-scope section quickly explains what was skipped and why.',
           ],
           calibration: [
