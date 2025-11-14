@@ -122,6 +122,27 @@ describe('ReminderRepository', () => {
       expect(result.url).toBeUndefined();
       expect(result.dueDate).toBeUndefined();
     });
+
+    it('should pass through due dates from Swift CLI without normalization', async () => {
+      const mockReminders: Partial<Reminder>[] = [
+        {
+          id: 'ad-1',
+          title: 'AdSense Fix',
+          isCompleted: false,
+          list: 'Work',
+          dueDate: '2025-11-15T08:30:00Z',
+        },
+      ];
+
+      mockExecuteCli.mockResolvedValue({
+        reminders: mockReminders,
+        lists: [],
+      });
+
+      const result = await repository.findReminderById('ad-1');
+
+      expect(result.dueDate).toBe('2025-11-15T08:30:00Z');
+    });
   });
 
   describe('findReminders', () => {
@@ -203,6 +224,28 @@ describe('ReminderRepository', () => {
       const result = await repository.findReminders();
 
       expect(result).toHaveLength(1);
+    });
+
+    it('should pass through due dates from Swift CLI when listing reminders', async () => {
+      const mockReminders: Partial<Reminder>[] = [
+        {
+          id: '99',
+          title: 'Pass Through Date',
+          isCompleted: false,
+          list: 'Default',
+          dueDate: '2025-11-20T02:00:00Z',
+        },
+      ];
+
+      mockExecuteCli.mockResolvedValue({
+        reminders: mockReminders,
+        lists: [],
+      });
+      mockApplyReminderFilters.mockImplementation((reminders) => reminders);
+
+      const result = await repository.findReminders();
+
+      expect(result[0].dueDate).toBe('2025-11-20T02:00:00Z');
     });
   });
 
@@ -481,13 +524,6 @@ describe('ReminderRepository', () => {
         '--name',
         'Test List',
       ]);
-    });
-  });
-
-  describe('reminderRepository instance', () => {
-    it('should export a reminderRepository instance', () => {
-      expect(reminderRepository).toBeDefined();
-      expect(typeof reminderRepository.findReminders).toBe('function');
     });
   });
 });

@@ -6,50 +6,49 @@ import { TOOLS } from './definitions.js';
 
 describe('Tools Definitions', () => {
   describe('TOOLS export', () => {
-    it('should export TOOLS array', () => {
-      expect(TOOLS).toBeDefined();
-      expect(Array.isArray(TOOLS)).toBe(true);
-      expect(TOOLS.length).toBe(2);
-    });
+    it.each([
+      {
+        name: 'reminders_tasks',
+        description: 'Manages reminder tasks',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      {
+        name: 'reminders_lists',
+        description: 'Manages reminder lists',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      {
+        name: 'calendar_events',
+        description: 'Manages calendar events',
+        actions: ['read', 'create', 'update', 'delete'],
+      },
+      {
+        name: 'calendar_calendars',
+        description: 'Reads calendar collections',
+        actions: ['read'],
+      },
+    ])(
+      'should define $name tool with correct schema and actions',
+      ({ name, description, actions }) => {
+        const tool = TOOLS.find((t) => t.name === name);
+        expect(tool).toBeDefined();
+        expect(tool?.description).toContain(description);
+        expect(tool?.inputSchema).toBeDefined();
+        expect(tool?.inputSchema.type).toBe('object');
 
-    it('should contain reminders tool definition', () => {
-      const remindersTool = TOOLS.find((tool) => tool.name === 'reminders');
-      expect(remindersTool).toBeDefined();
-      expect(remindersTool?.description).toContain('Manages reminders');
-      expect(remindersTool?.inputSchema).toBeDefined();
-      expect(remindersTool?.inputSchema.type).toBe('object');
-    });
-
-    it('should contain lists tool definition', () => {
-      const listsTool = TOOLS.find((tool) => tool.name === 'lists');
-      expect(listsTool).toBeDefined();
-      expect(listsTool?.description).toContain('Manages reminder lists');
-      expect(listsTool?.inputSchema).toBeDefined();
-      expect(listsTool?.inputSchema.type).toBe('object');
-    });
-
-    it('should have correct reminder actions enum', () => {
-      const remindersTool = TOOLS.find((tool) => tool.name === 'reminders');
-      const actionEnum = (
-        remindersTool?.inputSchema.properties?.action as
-          | { enum?: readonly string[] }
-          | undefined
-      )?.enum;
-      expect(actionEnum).toEqual(['read', 'create', 'update', 'delete']);
-    });
-
-    it('should have correct list actions enum', () => {
-      const listsTool = TOOLS.find((tool) => tool.name === 'lists');
-      const actionEnum = (
-        listsTool?.inputSchema.properties?.action as
-          | { enum?: readonly string[] }
-          | undefined
-      )?.enum;
-      expect(actionEnum).toEqual(['read', 'create', 'update', 'delete']);
-    });
+        const actionEnum = (
+          tool?.inputSchema.properties?.action as
+            | { enum?: readonly string[] }
+            | undefined
+        )?.enum;
+        expect(actionEnum).toEqual(actions);
+      },
+    );
 
     it('should have correct dueWithin options enum', () => {
-      const remindersTool = TOOLS.find((tool) => tool.name === 'reminders');
+      const remindersTool = TOOLS.find(
+        (tool) => tool.name === 'reminders_tasks',
+      );
       const dueWithinEnum = (
         remindersTool?.inputSchema.properties?.dueWithin as
           | { enum?: readonly string[] }
@@ -62,6 +61,12 @@ describe('Tools Definitions', () => {
         'overdue',
         'no-date',
       ]);
+    });
+
+    it('should enforce tool name pattern compliance', () => {
+      const pattern = /^[a-zA-Z0-9_-]+$/;
+      const invalidTool = TOOLS.find((tool) => !pattern.test(tool.name));
+      expect(invalidTool).toBeUndefined();
     });
   });
 });

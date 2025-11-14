@@ -3,6 +3,8 @@
  * Tests for validation schemas
  */
 
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
 import { z } from 'zod/v3';
 import {
   CreateReminderListSchema,
@@ -14,11 +16,44 @@ import {
   SafeNoteSchema,
   SafeTextSchema,
   SafeUrlSchema,
+  TodayOnlyDateSchema,
   UpdateReminderListSchema,
   UpdateReminderSchema,
   ValidationError,
   validateInput,
 } from './schemas.js';
+
+const TZ_FIXTURE_PATH = path.resolve(
+  process.cwd(),
+  'src/validation/__fixtures__/todayOnlySchemaRunner.ts',
+);
+
+const runTimezoneFixture = (params: {
+  tz: string;
+  dateString: string;
+  nowString: string;
+  expectThrow: boolean;
+}) => {
+  const { tz, dateString, nowString, expectThrow } = params;
+  execFileSync(
+    process.execPath,
+    [
+      '--import',
+      'tsx',
+      TZ_FIXTURE_PATH,
+      dateString,
+      nowString,
+      expectThrow ? 'expect-throw' : 'expect-ok',
+    ],
+    {
+      env: {
+        ...process.env,
+        TZ: tz,
+      },
+      stdio: 'pipe',
+    },
+  );
+};
 
 describe('ValidationSchemas', () => {
   beforeEach(() => {
@@ -152,38 +187,71 @@ describe('ValidationSchemas', () => {
   });
 
   describe('Tool-specific schemas', () => {
-    describe('CreateReminderSchema', () => {
-      it('should validate create reminder input', () => {
-        const validInput = {
-          title: 'Test reminder',
-          dueDate: '2024-01-15',
-          note: 'Test note',
-          url: 'https://example.com',
-          targetList: 'Work',
-        };
+    describe('Action schemas validation patterns', () => {
+      it.each([
+        {
+          name: 'CreateReminderSchema',
+          schema: CreateReminderSchema,
+          validInput: {
+            title: 'Test reminder',
+            dueDate: '2024-01-15',
+            note: 'Test note',
+            url: 'https://example.com',
+            targetList: 'Work',
+          },
+          minimalInput: { title: 'Test reminder' },
+          requiredFields: ['title'],
+        },
+        {
+          name: 'UpdateReminderSchema',
+          schema: UpdateReminderSchema,
+          validInput: {
+            id: '123',
+            title: 'Updated title',
+            dueDate: '2024-01-15',
+            note: 'Updated note',
+            url: 'https://example.com',
+            completed: false,
+            targetList: 'Work',
+          },
+          minimalInput: { id: '123' },
+          requiredFields: ['id'],
+        },
+        {
+          name: 'DeleteReminderSchema',
+          schema: DeleteReminderSchema,
+          validInput: { id: '123' },
+          minimalInput: { id: '123' },
+          requiredFields: ['id'],
+        },
+        {
+          name: 'CreateReminderListSchema',
+          schema: CreateReminderListSchema,
+          validInput: { name: 'New List' },
+          minimalInput: { name: 'New List' },
+          requiredFields: ['name'],
+        },
+      ])(
+        '$name validates correctly',
+        ({ schema, validInput, minimalInput, requiredFields }) => {
+          // Should validate full input
+          expect(() => schema.parse(validInput)).not.toThrow();
 
-        expect(() => CreateReminderSchema.parse(validInput)).not.toThrow();
-      });
+          // Should validate minimal input with only required fields
+          expect(() => schema.parse(minimalInput)).not.toThrow();
 
-      it('should require title', () => {
-        const invalidInput = {
-          dueDate: '2024-01-15',
-        };
-
-        expect(() => CreateReminderSchema.parse(invalidInput)).toThrow();
-      });
-
-      it('should make other fields optional', () => {
-        const minimalInput = {
-          title: 'Test reminder',
-        };
-
-        expect(() => CreateReminderSchema.parse(minimalInput)).not.toThrow();
-      });
+          // Should reject input missing required fields
+          for (const field of requiredFields) {
+            const invalidInput = { ...minimalInput } as Record<string, unknown>;
+            delete invalidInput[field];
+            expect(() => schema.parse(invalidInput)).toThrow();
+          }
+        },
+      );
     });
 
     describe('ReadRemindersSchema', () => {
-      it('should validate read reminders input', () => {
+      it('should validate read reminders input with all optional fields', () => {
         const validInput = {
           id: '123',
           filterList: 'Work',
@@ -193,84 +261,18 @@ describe('ValidationSchemas', () => {
         };
 
         expect(() => ReadRemindersSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should make all fields optional', () => {
         expect(() => ReadRemindersSchema.parse({})).not.toThrow();
       });
     });
 
-    describe('UpdateReminderSchema', () => {
-      it('should validate update reminder input', () => {
-        const validInput = {
-          id: '123',
-          title: 'Updated title',
-          dueDate: '2024-01-15',
-          note: 'Updated note',
-          url: 'https://example.com',
-          completed: false,
-          targetList: 'Work',
-        };
-
-        expect(() => UpdateReminderSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require id', () => {
-        const invalidInput = {
-          title: 'Updated title',
-        };
-
-        expect(() => UpdateReminderSchema.parse(invalidInput)).toThrow();
-      });
-
-      it('should make other fields optional', () => {
-        const minimalInput = {
-          id: '123',
-        };
-
-        expect(() => UpdateReminderSchema.parse(minimalInput)).not.toThrow();
-      });
-    });
-
-    describe('DeleteReminderSchema', () => {
-      it('should validate delete reminder input', () => {
-        const validInput = {
-          id: '123',
-        };
-
-        expect(() => DeleteReminderSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require id', () => {
-        expect(() => DeleteReminderSchema.parse({})).toThrow();
-      });
-    });
-
-    describe('CreateReminderListSchema', () => {
-      it('should validate create list input', () => {
-        const validInput = {
-          name: 'New List',
-        };
-
-        expect(() => CreateReminderListSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require name', () => {
-        expect(() => CreateReminderListSchema.parse({})).toThrow();
-      });
-    });
-
     describe('UpdateReminderListSchema', () => {
-      it('should validate update list input', () => {
+      it('should validate update list input with both required fields', () => {
         const validInput = {
           name: 'Old Name',
           newName: 'New Name',
         };
 
         expect(() => UpdateReminderListSchema.parse(validInput)).not.toThrow();
-      });
-
-      it('should require both name and newName', () => {
         expect(() => UpdateReminderListSchema.parse({ name: 'Old' })).toThrow();
         expect(() =>
           UpdateReminderListSchema.parse({ newName: 'New' }),
@@ -328,6 +330,111 @@ describe('ValidationSchemas', () => {
         expect(error).toBeInstanceOf(ValidationError);
         expect((error as Error).message).toContain('cannot be empty');
       }
+    });
+  });
+
+  describe('TodayOnlyDateSchema', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should accept today dates in various formats', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-14')).not.toThrow();
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14 10:30:00'),
+      ).not.toThrow();
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14T10:30:00Z'),
+      ).not.toThrow();
+    });
+
+    it('should reject yesterday dates', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-13')).toThrow(
+        'Date must be today',
+      );
+      expect(() => TodayOnlyDateSchema.parse('2024-11-13 23:59:59')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should reject tomorrow dates', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-15')).toThrow(
+        'Date must be today',
+      );
+      expect(() => TodayOnlyDateSchema.parse('2024-11-15 00:00:00')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should reject invalid date format', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('not-a-date')).toThrow();
+      expect(() => TodayOnlyDateSchema.parse('11/14/2024')).toThrow();
+    });
+
+    it('should accept undefined as optional', () => {
+      expect(() => TodayOnlyDateSchema.parse(undefined)).not.toThrow();
+    });
+
+    it('should handle edge case at midnight', () => {
+      const midnight = new Date('2024-11-14T00:00:00');
+      jest.setSystemTime(midnight);
+
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14 00:00:00'),
+      ).not.toThrow();
+      expect(() => TodayOnlyDateSchema.parse('2024-11-13 23:59:59')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should handle edge case before midnight', () => {
+      const beforeMidnight = new Date('2024-11-14T23:59:59');
+      jest.setSystemTime(beforeMidnight);
+
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14 23:59:59'),
+      ).not.toThrow();
+      expect(() => TodayOnlyDateSchema.parse('2024-11-15 00:00:00')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should treat bare dates as local time in western timezones', () => {
+      expect(() =>
+        runTimezoneFixture({
+          tz: 'America/Los_Angeles',
+          dateString: '2024-11-14',
+          nowString: '2024-11-14T12:00:00-08:00',
+          expectThrow: false,
+        }),
+      ).not.toThrow();
+    });
+
+    it('should reject tomorrow bare dates in eastern timezones', () => {
+      expect(() =>
+        runTimezoneFixture({
+          tz: 'Asia/Tokyo',
+          dateString: '2024-11-15',
+          nowString: '2024-11-14T12:00:00+09:00',
+          expectThrow: true,
+        }),
+      ).not.toThrow();
     });
   });
 

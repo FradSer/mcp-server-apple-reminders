@@ -30,7 +30,7 @@ describe('index', () => {
     mockFindProjectRoot.mockReturnValue('/test/project');
     mockJoin.mockImplementation((...args) => args.join('/'));
     mockReadFileSync.mockReturnValue(
-      JSON.stringify({ name: 'mcp-server-apple-reminders', version: '0.11.0' }),
+      JSON.stringify({ name: 'mcp-server-apple-events', version: '0.11.0' }),
     );
     mockStartServer.mockResolvedValue(undefined);
   });
@@ -46,7 +46,7 @@ describe('index', () => {
       'utf-8',
     );
     expect(mockStartServer).toHaveBeenCalledWith({
-      name: 'mcp-server-apple-reminders',
+      name: 'mcp-server-apple-events',
       version: '0.11.0',
     });
   });
@@ -56,7 +56,7 @@ describe('index', () => {
     mockFindProjectRoot.mockReturnValue('/test/project');
     mockJoin.mockImplementation((...args) => args.join('/'));
     mockReadFileSync.mockReturnValue(
-      JSON.stringify({ name: 'mcp-server-apple-reminders', version: '0.11.0' }),
+      JSON.stringify({ name: 'mcp-server-apple-events', version: '0.11.0' }),
     );
 
     const serverError = new Error('Server startup failed');
@@ -88,7 +88,7 @@ describe('index', () => {
     findProjectRootMock.mockReturnValue('/test/project');
     joinMock.mockImplementation((...args) => args.join('/'));
     readFileSyncMock.mockReturnValue(
-      JSON.stringify({ name: 'mcp-server-apple-reminders', version: '0.11.0' }),
+      JSON.stringify({ name: 'mcp-server-apple-events', version: '0.11.0' }),
     );
     startServerMock.mockRejectedValue(serverError);
 

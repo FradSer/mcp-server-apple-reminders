@@ -26,9 +26,10 @@ async function main() {
   }
 
   const scriptDir = path.resolve(process.cwd(), 'src', 'swift');
-  const sourceFile = path.join(scriptDir, 'RemindersCLI.swift');
+  const sourceFile = path.join(scriptDir, 'EventKitCLI.swift');
+  const infoPlistFile = path.join(scriptDir, 'Info.plist');
   const binDir = path.resolve(process.cwd(), 'bin');
-  const outputFile = path.join(binDir, 'RemindersCLI');
+  const outputFile = path.join(binDir, 'EventKitCLI');
 
   try {
     await fs.access(sourceFile);
@@ -37,9 +38,21 @@ async function main() {
     process.exit(1);
   }
 
+  try {
+    await fs.access(infoPlistFile);
+  } catch (_error) {
+    console.error(`Error: Info.plist not found: ${infoPlistFile}`);
+    console.error(
+      'Info.plist is required for EventKit permissions to work properly.',
+    );
+    process.exit(1);
+  }
+
   await fs.mkdir(binDir, { recursive: true });
 
-  const compileCommand = `swiftc -o "${outputFile}" "${sourceFile}" -framework EventKit -framework Foundation`;
+  // Use -Xlinker to embed Info.plist into the binary
+  // This is required for macOS to show permission dialogs for EventKit access
+  const compileCommand = `swiftc -o "${outputFile}" "${sourceFile}" -framework EventKit -framework Foundation -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "${infoPlistFile}"`;
 
   console.log(`Compiling ${sourceFile}...`);
 

@@ -4,6 +4,7 @@
  */
 
 import type { Reminder } from '../types/index.js';
+import { getTodayStart, getTomorrowStart, getWeekEnd } from './dateUtils.js';
 
 /**
  * Date range filters for reminders
@@ -28,14 +29,9 @@ interface DateBoundaries {
  * Creates standardized date boundaries for filtering operations
  */
 function createDateBoundaries(): DateBoundaries {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const weekEnd = new Date(today);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  const today = getTodayStart();
+  const tomorrow = getTomorrowStart();
+  const weekEnd = getWeekEnd();
 
   return { today, tomorrow, weekEnd };
 }
@@ -66,7 +62,7 @@ function filterRemindersByDate(
         return dueDate >= today && dueDate < tomorrow;
 
       case 'tomorrow': {
-        const dayAfterTomorrow = new Date(tomorrow);
+        const dayAfterTomorrow = getTomorrowStart();
         dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
         return dueDate >= tomorrow && dueDate < dayAfterTomorrow;
       }
