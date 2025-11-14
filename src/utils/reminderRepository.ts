@@ -19,12 +19,11 @@ import {
   addOptionalBooleanArg,
   nullToUndefined,
 } from './helpers.js';
-import { normalizeDueDateString } from './timeHelpers.js';
 
 class ReminderRepository {
   private mapReminder(reminder: ReminderJSON): Reminder {
-    const normalizedDueDate = normalizeDueDateString(reminder.dueDate);
-    const formattedDueDate = normalizedDueDate ?? reminder.dueDate ?? undefined;
+    // Pass dueDate as-is from Swift CLI to avoid double timezone conversion
+    const formattedDueDate = reminder.dueDate ?? undefined;
 
     const normalizedReminder = nullToUndefined(reminder, [
       'notes',

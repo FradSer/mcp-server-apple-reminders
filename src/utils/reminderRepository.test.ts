@@ -8,21 +8,15 @@ import { executeCli } from './cliExecutor.js';
 import type { ReminderFilters } from './dateFiltering.js';
 import { applyReminderFilters } from './dateFiltering.js';
 import { reminderRepository } from './reminderRepository.js';
-import { normalizeDueDateString } from './timeHelpers.js';
 
 // Mock dependencies
 jest.mock('./cliExecutor.js');
 jest.mock('./dateFiltering.js');
-jest.mock('./timeHelpers.js', () => ({
-  normalizeDueDateString: jest.fn((value) => value),
-}));
 
 const mockExecuteCli = executeCli as jest.MockedFunction<typeof executeCli>;
 const mockApplyReminderFilters = applyReminderFilters as jest.MockedFunction<
   typeof applyReminderFilters
 >;
-const mockNormalizeDueDateString =
-  normalizeDueDateString as jest.MockedFunction<typeof normalizeDueDateString>;
 
 describe('ReminderRepository', () => {
   const repository = reminderRepository;
@@ -129,7 +123,7 @@ describe('ReminderRepository', () => {
       expect(result.dueDate).toBeUndefined();
     });
 
-    it('should normalize ISO due dates returned by the CLI', async () => {
+    it('should pass through due dates from Swift CLI without normalization', async () => {
       const mockReminders: Partial<Reminder>[] = [
         {
           id: 'ad-1',
@@ -140,13 +134,6 @@ describe('ReminderRepository', () => {
         },
       ];
 
-      mockNormalizeDueDateString.mockImplementation((value) => {
-        if (value === '2025-11-15T08:30:00Z') {
-          return '2025-11-14 16:30:00';
-        }
-        return value ?? undefined;
-      });
-
       mockExecuteCli.mockResolvedValue({
         reminders: mockReminders,
         lists: [],
@@ -154,10 +141,7 @@ describe('ReminderRepository', () => {
 
       const result = await repository.findReminderById('ad-1');
 
-      expect(mockNormalizeDueDateString).toHaveBeenCalledWith(
-        '2025-11-15T08:30:00Z',
-      );
-      expect(result.dueDate).toBe('2025-11-14 16:30:00');
+      expect(result.dueDate).toBe('2025-11-15T08:30:00Z');
     });
   });
 
@@ -242,23 +226,16 @@ describe('ReminderRepository', () => {
       expect(result).toHaveLength(1);
     });
 
-    it('should surface normalized due dates when listing reminders', async () => {
+    it('should pass through due dates from Swift CLI when listing reminders', async () => {
       const mockReminders: Partial<Reminder>[] = [
         {
           id: '99',
-          title: 'Normalize Me',
+          title: 'Pass Through Date',
           isCompleted: false,
           list: 'Default',
           dueDate: '2025-11-20T02:00:00Z',
         },
       ];
-
-      mockNormalizeDueDateString.mockImplementation((value) => {
-        if (value === '2025-11-20T02:00:00Z') {
-          return '2025-11-20 10:00:00';
-        }
-        return value ?? undefined;
-      });
 
       mockExecuteCli.mockResolvedValue({
         reminders: mockReminders,
@@ -268,7 +245,7 @@ describe('ReminderRepository', () => {
 
       const result = await repository.findReminders();
 
-      expect(result[0].dueDate).toBe('2025-11-20 10:00:00');
+      expect(result[0].dueDate).toBe('2025-11-20T02:00:00Z');
     });
   });
 

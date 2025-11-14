@@ -14,6 +14,7 @@ import {
   SafeNoteSchema,
   SafeTextSchema,
   SafeUrlSchema,
+  TodayOnlyDateSchema,
   UpdateReminderListSchema,
   UpdateReminderSchema,
   ValidationError,
@@ -295,6 +296,85 @@ describe('ValidationSchemas', () => {
         expect(error).toBeInstanceOf(ValidationError);
         expect((error as Error).message).toContain('cannot be empty');
       }
+    });
+  });
+
+  describe('TodayOnlyDateSchema', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should accept today dates in various formats', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-14')).not.toThrow();
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14 10:30:00'),
+      ).not.toThrow();
+      expect(() =>
+        TodayOnlyDateSchema.parse('2024-11-14T10:30:00Z'),
+      ).not.toThrow();
+    });
+
+    it('should reject yesterday dates', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-13')).toThrow(
+        'Date must be today',
+      );
+      expect(() => TodayOnlyDateSchema.parse('2024-11-13 23:59:59')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should reject tomorrow dates', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-15')).toThrow(
+        'Date must be today',
+      );
+      expect(() => TodayOnlyDateSchema.parse('2024-11-15 00:00:00')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should reject invalid date format', () => {
+      const now = new Date('2024-11-14T10:30:00');
+      jest.setSystemTime(now);
+
+      expect(() => TodayOnlyDateSchema.parse('not-a-date')).toThrow();
+      expect(() => TodayOnlyDateSchema.parse('11/14/2024')).toThrow();
+    });
+
+    it('should accept undefined as optional', () => {
+      expect(() => TodayOnlyDateSchema.parse(undefined)).not.toThrow();
+    });
+
+    it('should handle edge case at midnight', () => {
+      const midnight = new Date('2024-11-14T00:00:00');
+      jest.setSystemTime(midnight);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-14 00:00:00')).not.toThrow();
+      expect(() => TodayOnlyDateSchema.parse('2024-11-13 23:59:59')).toThrow(
+        'Date must be today',
+      );
+    });
+
+    it('should handle edge case before midnight', () => {
+      const beforeMidnight = new Date('2024-11-14T23:59:59');
+      jest.setSystemTime(beforeMidnight);
+
+      expect(() => TodayOnlyDateSchema.parse('2024-11-14 23:59:59')).not.toThrow();
+      expect(() => TodayOnlyDateSchema.parse('2024-11-15 00:00:00')).toThrow(
+        'Date must be today',
+      );
     });
   });
 
