@@ -323,7 +323,7 @@ Shared abstractions for consistent behavior across all prompt templates:
 **Shared Constraint Patterns:**
 - `CONFIDENCE_CONSTRAINTS`: Standard confidence thresholds and execution rules
 - `TIME_CONSISTENCY_CONSTRAINTS`: Due date alignment with urgency (immediate → 2hrs, quick wins → same day)
-- `NOTE_FORMATTING_CONSTRAINTS`: Plain text only, keyword annotations (Blocked:, Depends:, Duration:)
+- `NOTE_FORMATTING_CONSTRAINTS`: Plain text only, minimal intervention principle, three allowed keywords (See:, Note:, Duration:)
 - `TIME_BLOCK_CREATION_CONSTRAINTS`: When to create blocks vs. reminders (comprehensive calendar integration rules)
 - `DEEP_WORK_CONSTRAINTS`: 60-90 minute blocks, max 4 hours/day, peak energy scheduling
 - `SHALLOW_TASKS_CONSTRAINTS`: 15-60 minute blocks for routine work, batch when possible
