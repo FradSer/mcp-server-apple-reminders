@@ -1,12 +1,12 @@
-# Apple Reminders MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Events MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
 English | [简体中文](README.zh-CN.md)
 
-A Model Context Protocol (MCP) server that provides native integration with Apple Reminders on macOS. This server allows you to interact with Apple Reminders through a standardized interface with comprehensive management capabilities.
+A Model Context Protocol (MCP) server that provides native integration with Apple Reminders and Calendar on macOS. This server allows you to interact with Apple Reminders and Calendar Events through a standardized interface with comprehensive management capabilities.
 
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/fradser-mcp-server-apple-reminders-badge.png)](https://mseep.ai/app/fradser-mcp-server-apple-reminders)
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/fradser-mcp-server-apple-events-badge.png)](https://mseep.ai/app/fradser-mcp-server-apple-events)
 
 ## Features
 
@@ -67,7 +67,7 @@ The test suite ensures all required usage-description strings are present before
 Install globally via npm:
 
 ```bash
-npm install -g mcp-server-apple-reminders
+npm install -g mcp-server-apple-events
 ```
 
 ## Configuration
@@ -83,7 +83,7 @@ npm install -g mcp-server-apple-reminders
     {
       "mcpServers": {
         "apple-reminders": {
-          "command": "mcp-server-apple-reminders",
+          "command": "mcp-server-apple-events",
           "args": []
         }
       }
@@ -99,12 +99,12 @@ npm install -g mcp-server-apple-reminders
 5. Configure the tool with the following settings:
    - Type: `stdio`
    - ID: `apple-reminders`
-   - Command: `mcp-server-apple-reminders`
+   - Command: `mcp-server-apple-events`
    - Args: (leave empty)
 
 ### Configure Claude Desktop
 
-You need to configure Claude Desktop to recognize the Apple Reminders MCP server. There are two ways to access the configuration:
+You need to configure Claude Desktop to recognize the Apple Events MCP server. There are two ways to access the configuration:
 
 #### Option 1: Through Claude Desktop UI
 
@@ -133,7 +133,7 @@ Add the following configuration to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "apple-reminders": {
-      "command": "mcp-server-apple-reminders",
+      "command": "mcp-server-apple-events",
       "args": []
     }
   }
@@ -146,7 +146,7 @@ For the changes to take effect:
 
 1. Completely quit Claude Desktop (not just close the window)
 2. Start Claude Desktop again
-3. Look for the tool icon to verify the Apple Reminders server is connected
+3. Look for the tool icon to verify the Apple Events server is connected
 
 ## Usage Examples
 

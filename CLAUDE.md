@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Apple Reminders MCP server - Native macOS integration using Swift CLI for EventKit operations.
+Apple Events MCP server - Native macOS integration using Swift CLI for EventKit operations.
 
 ## Essential Commands
 
@@ -67,7 +67,7 @@ The Swift layer handles all permission checking and requesting following EventKi
   - `module: "NodeNext"` for Node.js ESM compatibility
   - `target: "ES2020"` for modern JavaScript features
 - **Entry point chain**: `bin/run.cjs` (CommonJS wrapper) → `dist/index.js` (compiled ES module)
-- **Project Root Discovery**: `src/utils/projectUtils.ts` walks up to 10 directories to find `package.json` with name `"mcp-server-apple-reminders"`
+- **Project Root Discovery**: `src/utils/projectUtils.ts` walks up to 10 directories to find `package.json` with name `"mcp-server-apple-events"`
 
 **Critical Build Dependencies:**
 - Binary location: `bin/EventKitCLI` (resolved via project root discovery in `cliExecutor.ts`)
@@ -192,7 +192,7 @@ User Request → MCP Protocol → tools/index.ts (routing)
 - `findSecureBinaryPath()`: Validates binary existence and path constraints before execution
 - Allowed paths: `/bin/`, `/dist/swift/bin/`, `/src/swift/bin/`, `/swift/bin/`
 - Binary name: `EventKitCLI` (from `FILE_SYSTEM.SWIFT_BINARY_NAME`)
-- Project root discovery: Walks up to 10 directories to find `package.json` with name `"mcp-server-apple-reminders"`
+- Project root discovery: Walks up to 10 directories to find `package.json` with name `"mcp-server-apple-events"`
 - Test environment: `NODE_ENV=test` mocks binary paths to avoid Swift dependency
 
 **Permission Error Detection & Auto-Retry:**

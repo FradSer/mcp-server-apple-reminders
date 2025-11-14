@@ -1,28 +1,30 @@
 {
-  "name": "mcp-server-apple-reminders",
+  "name": "mcp-server-apple-events",
   "version": "1.2.0",
-  "description": "MCP server that provides native integration with Apple Reminders on macOS.",
+  "description": "MCP server that provides native integration with Apple Reminders and Calendar on macOS.",
   "author": "Frad Lee <https://frad.me>",
   "license": "MIT",
   "homepage": "https://frad.me",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fradser/mcp-server-apple-reminders.git"
+    "url": "git+https://github.com/fradser/mcp-server-apple-events.git"
   },
   "bugs": {
-    "url": "https://github.com/fradser/mcp-server-apple-reminders/issues"
+    "url": "https://github.com/fradser/mcp-server-apple-events/issues"
   },
   "keywords": [
     "mcp",
     "apple",
     "reminders",
+    "calendar",
+    "events",
     "automation"
   ],
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "bin": {
-    "mcp-server-apple-reminders": "./bin/run.cjs"
+    "mcp-server-apple-events": "./bin/run.cjs"
   },
   "scripts": {
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",

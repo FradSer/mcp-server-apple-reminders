@@ -1,12 +1,12 @@
-# Apple Reminders MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+# Apple Events MCP Server ![Version 1.0.1](https://img.shields.io/badge/version-1.0.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
 English | [简体中文](README.zh-CN.md)
 
-一个为 macOS 提供原生 Apple Reminders 集成的 Model Context Protocol (MCP) 服务器。该服务器允许你通过标准化接口与 Apple Reminders 进行交互，具有全面的管理功能。
+一个为 macOS 提供原生 Apple Reminders 和 Calendar 集成的 Model Context Protocol (MCP) 服务器。该服务器允许你通过标准化接口与 Apple Reminders 和 Calendar Events 进行交互，具有全面的管理功能。
 
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/fradser-mcp-server-apple-reminders-badge.png)](https://mseep.ai/app/fradser-mcp-server-apple-reminders)
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/fradser-mcp-server-apple-events-badge.png)](https://mseep.ai/app/fradser-mcp-server-apple-events)
 
 ## 功能特性
 
@@ -67,7 +67,7 @@ pnpm test -- src/swift/Info.plist.test.ts
 通过 npm 全局安装：
 
 ```bash
-npm install -g mcp-server-apple-reminders
+npm install -g mcp-server-apple-events
 ```
 
 ## 配置说明
@@ -83,7 +83,7 @@ npm install -g mcp-server-apple-reminders
     {
       "mcpServers": {
         "apple-reminders": {
-          "command": "mcp-server-apple-reminders",
+          "command": "mcp-server-apple-events",
           "args": []
         }
       }
@@ -99,12 +99,12 @@ npm install -g mcp-server-apple-reminders
 5. 使用以下设置配置工具：
    - 类型：`stdio`
    - ID：`apple-reminders`
-   - 命令：`mcp-server-apple-reminders`
+   - 命令：`mcp-server-apple-events`
    - 参数：（留空）
 
 ### 配置 Claude Desktop
 
-你需要配置 Claude Desktop 以识别 Apple Reminders MCP 服务器。有两种方式可以访问配置：
+你需要配置 Claude Desktop 以识别 Apple Events MCP 服务器。有两种方式可以访问配置：
 
 #### 方式 1：通过 Claude Desktop 界面
 
@@ -133,7 +133,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 {
   "mcpServers": {
     "apple-reminders": {
-      "command": "mcp-server-apple-reminders",
+      "command": "mcp-server-apple-events",
       "args": []
     }
   }
@@ -146,7 +146,7 @@ code %APPDATA%\Claude\claude_desktop_config.json
 
 1. 完全退出 Claude Desktop（不仅仅是关闭窗口）
 2. 重新启动 Claude Desktop
-3. 查看工具图标以验证 Apple Reminders 服务器是否已连接
+3. 查看工具图标以验证 Apple Events 服务器是否已连接
 
 ## 使用示例
 

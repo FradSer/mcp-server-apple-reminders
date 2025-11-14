@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # macOS权限检查和申请脚本
-# 用于Apple Reminders MCP Server
+# 用于Apple Events MCP Server
 
-echo "🔐 检查 Apple Reminders MCP Server 权限..."
+echo "🔐 检查 Apple Events MCP Server 权限..."
 
 # 检查EventKit权限
 echo "📅 检查 EventKit (提醒) 权限..."
@@ -32,6 +32,6 @@ fi
 
 echo ""
 echo "🎉 所有权限检查通过！"
-echo "📱 Apple Reminders MCP Server 现在可以正常运行"
+echo "📱 Apple Events MCP Server 现在可以正常运行"
 echo ""
-echo "启动命令: npx $HOME/.mcp-server/mcp-server-apple-reminders"
+echo "启动命令: npx $HOME/.mcp-server/mcp-server-apple-events"
