@@ -151,4 +151,45 @@ describe('prompt time horizons', () => {
       /Split anything.*120 minutes/i, // Updated: More flexible pattern
     );
   });
+
+  it('reminder-review-assistant handles null args', () => {
+    const template = getPromptDefinition('reminder-review-assistant');
+    if (!template) {
+      throw new Error('reminder-review-assistant prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, null);
+    const text = getPromptText(response);
+
+    expect(text).toMatch(/strategist and productivity coach/i);
+    expect(text).toMatch(/### Current state/i);
+    expect(text).toMatch(/### Action queue/i);
+  });
+
+  it('reminder-review-assistant handles undefined args', () => {
+    const template = getPromptDefinition('reminder-review-assistant');
+    if (!template) {
+      throw new Error('reminder-review-assistant prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, undefined);
+    const text = getPromptText(response);
+
+    expect(text).toMatch(/strategist and productivity coach/i);
+  });
+
+  it('reminder-review-assistant accepts review_focus parameter', () => {
+    const template = getPromptDefinition('reminder-review-assistant');
+    if (!template) {
+      throw new Error('reminder-review-assistant prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, {
+      review_focus: 'overdue tasks',
+    });
+    const text = getPromptText(response);
+
+    expect(text).toContain('overdue tasks');
+    expect(text).toMatch(/strategist and productivity coach/i);
+  });
 });

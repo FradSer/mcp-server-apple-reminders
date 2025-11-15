@@ -280,6 +280,15 @@ describe('Tools Index', () => {
     });
 
     describe('reminders_lists tool routing', () => {
+      it('should return error when no arguments provided', async () => {
+        const result = await handleToolCall('reminders_lists', undefined);
+
+        expect(result).toEqual({
+          content: [{ type: 'text', text: 'No arguments provided' }],
+          isError: true,
+        });
+      });
+
       it.each([
         [
           'read',

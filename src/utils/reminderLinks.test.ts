@@ -48,6 +48,47 @@ describe('reminderLinks', () => {
       expect(result).toContain('- [Task 1] (ID: task1)');
     });
 
+    it('should handle blocked-by relationship', () => {
+      const related: RelatedReminder[] = [
+        { id: 'blocker1', title: 'Blocking Task', relationship: 'blocked-by' },
+      ];
+
+      const result = formatRelatedReminders(related);
+
+      expect(result).toContain('Blocked by:');
+      expect(result).toContain('- [Blocking Task] (ID: blocker1)');
+    });
+
+    it('should handle prerequisite relationship', () => {
+      const related: RelatedReminder[] = [
+        {
+          id: 'prereq1',
+          title: 'Required Task',
+          relationship: 'prerequisite',
+        },
+      ];
+
+      const result = formatRelatedReminders(related);
+
+      expect(result).toContain('Prerequisites:');
+      expect(result).toContain('- [Required Task] (ID: prereq1)');
+    });
+
+    it('should handle unknown relationship type', () => {
+      const related: RelatedReminder[] = [
+        {
+          id: 'unknown1',
+          title: 'Unknown Type',
+          relationship: 'custom' as any,
+        },
+      ];
+
+      const result = formatRelatedReminders(related);
+
+      expect(result).toContain('Related:');
+      expect(result).toContain('- [Unknown Type] (ID: unknown1)');
+    });
+
     it('should return empty string for no related reminders', () => {
       const result = formatRelatedReminders([]);
       expect(result).toBe('');

@@ -196,5 +196,78 @@ describe('timeHelpers', () => {
       expect(normalizeDueDateString(undefined)).toBeUndefined();
       expect(normalizeDueDateString(null)).toBeUndefined();
     });
+
+    it('should handle invalid date strings by returning original', () => {
+      const invalid = 'not-a-date';
+      const result = normalizeDueDateString(invalid);
+
+      expect(result).toBe(invalid);
+    });
+
+    it('should use system timezone when not specified', () => {
+      const result = normalizeDueDateString('2025-11-15T08:30:00Z');
+
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+    });
+  });
+
+  describe('getTimeContext timeOfDay categorization', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should categorize early morning as morning', () => {
+      const now = new Date('2024-01-15T05:30:00');
+      jest.setSystemTime(now);
+
+      const context = getTimeContext();
+
+      expect(context.timeOfDay).toBe('morning');
+      expect(context.timeDescription).toContain('morning');
+    });
+
+    it('should categorize midday as afternoon', () => {
+      const now = new Date('2024-01-15T13:00:00');
+      jest.setSystemTime(now);
+
+      const context = getTimeContext();
+
+      expect(context.timeOfDay).toBe('afternoon');
+      expect(context.timeDescription).toContain('afternoon');
+    });
+
+    it('should categorize late afternoon as evening', () => {
+      const now = new Date('2024-01-15T18:00:00');
+      jest.setSystemTime(now);
+
+      const context = getTimeContext();
+
+      expect(context.timeOfDay).toBe('evening');
+      expect(context.timeDescription).toContain('evening');
+    });
+
+    it('should categorize late night as night', () => {
+      const now = new Date('2024-01-15T23:00:00');
+      jest.setSystemTime(now);
+
+      const context = getTimeContext();
+
+      expect(context.timeOfDay).toBe('night');
+      expect(context.timeDescription).toContain('night');
+    });
+
+    it('should include working hours status in night description', () => {
+      const now = new Date('2024-01-15T22:00:00');
+      jest.setSystemTime(now);
+
+      const context = getTimeContext();
+
+      expect(context.isWorkingHours).toBe(false);
+      expect(context.timeDescription).toContain('outside working hours');
+    });
   });
 });

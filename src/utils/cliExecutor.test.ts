@@ -327,5 +327,191 @@ describe('cliExecutor', () => {
       expect(mockTriggerPermissionPrompt).toHaveBeenCalledTimes(1);
       expect(mockExecFile).toHaveBeenCalledTimes(2);
     });
+
+    it('detects calendar domain from error message', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Calendar permission denied.',
+      });
+      const successOutput = JSON.stringify({
+        status: 'success',
+        result: { ok: true },
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        if (call === 1) {
+          const error = Object.assign(new Error('Command failed'), {
+            stderr: '',
+          }) as ExecFileException;
+          cb?.(error, permissionError, '');
+        } else {
+          cb?.(null, successOutput, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      const result = await executeCli(['--action', 'read']);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('calendars');
+    });
+
+    it('infers calendar domain from action when no explicit mention in error', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Authorization denied.',
+      });
+      const successOutput = JSON.stringify({
+        status: 'success',
+        result: { ok: true },
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        if (call === 1) {
+          const error = Object.assign(new Error('Command failed'), {
+            stderr: '',
+          }) as ExecFileException;
+          cb?.(error, permissionError, '');
+        } else {
+          cb?.(null, successOutput, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      const result = await executeCli(['--action', 'create-event', '--title', 'Test']);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('calendars');
+    });
+
+    it('handles empty stdout by throwing error', async () => {
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        cb?.(null, '', '');
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      await expect(
+        executeCli(['--action', 'read', '--id', '123']),
+      ).rejects.toThrow('EventKitCLI execution failed: Empty CLI output');
+    });
+
+    it('handles null stdout by throwing error', async () => {
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        cb?.(null, null as unknown as string, '');
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      await expect(
+        executeCli(['--action', 'read', '--id', '123']),
+      ).rejects.toThrow('EventKitCLI execution failed');
+    });
+
+    it('handles action at end of args array', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Permission denied.',
+      });
+      const successOutput = JSON.stringify({
+        status: 'success',
+        result: { ok: true },
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        if (call === 1) {
+          const error = Object.assign(new Error('Command failed'), {
+            stderr: '',
+          }) as ExecFileException;
+          cb?.(error, permissionError, '');
+        } else {
+          cb?.(null, successOutput, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      const result = await executeCli(['--title', 'Test', '--action', 'update-event']);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('calendars');
+    });
+
+    it('defaults to reminders when action flag is missing value', async () => {
+      const permissionError = JSON.stringify({
+        status: 'error',
+        message: 'Permission denied.',
+      });
+      const successOutput = JSON.stringify({
+        status: 'success',
+        result: { ok: true },
+      });
+
+      let call = 0;
+      mockExecFile.mockImplementation(((
+        _cliPath: string,
+        _args: readonly string[] | null | undefined,
+        optionsOrCallback?: ExecFileOptions | null | ExecFileCallback,
+        callback?: ExecFileCallback,
+      ) => {
+        const cb = invokeCallback(optionsOrCallback, callback);
+        call += 1;
+        if (call === 1) {
+          const error = Object.assign(new Error('Command failed'), {
+            stderr: '',
+          }) as ExecFileException;
+          cb?.(error, permissionError, '');
+        } else {
+          cb?.(null, successOutput, '');
+        }
+        return {} as ChildProcess;
+      }) as unknown as typeof execFile);
+
+      mockTriggerPermissionPrompt.mockResolvedValue();
+
+      const result = await executeCli(['--title', 'Test', '--action']);
+
+      expect(result).toEqual({ ok: true });
+      expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('reminders');
+    });
   });
 });
