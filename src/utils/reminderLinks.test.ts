@@ -79,8 +79,8 @@ describe('reminderLinks', () => {
         {
           id: 'unknown1',
           title: 'Unknown Type',
-          relationship: 'custom' as any,
-        },
+          relationship: 'custom',
+        } as unknown as RelatedReminder,
       ];
 
       const result = formatRelatedReminders(related);

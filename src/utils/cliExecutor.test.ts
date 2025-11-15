@@ -398,7 +398,12 @@ describe('cliExecutor', () => {
 
       mockTriggerPermissionPrompt.mockResolvedValue();
 
-      const result = await executeCli(['--action', 'create-event', '--title', 'Test']);
+      const result = await executeCli([
+        '--action',
+        'create-event',
+        '--title',
+        'Test',
+      ]);
 
       expect(result).toEqual({ ok: true });
       expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('calendars');
@@ -470,7 +475,12 @@ describe('cliExecutor', () => {
 
       mockTriggerPermissionPrompt.mockResolvedValue();
 
-      const result = await executeCli(['--title', 'Test', '--action', 'update-event']);
+      const result = await executeCli([
+        '--title',
+        'Test',
+        '--action',
+        'update-event',
+      ]);
 
       expect(result).toEqual({ ok: true });
       expect(mockTriggerPermissionPrompt).toHaveBeenCalledWith('calendars');

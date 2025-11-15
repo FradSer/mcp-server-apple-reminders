@@ -50,7 +50,9 @@ describe('permissionPrompt', () => {
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
-      await expect(triggerPermissionPrompt('reminders')).resolves.toBeUndefined();
+      await expect(
+        triggerPermissionPrompt('reminders'),
+      ).resolves.toBeUndefined();
 
       expect(mockExecFile).toHaveBeenCalledWith(
         'osascript',
@@ -71,7 +73,9 @@ describe('permissionPrompt', () => {
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
-      await expect(triggerPermissionPrompt('calendars')).resolves.toBeUndefined();
+      await expect(
+        triggerPermissionPrompt('calendars'),
+      ).resolves.toBeUndefined();
 
       expect(mockExecFile).toHaveBeenCalledWith(
         'osascript',
@@ -107,7 +111,10 @@ describe('permissionPrompt', () => {
         callback?: ExecFileCallback,
       ) => {
         const cb = invokeCallback(optionsOrCallback, callback);
-        setTimeout(() => cb?.('string error' as unknown as ExecFileException, '', ''), 0);
+        setTimeout(
+          () => cb?.('string error' as unknown as ExecFileException, '', ''),
+          0,
+        );
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
@@ -124,7 +131,11 @@ describe('permissionPrompt', () => {
         callback?: ExecFileCallback,
       ) => {
         const cb = invokeCallback(optionsOrCallback, callback);
-        setTimeout(() => cb?.('simple string error' as unknown as ExecFileException, '', ''), 0);
+        setTimeout(
+          () =>
+            cb?.('simple string error' as unknown as ExecFileException, '', ''),
+          0,
+        );
         return {} as ChildProcess;
       }) as unknown as typeof execFile);
 
