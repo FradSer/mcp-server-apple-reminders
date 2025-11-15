@@ -348,7 +348,7 @@ describe('binaryValidator', () => {
         '/another/path/bin/EventKitCLI',
       ];
 
-      mockFs.existsSync.mockImplementation((filepath: string) => {
+      mockFs.existsSync.mockImplementation((filepath): boolean => {
         return filepath === '/project/dist/swift/bin/EventKitCLI';
       });
       mockFs.statSync.mockReturnValue({
