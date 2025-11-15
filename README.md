@@ -2,6 +2,8 @@
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/FradSer?style=social)](https://twitter.com/FradSer)
 
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/FradSer/mcp-server-apple-reminders)](https://archestra.ai/mcp-catalog/fradser__mcp-server-apple-reminders)
+
 English | [简体中文](README.zh-CN.md)
 
 A Model Context Protocol (MCP) server that provides native integration with Apple Reminders and Calendar on macOS. This server allows you to interact with Apple Reminders and Calendar Events through a standardized interface with comprehensive management capabilities.
