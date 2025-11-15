@@ -192,4 +192,69 @@ describe('prompt time horizons', () => {
     expect(text).toContain('overdue tasks');
     expect(text).toMatch(/strategist and productivity coach/i);
   });
+
+  it('createStructuredPrompt handles empty constraints and calibration', () => {
+    const { createStructuredPrompt } = require('./prompts.js');
+
+    const result = createStructuredPrompt({
+      mission: 'Test mission',
+      contextInputs: ['input1', 'input2'],
+      process: ['step1', 'step2'],
+      outputFormat: ['format1'],
+      qualityBar: ['quality1'],
+      constraints: undefined,
+      calibration: undefined,
+    });
+
+    expect(result).toContain('You are an Apple Reminders strategist and productivity coach.');
+    expect(result).toContain('Test mission');
+    expect(result).toContain('Context inputs:');
+    expect(result).toContain('Process:');
+    expect(result).toContain('Output format:');
+    expect(result).toContain('Quality bar:');
+  });
+
+  it('createStructuredPrompt handles empty arrays for constraints and calibration', () => {
+    const { createStructuredPrompt } = require('./prompts.js');
+
+    const result = createStructuredPrompt({
+      mission: 'Test mission',
+      contextInputs: ['input1'],
+      process: ['step1'],
+      outputFormat: ['format1'],
+      qualityBar: ['quality1'],
+      constraints: [],
+      calibration: [],
+    });
+
+    expect(result).toContain('You are an Apple Reminders strategist and productivity coach.');
+    expect(result).toContain('Test mission');
+    expect(result).not.toContain('Constraints:');
+    expect(result).not.toContain('Calibration guidance:');
+  });
+
+  it('smart-reminder-creator parseArgs handles null rawArgs', () => {
+    const template = getPromptDefinition('smart-reminder-creator');
+    if (!template) {
+      throw new Error('smart-reminder-creator prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, null);
+    const text = getPromptText(response);
+
+    expect(text).toMatch(/productivity coach and reminder strategist/i);
+    expect(text).toMatch(/### Current state/i);
+  });
+
+  it('smart-reminder-creator parseArgs handles undefined rawArgs', () => {
+    const template = getPromptDefinition('smart-reminder-creator');
+    if (!template) {
+      throw new Error('smart-reminder-creator prompt is not registered');
+    }
+
+    const response = buildPromptResponse(template, undefined);
+    const text = getPromptText(response);
+
+    expect(text).toMatch(/productivity coach and reminder strategist/i);
+  });
 });

@@ -180,6 +180,45 @@ describe('Confidence Action Formatting', () => {
     expect(formatted).toContain('LOW CONFIDENCE (45%)');
     expect(formatted).not.toContain('Tool:');
   });
+
+  it('should format recommendation with tool call suggestion', () => {
+    const action = buildConfidenceAction({
+      percentage: 75,
+      action: 'Consider creating reminder',
+      toolCall: buildToolCall('reminders_tasks', {
+        action: 'create',
+        title: 'Suggested Task',
+      }),
+      rationale: 'Seems relevant but needs confirmation',
+      isRecommendation: true,
+    });
+
+    const formatted = formatConfidenceAction(action);
+    expect(formatted).toContain('MEDIUM CONFIDENCE (75%)');
+    expect(formatted).toContain('RECOMMENDATION - Consider creating reminder');
+    expect(formatted).toContain('Suggested tool call: reminders_tasks');
+    expect(formatted).toContain('Rationale: Seems relevant but needs confirmation');
+  });
+
+  it('should format action with tool call and rationale', () => {
+    const action = buildConfidenceAction({
+      percentage: 85,
+      action: 'Update existing reminder',
+      toolCall: buildToolCall('reminders_tasks', {
+        action: 'update',
+        id: '123',
+        title: 'Updated Task',
+      }),
+      rationale: 'Task details need correction',
+    });
+
+    const formatted = formatConfidenceAction(action);
+    expect(formatted).toContain('HIGH CONFIDENCE (85%)');
+    expect(formatted).toContain('Update existing reminder');
+    expect(formatted).toContain('Tool: reminders_tasks');
+    expect(formatted).toContain('Args:');
+    expect(formatted).toContain('\nRationale: Task details need correction');
+  });
 });
 
 describe('Constraint Consistency', () => {
