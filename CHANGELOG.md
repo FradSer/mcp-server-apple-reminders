@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-11-15
+
+### Added
+
+- Calendar events complete CRUD support (create, read, update, delete operations)
+- Calendar permissions management integrated into EventKit CLI
+- Extended JSON Schema support for enhanced MCP tool definitions
+- Comprehensive timezone integration tests with DST handling
+- Automatic permission handling in handlers layer with retry mechanism
+- Shared prompt abstractions for consistent behavior across templates
+- Work categorization for intelligent time blocking
+- Permission helper utilities and troubleshooting scripts
+- Time consistency and helper utilities for improved date handling
+- Notes formatting and reminder links utilities
+
+### Changed
+
+- **BREAKING**: Project renamed from `mcp-server-apple-reminders` to `mcp-server-apple-events`
+- **BREAKING**: MCP tools renamed to underscore notation (e.g., `reminders_tasks`, `calendar_events`)
+- **BREAKING**: RemindersCLI renamed to EventKitCLI for unified Apple services support
+- Simplified prompt constraints and abstractions (reduced from ~70 to ~60 constraints)
+- Unified confidence policy across all prompt templates
+- Removed TypeScript timezone normalization (Swift CLI is single source of truth)
+- Moved permission handling entirely to Swift CLI layer
+- Enhanced daily task organizer with calendar integration
+- Optimized time blocking with research-backed deep work constraints
+- Upgraded dependencies and updated lockfile
+- Simplified dev server startup process
+- Enhanced tool handlers with better error handling and validation
+
+### Fixed
+
+- Timezone handling for bare date strings (e.g., "2025-11-15")
+- Auto-trigger permission prompts with AppleScript fallback
+- Secure binary path validation with allowed paths constraints
+- Support for colonless timezone offsets (e.g., "+0800")
+- Persist reminder timezone metadata in EventKit
+- Local timezone usage for date parsing instead of UTC
+- Support for legacy tool aliases during migration
+- Calendar events prompt reference accuracy
+- Non-null assertion safety in permission prompt memoization
+
+### Removed
+
+- Permissions tool from MCP interface (handled automatically by Swift CLI)
+- Swift permission status checking from TypeScript layer
+- Obsolete permission repository and manual helpers
+- Unused time consistency and reminder links modules (consolidated)
+- Unsupported deep link format from reminders
+
 ## [1.1.0] - 2025-10-30
 
 ### Added
@@ -339,7 +389,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic Apple Reminders integration
 - Foundation for macOS native reminder management
 
-[unreleased]: https://github.com/FradSer/mcp-server-apple-events/compare/v1.1.0...HEAD
+[unreleased]: https://github.com/FradSer/mcp-server-apple-events/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/FradSer/mcp-server-apple-events/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/FradSer/mcp-server-apple-events/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/FradSer/mcp-server-apple-events/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/FradSer/mcp-server-apple-events/releases/tag/v1.0.0
